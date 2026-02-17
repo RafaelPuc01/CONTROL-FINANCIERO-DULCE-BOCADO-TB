@@ -1,0 +1,2477 @@
+<!DOCTYPE html>
+<html lang="es-MX">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dulce Bocado - ERP</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Poppins', 'sans-serif'],
+                        serif: ['Playfair Display', 'serif'],
+                    },
+                    colors: {
+                        brand: {
+                            50: '#fdf8f6',
+                            100: '#f2e8e5',
+                            200: '#eaddd7',
+                            300: '#e0cec7',
+                            400: '#d2bab0',
+                            500: '#a77f70',
+                            600: '#8a5a4d',
+                            700: '#6d453c',
+                            800: '#4a2e28',
+                            900: '#2d1b17',
+                        },
+                        sweet: {
+                            100: '#fff0f3',
+                            200: '#ffc1cc',
+                            300: '#ff8fa3',
+                            400: '#ff5c7a',
+                            500: '#e83e5f',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            background: linear-gradient(135deg, #fdf8f6 0%, #fff0f3 100%);
+        }
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        .sidebar-item {
+            transition: all 0.3s ease;
+        }
+        .sidebar-item:hover {
+            transform: translateX(5px);
+        }
+        .card-hover {
+            transition: all 0.3s ease;
+        }
+        .card-hover:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+        }
+        .fade-in {
+            animation: fadeIn 0.5s ease-in;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 6px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: #f1f1f1;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #a77f70;
+            border-radius: 3px;
+        }
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+        .modal.active {
+            display: flex;
+        }
+        .btn-action {
+            transition: all 0.2s;
+        }
+        .btn-action:hover {
+            transform: scale(1.1);
+        }
+        /* Sidebar transitions */
+        .sidebar {
+            transition: transform 0.3s ease-in-out, width 0.3s ease-in-out;
+        }
+        .sidebar.collapsed {
+            transform: translateX(-100%);
+            width: 0;
+            overflow: hidden;
+        }
+        .main-content {
+            transition: margin-left 0.3s ease-in-out;
+        }
+        .hamburger-btn {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            z-index: 60;
+            background: white;
+            border-radius: 8px;
+            padding: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        .hamburger-btn:hover {
+            background: #f3f4f6;
+            transform: scale(1.05);
+        }
+        .hamburger-btn.hidden {
+            display: none;
+        }
+        /* Nomina styles */
+        .nomina-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+    </style>
+</head>
+<body class="text-gray-800 h-screen overflow-hidden">
+
+    <!-- Login Screen -->
+    <div id="loginScreen" class="fixed inset-0 z-50 flex items-center justify-center bg-gradient-to-br from-brand-100 to-sweet-100">
+        <div class="bg-white p-8 rounded-2xl shadow-2xl w-full max-w-md mx-4 transform transition-all hover:scale-105">
+            <div class="text-center mb-8">
+                <div class="w-20 h-20 bg-gradient-to-br from-brand-500 to-sweet-500 rounded-full mx-auto mb-4 flex items-center justify-center text-white text-3xl">
+                    <i class="fas fa-birthday-cake"></i>
+                </div>
+                <h1 class="text-3xl font-serif font-bold text-brand-800">Dulce Bocado</h1>
+                <p class="text-brand-600 mt-2">Tierra Blanca</p>
+            </div>
+            
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Usuario</label>
+                    <input type="text" id="username" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-transparent outline-none transition-all" placeholder="admin o cajero">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Contraseña</label>
+                    <input type="password" id="password" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-transparent outline-none transition-all" placeholder="••••••">
+                </div>
+                <button onclick="login()" class="w-full bg-gradient-to-r from-brand-600 to-brand-700 text-white py-3 rounded-lg font-semibold hover:from-brand-700 hover:to-brand-800 transition-all transform hover:scale-105 shadow-lg">
+                    Ingresar al Sistema
+                </button>
+                <button onclick="openChangePasswordModal()" class="w-full text-sm text-brand-600 hover:text-brand-800 underline">
+                    Cambiar contraseña
+                </button>
+            </div>
+            
+            <div class="mt-6 text-center text-sm text-gray-500">
+                <p>Demo: admin/admin o cajero/cajero</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Change Password Modal -->
+    <div id="changePasswordModal" class="modal">
+        <div class="bg-white rounded-2xl p-6 w-full max-w-md mx-4 shadow-2xl">
+            <h3 class="text-xl font-bold text-brand-800 mb-4">Cambiar Contraseña</h3>
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Usuario</label>
+                    <select id="changePassUser" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-brand-500 outline-none">
+                        <option value="admin">Administrador</option>
+                        <option value="cajero">Cajero</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Contraseña Actual</label>
+                    <input type="password" id="currentPass" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-brand-500 outline-none">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Nueva Contraseña</label>
+                    <input type="password" id="newPass" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-brand-500 outline-none">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Confirmar Nueva Contraseña</label>
+                    <input type="password" id="confirmNewPass" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-brand-500 outline-none">
+                </div>
+            </div>
+            <div class="flex gap-3 mt-6">
+                <button onclick="closeModal('changePasswordModal')" class="flex-1 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">Cancelar</button>
+                <button onclick="saveNewPassword()" class="flex-1 py-2 bg-brand-600 text-white rounded-lg hover:bg-brand-700 transition-colors">Guardar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Hamburger Button -->
+    <div id="hamburgerBtn" class="hamburger-btn hidden" onclick="toggleSidebar()">
+        <i class="fas fa-bars text-brand-800 text-xl"></i>
+    </div>
+
+    <!-- Main App -->
+    <div id="mainApp" class="hidden h-full flex">
+        <!-- Sidebar -->
+        <aside id="sidebar" class="sidebar w-64 bg-gradient-to-b from-brand-900 to-brand-800 text-white flex flex-col shadow-2xl z-50">
+            <div class="p-6 border-b border-brand-700 flex justify-between items-center">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 bg-sweet-500 rounded-full flex items-center justify-center">
+                        <i class="fas fa-cookie-bite text-white"></i>
+                    </div>
+                    <div>
+                        <h2 class="font-serif font-bold text-lg">Dulce Bocado</h2>
+                        <p class="text-xs text-brand-300">ERP System</p>
+                    </div>
+                </div>
+                <button onclick="toggleSidebar()" class="text-white hover:text-brand-200 transition-colors">
+                    <i class="fas fa-times text-xl"></i>
+                </button>
+            </div>
+
+            <nav class="flex-1 p-4 space-y-2 overflow-y-auto custom-scrollbar">
+                <div class="text-xs font-semibold text-brand-400 uppercase tracking-wider mb-2 px-2">Principal</div>
+                
+                <button onclick="showModule('dashboard')" class="sidebar-item w-full flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-brand-700 transition-colors text-left admin-only">
+                    <i class="fas fa-chart-pie w-5"></i>
+                    <span>Dashboard Financiero</span>
+                </button>
+
+                <button onclick="showModule('pos')" class="sidebar-item w-full flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-brand-700 transition-colors text-left">
+                    <i class="fas fa-cash-register w-5"></i>
+                    <span>Punto de Venta (POS)</span>
+                </button>
+
+                <button onclick="showModule('salesHistory')" class="sidebar-item w-full flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-brand-700 transition-colors text-left">
+                    <i class="fas fa-receipt w-5"></i>
+                    <span>Historial de Ventas</span>
+                </button>
+
+                <button onclick="showModule('expenses')" class="sidebar-item w-full flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-brand-700 transition-colors text-left">
+                    <i class="fas fa-wallet w-5"></i>
+                    <span id="expensesMenuText">Mis Gastos</span>
+                </button>
+
+                <button onclick="showModule('products')" class="sidebar-item w-full flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-brand-700 transition-colors text-left">
+                    <i class="fas fa-box w-5"></i>
+                    <span>Productos</span>
+                </button>
+
+                <div class="text-xs font-semibold text-brand-400 uppercase tracking-wider mt-6 mb-2 px-2 admin-only">Administración</div>
+
+                <button onclick="showModule('bank')" class="sidebar-item w-full flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-brand-700 transition-colors text-left admin-only">
+                    <i class="fas fa-university w-5"></i>
+                    <span>Bancos y Efectivo</span>
+                </button>
+
+                <button onclick="showModule('taxes')" class="sidebar-item w-full flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-brand-700 transition-colors text-left admin-only">
+                    <i class="fas fa-calculator w-5"></i>
+                    <span>Impuestos (IVA/ISR)</span>
+                </button>
+
+                <button onclick="showModule('employees')" class="sidebar-item w-full flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-brand-700 transition-colors text-left admin-only">
+                    <i class="fas fa-users w-5"></i>
+                    <span>Empleados</span>
+                </button>
+
+                <button onclick="showModule('nomina')" class="sidebar-item w-full flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-brand-700 transition-colors text-left admin-only">
+                    <i class="fas fa-money-check-alt w-5"></i>
+                    <span>Nómina</span>
+                </button>
+            </nav>
+
+            <div class="p-4 border-t border-brand-700">
+                <div class="flex items-center gap-3 mb-3">
+                    <div class="w-8 h-8 bg-brand-600 rounded-full flex items-center justify-center">
+                        <i class="fas fa-user text-sm"></i>
+                    </div>
+                    <div class="flex-1">
+                        <p class="text-sm font-medium" id="currentUserName">Usuario</p>
+                        <p class="text-xs text-brand-400" id="currentUserRole">Rol</p>
+                    </div>
+                </div>
+                <button onclick="logout()" class="w-full flex items-center justify-center gap-2 px-4 py-2 bg-red-600 hover:bg-red-700 rounded-lg transition-colors text-sm">
+                    <i class="fas fa-sign-out-alt"></i>
+                    Cerrar Sesión
+                </button>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main id="mainContent" class="flex-1 overflow-y-auto bg-gray-50 p-8 custom-scrollbar main-content">
+            
+            <!-- Dashboard Module -->
+            <div id="dashboard" class="module fade-in">
+                <div class="mb-8">
+                    <h1 class="text-3xl font-serif font-bold text-brand-900 mb-2">Dashboard Financiero</h1>
+                    <p class="text-gray-600">Resumen general del negocio</p>
+                </div>
+
+                <!-- KPI Cards -->
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                    <div class="glass-panel p-6 rounded-2xl card-hover border-l-4 border-green-500">
+                        <div class="flex justify-between items-start">
+                            <div>
+                                <p class="text-gray-500 text-sm mb-1">Ventas Reales del Día</p>
+                                <h3 class="text-2xl font-bold text-gray-800" id="dashboardTodaySales">$0.00</h3>
+                            </div>
+                            <div class="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center text-green-600">
+                                <i class="fas fa-dollar-sign"></i>
+                            </div>
+                        </div>
+                        <p class="text-xs text-green-600 mt-2" id="salesStatus"><i class="fas fa-check-circle"></i> Sin cancelaciones</p>
+                    </div>
+
+                    <div class="glass-panel p-6 rounded-2xl card-hover border-l-4 border-blue-500">
+                        <div class="flex justify-between items-start">
+                            <div>
+                                <p class="text-gray-500 text-sm mb-1">IVA por Pagar</p>
+                                <h3 class="text-2xl font-bold text-gray-800" id="dashboardIVA">$0.00</h3>
+                            </div>
+                            <div class="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center text-blue-600">
+                                <i class="fas fa-percentage"></i>
+                            </div>
+                        </div>
+                        <p class="text-xs text-gray-500 mt-2">Este mes</p>
+                    </div>
+
+                    <div class="glass-panel p-6 rounded-2xl card-hover border-l-4 border-purple-500">
+                        <div class="flex justify-between items-start">
+                            <div>
+                                <p class="text-gray-500 text-sm mb-1">ISR Estimado (RESICO)</p>
+                                <h3 class="text-2xl font-bold text-gray-800" id="dashboardISR">$0.00</h3>
+                            </div>
+                            <div class="w-10 h-10 bg-purple-100 rounded-full flex items-center justify-center text-purple-600">
+                                <i class="fas fa-file-invoice-dollar"></i>
+                            </div>
+                        </div>
+                        <p class="text-xs text-gray-500 mt-2">2.5% de ingresos</p>
+                    </div>
+
+                    <div class="glass-panel p-6 rounded-2xl card-hover border-l-4 border-orange-500">
+                        <div class="flex justify-between items-start">
+                            <div>
+                                <p class="text-gray-500 text-sm mb-1">Gastos del Mes</p>
+                                <h3 class="text-2xl font-bold text-gray-800" id="dashboardExpenses">$0.00</h3>
+                            </div>
+                            <div class="w-10 h-10 bg-orange-100 rounded-full flex items-center justify-center text-orange-600">
+                                <i class="fas fa-chart-line"></i>
+                            </div>
+                        </div>
+                        <p class="text-xs text-red-500 mt-2" id="expenseTrend"><i class="fas fa-arrow-down"></i> Ver detalle</p>
+                    </div>
+                </div>
+
+                <!-- Cancelled Sales Alert -->
+                <div id="cancelledAlert" class="hidden mb-6 glass-panel p-4 rounded-xl bg-red-50 border border-red-200">
+                    <div class="flex items-center gap-3 text-red-800">
+                        <i class="fas fa-exclamation-triangle text-xl"></i>
+                        <div>
+                            <p class="font-bold">Hay ventas canceladas hoy</p>
+                            <p class="text-sm">Total cancelado: <span id="cancelledAmount" class="font-bold">$0.00</span> | Ventas afectadas: <span id="cancelledCount">0</span></p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Charts Section -->
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+                    <div class="glass-panel p-6 rounded-2xl">
+                        <h3 class="text-lg font-bold text-brand-800 mb-4">Ventas vs Gastos (Últimos 7 días)</h3>
+                        <canvas id="salesChart" class="w-full h-64"></canvas>
+                    </div>
+                    <div class="glass-panel p-6 rounded-2xl">
+                        <h3 class="text-lg font-bold text-brand-800 mb-4">Distribución de Gastos por Área</h3>
+                        <canvas id="expensesChart" class="w-full h-64"></canvas>
+                    </div>
+                </div>
+
+                <!-- Recent Activity -->
+                <div class="glass-panel p-6 rounded-2xl">
+                    <h3 class="text-lg font-bold text-brand-800 mb-4">Actividad Reciente</h3>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-sm">
+                            <thead class="bg-gray-50 text-gray-600">
+                                <tr>
+                                    <th class="px-4 py-3 text-left rounded-l-lg">Fecha</th>
+                                    <th class="px-4 py-3 text-left">Concepto</th>
+                                    <th class="px-4 py-3 text-left">Tipo</th>
+                                    <th class="px-4 py-3 text-right rounded-r-lg">Monto</th>
+                                </tr>
+                            </thead>
+                            <tbody id="recentActivityTable" class="divide-y divide-gray-100">
+                                <!-- Dynamic content -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- POS Module - IVA INCLUIDO -->
+            <div id="pos" class="module hidden fade-in">
+                <div class="mb-6 flex justify-between items-center">
+                    <div>
+                        <h1 class="text-3xl font-serif font-bold text-brand-900 mb-2">Punto de Venta</h1>
+                        <p class="text-gray-600">Nueva venta - Los precios con IVA ya incluyen el 16%</p>
+                    </div>
+                    <button onclick="openCustomProductModal()" class="bg-sweet-500 hover:bg-sweet-600 text-white px-4 py-2 rounded-lg transition-colors">
+                        <i class="fas fa-plus mr-2"></i>Pastel Personalizado
+                    </button>
+                </div>
+
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 h-[calc(100vh-200px)]">
+                    <!-- Products Grid -->
+                    <div class="lg:col-span-2 glass-panel rounded-2xl p-6 overflow-y-auto custom-scrollbar">
+                        <div class="flex gap-2 mb-4 overflow-x-auto pb-2">
+                            <button onclick="filterProducts('all')" class="px-4 py-2 bg-brand-600 text-white rounded-full text-sm whitespace-nowrap hover:bg-brand-700 transition-colors">Todos</button>
+                            <button onclick="filterProducts('pasteles')" class="px-4 py-2 bg-white text-gray-700 border border-gray-300 rounded-full text-sm whitespace-nowrap hover:bg-gray-50 transition-colors">Pasteles</button>
+                            <button onclick="filterProducts('postres')" class="px-4 py-2 bg-white text-gray-700 border border-gray-300 rounded-full text-sm whitespace-nowrap hover:bg-gray-50 transition-colors">Postres</button>
+                            <button onclick="filterProducts('decoracion')" class="px-4 py-2 bg-white text-gray-700 border border-gray-300 rounded-full text-sm whitespace-nowrap hover:bg-gray-50 transition-colors">Decoración</button>
+                            <button onclick="filterProducts('herramientas')" class="px-4 py-2 bg-white text-gray-700 border border-gray-300 rounded-full text-sm whitespace-nowrap hover:bg-gray-50 transition-colors">Herramientas</button>
+                        </div>
+
+                        <div id="productsGrid" class="grid grid-cols-2 md:grid-cols-3 gap-4">
+                            <!-- Products will be loaded here -->
+                        </div>
+                    </div>
+
+                    <!-- Cart -->
+                    <div class="glass-panel rounded-2xl p-6 flex flex-col">
+                        <h3 class="text-lg font-bold text-brand-800 mb-4">Ticket Actual</h3>
+                        
+                        <div id="cartItems" class="flex-1 overflow-y-auto custom-scrollbar space-y-3 mb-4">
+                            <div class="text-center text-gray-400 py-8">
+                                <i class="fas fa-shopping-basket text-4xl mb-2"></i>
+                                <p>Carrito vacío</p>
+                            </div>
+                        </div>
+
+                        <div class="border-t pt-4 space-y-2">
+                            <div class="flex justify-between text-sm">
+                                <span class="text-gray-600">Subtotal:</span>
+                                <span class="font-medium" id="cartSubtotal">$0.00</span>
+                            </div>
+                            <div class="flex justify-between text-sm text-blue-600">
+                                <span class="text-gray-600">IVA (16%):</span>
+                                <span class="font-medium" id="cartIVA">$0.00</span>
+                                <span class="text-xs text-gray-400">(incluido en productos con IVA)</span>
+                            </div>
+                            <div class="flex justify-between text-lg font-bold text-brand-800 pt-2 border-t">
+                                <span>Total:</span>
+                                <span id="cartTotal">$0.00</span>
+                            </div>
+                        </div>
+
+                        <div class="mt-4 space-y-2">
+                            <label class="text-sm font-medium text-gray-700">Método de Pago:</label>
+                            <div class="grid grid-cols-3 gap-2">
+                                <button onclick="setPaymentMethod('efectivo')" id="btnEfectivo" class="payment-btn py-2 border-2 border-brand-500 bg-brand-50 text-brand-700 rounded-lg text-sm font-medium transition-all">
+                                    <i class="fas fa-money-bill-wave mr-1"></i>Efectivo
+                                </button>
+                                <button onclick="setPaymentMethod('transferencia')" id="btnTransferencia" class="payment-btn py-2 border-2 border-gray-300 text-gray-600 rounded-lg text-sm font-medium transition-all hover:border-brand-400">
+                                    <i class="fas fa-mobile-alt mr-1"></i>Transfer
+                                </button>
+                                <button onclick="setPaymentMethod('tarjeta')" id="btnTarjeta" class="payment-btn py-2 border-2 border-gray-300 text-gray-600 rounded-lg text-sm font-medium transition-all hover:border-brand-400">
+                                    <i class="fas fa-credit-card mr-1"></i>Tarjeta
+                                </button>
+                            </div>
+                        </div>
+
+                        <button onclick="processSale()" class="mt-4 w-full bg-gradient-to-r from-green-600 to-green-700 text-white py-3 rounded-lg font-bold text-lg hover:from-green-700 hover:to-green-800 transition-all transform hover:scale-105 shadow-lg">
+                            <i class="fas fa-check-circle mr-2"></i>Cobrar
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Sales History Module -->
+            <div id="salesHistory" class="module hidden fade-in">
+                <div class="mb-6 flex justify-between items-center">
+                    <div>
+                        <h1 class="text-3xl font-serif font-bold text-brand-900 mb-2">Historial de Ventas</h1>
+                        <p class="text-gray-600">Corte del día y ventas anteriores</p>
+                    </div>
+                    <button onclick="generateDailyCut()" class="bg-brand-600 hover:bg-brand-700 text-white px-6 py-2 rounded-lg transition-colors shadow-lg">
+                        <i class="fas fa-cut mr-2"></i>Generar Corte del Día
+                    </button>
+                </div>
+
+                <!-- Daily Summary Cards -->
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+                    <div class="glass-panel p-6 rounded-2xl bg-gradient-to-br from-green-50 to-green-100 border border-green-200">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-green-800 text-sm font-medium">Ventas Hoy (Reales)</p>
+                                <h3 class="text-2xl font-bold text-green-900" id="historyTotalSales">$0.00</h3>
+                                <p class="text-xs text-green-700 mt-1"><span id="historyCount">0</span> transacciones</p>
+                            </div>
+                            <div class="w-12 h-12 bg-green-500 rounded-full flex items-center justify-center text-white text-xl">
+                                <i class="fas fa-shopping-cart"></i>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="glass-panel p-6 rounded-2xl bg-gradient-to-br from-blue-50 to-blue-100 border border-blue-200">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-blue-800 text-sm font-medium">En Caja Debería Haber</p>
+                                <h3 class="text-2xl font-bold text-blue-900" id="historyShouldHave">$0.00</h3>
+                                <div class="text-xs text-blue-700 mt-1 space-x-2">
+                                    <span id="cashTotal">E: $0</span>
+                                    <span id="transferTotal">T: $0</span>
+                                    <span id="cardTotal">C: $0</span>
+                                </div>
+                            </div>
+                            <div class="w-12 h-12 bg-blue-500 rounded-full flex items-center justify-center text-white text-xl">
+                                <i class="fas fa-cash-register"></i>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="glass-panel p-6 rounded-2xl bg-gradient-to-br from-purple-50 to-purple-100 border border-purple-200">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-purple-800 text-sm font-medium">IVA Generado Hoy</p>
+                                <h3 class="text-2xl font-bold text-purple-900" id="historyIVA">$0.00</h3>
+                                <p class="text-xs text-purple-700 mt-1">IVA incluido en precios</p>
+                            </div>
+                            <div class="w-12 h-12 bg-purple-500 rounded-full flex items-center justify-center text-white text-xl">
+                                <i class="fas fa-receipt"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Cancelled Sales Summary -->
+                <div id="historyCancelledSection" class="hidden mb-6 glass-panel p-4 rounded-xl bg-red-50 border border-red-200">
+                    <h4 class="font-bold text-red-800 mb-2">Ventas Canceladas Hoy</h4>
+                    <div class="grid grid-cols-3 gap-4 text-sm">
+                        <div>
+                            <span class="text-gray-600">Total Cancelado:</span>
+                            <span class="font-bold text-red-600 ml-2" id="historyCancelledAmount">$0.00</span>
+                        </div>
+                        <div>
+                            <span class="text-gray-600">Ventas Afectadas:</span>
+                            <span class="font-bold text-red-600 ml-2" id="historyCancelledCount">0</span>
+                        </div>
+                        <div>
+                            <span class="text-gray-600">Ventas Brutas:</span>
+                            <span class="font-bold text-gray-600 ml-2" id="historyGrossSales">$0.00</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Filters -->
+                <div class="glass-panel p-4 rounded-xl mb-6 flex flex-wrap gap-4 items-center">
+                    <div class="flex items-center gap-2">
+                        <label class="text-sm font-medium text-gray-700">Desde:</label>
+                        <input type="date" id="filterDateFrom" class="border border-gray-300 rounded-lg px-3 py-1 text-sm focus:ring-2 focus:ring-brand-500 outline-none">
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <label class="text-sm font-medium text-gray-700">Hasta:</label>
+                        <input type="date" id="filterDateTo" class="border border-gray-300 rounded-lg px-3 py-1 text-sm focus:ring-2 focus:ring-brand-500 outline-none">
+                    </div>
+                    <button onclick="filterSales()" class="bg-brand-600 text-white px-4 py-1 rounded-lg text-sm hover:bg-brand-700 transition-colors">
+                        <i class="fas fa-filter mr-1"></i>Filtrar
+                    </button>
+                    <button onclick="loadTodaySales()" class="bg-gray-200 text-gray-700 px-4 py-1 rounded-lg text-sm hover:bg-gray-300 transition-colors">
+                        Hoy
+                    </button>
+                </div>
+
+                <!-- Sales Table -->
+                <div class="glass-panel rounded-2xl overflow-hidden">
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-sm">
+                            <thead class="bg-brand-50 text-brand-800">
+                                <tr>
+                                    <th class="px-4 py-3 text-left">Folio</th>
+                                    <th class="px-4 py-3 text-left">Fecha/Hora</th>
+                                    <th class="px-4 py-3 text-left">Cajero</th>
+                                    <th class="px-4 py-3 text-left">Productos</th>
+                                    <th class="px-4 py-3 text-left">Método</th>
+                                    <th class="px-4 py-3 text-right">Total</th>
+                                    <th class="px-4 py-3 text-center">Estado</th>
+                                    <th class="px-4 py-3 text-center">Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody id="salesTableBody" class="divide-y divide-gray-100">
+                                <!-- Dynamic content -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Expenses Module -->
+            <div id="expenses" class="module hidden fade-in">
+                <div class="mb-6 flex justify-between items-center">
+                    <div>
+                        <h1 class="text-3xl font-serif font-bold text-brand-900 mb-2" id="expensesTitle">Gastos y Egresos</h1>
+                        <p class="text-gray-600" id="expensesSubtitle">Control de egresos por área</p>
+                    </div>
+                    <button onclick="openExpenseModal()" class="bg-red-500 hover:bg-red-600 text-white px-6 py-2 rounded-lg transition-colors shadow-lg">
+                        <i class="fas fa-plus mr-2"></i>Registrar Gasto
+                    </button>
+                </div>
+
+                <!-- Expense Stats - Solo visible para Admin -->
+                <div id="adminExpenseStats" class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+                    <div class="glass-panel p-4 rounded-xl border-l-4 border-red-500">
+                        <p class="text-xs text-gray-500 uppercase">Producción</p>
+                        <h4 class="text-lg font-bold text-gray-800" id="expenseProduction">$0.00</h4>
+                    </div>
+                    <div class="glass-panel p-4 rounded-xl border-l-4 border-blue-500">
+                        <p class="text-xs text-gray-500 uppercase">Atención Clientes</p>
+                        <h4 class="text-lg font-bold text-gray-800" id="expenseCustomerService">$0.00</h4>
+                    </div>
+                    <div class="glass-panel p-4 rounded-xl border-l-4 border-yellow-500">
+                        <p class="text-xs text-gray-500 uppercase">Administrativo</p>
+                        <h4 class="text-lg font-bold text-gray-800" id="expenseAdmin">$0.00</h4>
+                    </div>
+                    <div class="glass-panel p-4 rounded-xl border-l-4 border-purple-500">
+                        <p class="text-xs text-gray-500 uppercase">Otros</p>
+                        <h4 class="text-lg font-bold text-gray-800" id="expenseOthers">$0.00</h4>
+                    </div>
+                </div>
+
+                <!-- Cashier Stats - Solo visible para Cajero -->
+                <div id="cashierExpenseStats" class="hidden mb-6">
+                    <div class="glass-panel p-6 rounded-2xl bg-gradient-to-br from-orange-50 to-orange-100 border border-orange-200">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-orange-800 text-sm font-medium">Total de Tus Gastos Registrados</p>
+                                <h3 class="text-3xl font-bold text-orange-900" id="cashierTotalExpenses">$0.00</h3>
+                                <p class="text-xs text-orange-700 mt-1">Este mes</p>
+                            </div>
+                            <div class="w-16 h-16 bg-orange-500 rounded-full flex items-center justify-center text-white text-2xl">
+                                <i class="fas fa-wallet"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="glass-panel rounded-2xl overflow-hidden">
+                    <div class="p-4 border-b border-gray-200 flex justify-between items-center flex-wrap gap-4">
+                        <h3 class="font-bold text-brand-800" id="expensesTableTitle">Registro de Gastos</h3>
+                        <div class="flex gap-2 items-center">
+                            <span id="expenseFilterLabel" class="text-sm text-gray-600 hidden">Mostrando solo tus gastos</span>
+                            <select id="expenseFilterArea" onchange="loadExpenses()" class="border border-gray-300 rounded-lg px-3 py-1 text-sm admin-only-inline">
+                                <option value="all">Todas las áreas</option>
+                                <option value="produccion">Producción</option>
+                                <option value="atencion">Atención a Clientes</option>
+                                <option value="administrativo">Administrativo</option>
+                                <option value="otros">Otros</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-sm">
+                            <thead class="bg-gray-50 text-gray-600">
+                                <tr>
+                                    <th class="px-4 py-3 text-left">Fecha</th>
+                                    <th class="px-4 py-3 text-left admin-only-inline">Área</th>
+                                    <th class="px-4 py-3 text-left">Registrado por</th>
+                                    <th class="px-4 py-3 text-left">Concepto</th>
+                                    <th class="px-4 py-3 text-left">Método</th>
+                                    <th class="px-4 py-3 text-center">IVA</th>
+                                    <th class="px-4 py-3 text-right">Monto</th>
+                                    <th class="px-4 py-3 text-center">Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody id="expensesTableBody" class="divide-y divide-gray-100">
+                                <!-- Dynamic content -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Products Module -->
+            <div id="products" class="module hidden fade-in">
+                <div class="mb-6 flex justify-between items-center">
+                    <div>
+                        <h1 class="text-3xl font-serif font-bold text-brand-900 mb-2">Catálogo de Productos</h1>
+                        <p class="text-gray-600">Precios con IVA ya incluyen el 16%</p>
+                    </div>
+                    <button onclick="openProductModal()" class="bg-brand-600 hover:bg-brand-700 text-white px-6 py-2 rounded-lg transition-colors shadow-lg">
+                        <i class="fas fa-plus mr-2"></i>Nuevo Producto
+                    </button>
+                </div>
+
+                <div class="glass-panel rounded-2xl overflow-hidden">
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-sm">
+                            <thead class="bg-brand-50 text-brand-800">
+                                <tr>
+                                    <th class="px-4 py-3 text-left">Nombre</th>
+                                    <th class="px-4 py-3 text-left">Categoría</th>
+                                    <th class="px-4 py-3 text-center">Stock</th>
+                                    <th class="px-4 py-3 text-center">IVA Incluido</th>
+                                    <th class="px-4 py-3 text-right">Precio Final</th>
+                                    <th class="px-4 py-3 text-center">Estado</th>
+                                    <th class="px-4 py-3 text-center">Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody id="productsTableBody" class="divide-y divide-gray-100">
+                                <!-- Dynamic content -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Bank Module -->
+            <div id="bank" class="module hidden fade-in admin-only-content">
+                <div class="mb-6">
+                    <h1 class="text-3xl font-serif font-bold text-brand-900 mb-2">Bancos y Efectivo</h1>
+                    <p class="text-gray-600">Saldos actualizados (descontando egresos)</p>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+                    <div class="glass-panel p-6 rounded-2xl relative overflow-hidden">
+                        <div class="absolute top-0 right-0 w-32 h-32 bg-green-100 rounded-full -mr-16 -mt-16 opacity-50"></div>
+                        <div class="relative z-10">
+                            <div class="flex items-center gap-3 mb-4">
+                                <div class="w-12 h-12 bg-green-500 rounded-full flex items-center justify-center text-white text-xl">
+                                    <i class="fas fa-money-bill-wave"></i>
+                                </div>
+                                <div>
+                                    <h3 class="text-lg font-bold text-gray-800">Efectivo en Caja</h3>
+                                    <p class="text-sm text-gray-500">Disponible actual</p>
+                                </div>
+                            </div>
+                            <div class="text-3xl font-bold text-green-700 mb-2" id="cashBalance">$0.00</div>
+                        </div>
+                    </div>
+
+                    <div class="glass-panel p-6 rounded-2xl relative overflow-hidden">
+                        <div class="absolute top-0 right-0 w-32 h-32 bg-blue-100 rounded-full -mr-16 -mt-16 opacity-50"></div>
+                        <div class="relative z-10">
+                            <div class="flex items-center gap-3 mb-4">
+                                <div class="w-12 h-12 bg-blue-500 rounded-full flex items-center justify-center text-white text-xl">
+                                    <i class="fas fa-university"></i>
+                                </div>
+                                <div>
+                                    <h3 class="text-lg font-bold text-gray-800">Cuenta Bancaria</h3>
+                                    <p class="text-sm text-gray-500">Transferencias y tarjetas</p>
+                                </div>
+                            </div>
+                            <div class="text-3xl font-bold text-blue-700 mb-2" id="bankBalance">$0.00</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Taxes Module -->
+            <div id="taxes" class="module hidden fade-in admin-only-content">
+                <div class="mb-6">
+                    <h1 class="text-3xl font-serif font-bold text-brand-900 mb-2">Impuestos</h1>
+                    <p class="text-gray-600">Cálculo de IVA e ISR (RESICO - Panificación Tradicional)</p>
+                </div>
+
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+                    <div class="glass-panel p-6 rounded-2xl border-t-4 border-blue-500">
+                        <h3 class="text-lg font-bold text-gray-800 mb-4">IVA (16% incluido en precios)</h3>
+                        <div class="space-y-4">
+                            <div class="flex justify-between items-center p-3 bg-blue-50 rounded-lg">
+                                <span class="text-gray-700">IVA Cobrado (Ventas)</span>
+                                <span class="font-bold text-blue-700" id="ivaCharged">$0.00</span>
+                            </div>
+                            <div class="flex justify-between items-center p-3 bg-red-50 rounded-lg">
+                                <span class="text-gray-700">IVA en Gastos</span>
+                                <span class="font-bold text-red-700" id="ivaExpenses">$0.00</span>
+                            </div>
+                            <div class="flex justify-between items-center p-4 bg-blue-100 rounded-lg border-2 border-blue-300">
+                                <span class="font-bold text-blue-900">IVA a Pagar</span>
+                                <span class="font-bold text-xl text-blue-900" id="ivaToPay">$0.00</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="glass-panel p-6 rounded-2xl border-t-4 border-purple-500">
+                        <h3 class="text-lg font-bold text-gray-800 mb-4">ISR - RESICO</h3>
+                        <div class="bg-purple-50 p-4 rounded-lg mb-4">
+                            <p class="text-sm text-purple-900 mb-2"><strong>Régimen:</strong> RESICO (Personas Físicas)</p>
+                            <p class="text-sm text-purple-900 mb-2"><strong>Actividad:</strong> Panificación Tradicional</p>
+                            <p class="text-sm text-purple-900"><strong>Tasa:</strong> 2.5% sobre ingresos</p>
+                        </div>
+                        <div class="space-y-3">
+                            <div class="flex justify-between items-center">
+                                <span class="text-gray-600">Ingresos del Periodo:</span>
+                                <span class="font-medium" id="isrIncome">$0.00</span>
+                            </div>
+                            <div class="flex justify-between items-center p-3 bg-purple-100 rounded-lg border-2 border-purple-300">
+                                <span class="font-bold text-purple-900">ISR Estimado (2.5%):</span>
+                                <span class="font-bold text-xl text-purple-900" id="isrAmount">$0.00</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Employees Module -->
+            <div id="employees" class="module hidden fade-in admin-only-content">
+                <div class="mb-6 flex justify-between items-center">
+                    <div>
+                        <h1 class="text-3xl font-serif font-bold text-brand-900 mb-2">Empleados</h1>
+                        <p class="text-gray-600">Personal de Dulce Bocado</p>
+                    </div>
+                    <button onclick="openEmployeeModal()" class="bg-brand-600 hover:bg-brand-700 text-white px-6 py-2 rounded-lg transition-colors shadow-lg">
+                        <i class="fas fa-plus mr-2"></i>Agregar Empleado
+                    </button>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div class="glass-panel p-6 rounded-2xl">
+                        <div class="flex items-center gap-3 mb-4">
+                            <div class="w-10 h-10 bg-orange-100 rounded-full flex items-center justify-center text-orange-600">
+                                <i class="fas fa-bread-slice"></i>
+                            </div>
+                            <div class="flex-1">
+                                <h3 class="text-lg font-bold text-gray-800">Producción</h3>
+                                <p class="text-xs text-gray-500" id="countProduction">0 empleados</p>
+                            </div>
+                        </div>
+                        <div id="productionEmployees" class="space-y-3"></div>
+                    </div>
+
+                    <div class="glass-panel p-6 rounded-2xl">
+                        <div class="flex items-center gap-3 mb-4">
+                            <div class="w-10 h-10 bg-pink-100 rounded-full flex items-center justify-center text-pink-600">
+                                <i class="fas fa-headset"></i>
+                            </div>
+                            <div class="flex-1">
+                                <h3 class="text-lg font-bold text-gray-800">Atención a Clientes</h3>
+                                <p class="text-xs text-gray-500" id="countService">0 empleados</p>
+                            </div>
+                        </div>
+                        <div id="serviceEmployees" class="space-y-3"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- NOMINA MODULE - NEW -->
+            <div id="nomina" class="module hidden fade-in admin-only-content">
+                <div class="mb-6 flex justify-between items-center">
+                    <div>
+                        <h1 class="text-3xl font-serif font-bold text-brand-900 mb-2">Nómina</h1>
+                        <p class="text-gray-600">Gestión de pagos y sueldos</p>
+                    </div>
+                    <div class="flex gap-3">
+                        <button onclick="generateNominaReport()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors shadow-lg">
+                            <i class="fas fa-file-pdf mr-2"></i>Reporte Mensual
+                        </button>
+                        <button onclick="openNominaModal()" class="bg-brand-600 hover:bg-brand-700 text-white px-6 py-2 rounded-lg transition-colors shadow-lg">
+                            <i class="fas fa-plus mr-2"></i>Registrar Pago
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Nomina Stats -->
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+                    <div class="nomina-card p-4 rounded-xl text-white">
+                        <p class="text-xs opacity-80 uppercase">Total Nómina Mes</p>
+                        <h4 class="text-xl font-bold" id="totalNominaMes">$0.00</h4>
+                    </div>
+                    <div class="glass-panel p-4 rounded-xl border-l-4 border-green-500">
+                        <p class="text-xs text-gray-500 uppercase">Sueldos Base</p>
+                        <h4 class="text-lg font-bold text-gray-800" id="totalSueldos">$0.00</h4>
+                    </div>
+                    <div class="glass-panel p-4 rounded-xl border-l-4 border-yellow-500">
+                        <p class="text-xs text-gray-500 uppercase">Horas Extras</p>
+                        <h4 class="text-lg font-bold text-gray-800" id="totalHorasExtras">$0.00</h4>
+                    </div>
+                    <div class="glass-panel p-4 rounded-xl border-l-4 border-purple-500">
+                        <p class="text-xs text-gray-500 uppercase">Bonos y Puntualidad</p>
+                        <h4 class="text-lg font-bold text-gray-800" id="totalBonos">$0.00</h4>
+                    </div>
+                </div>
+
+                <!-- Nomina Table -->
+                <div class="glass-panel rounded-2xl overflow-hidden">
+                    <div class="p-4 border-b border-gray-200 flex justify-between items-center flex-wrap gap-4">
+                        <h3 class="font-bold text-brand-800">Historial de Pagos</h3>
+                        <div class="flex gap-2">
+                            <select id="nominaFilterMonth" onchange="loadNomina()" class="border border-gray-300 rounded-lg px-3 py-1 text-sm">
+                                <option value="all">Todos los meses</option>
+                                <option value="0">Enero</option>
+                                <option value="1">Febrero</option>
+                                <option value="2">Marzo</option>
+                                <option value="3">Abril</option>
+                                <option value="4">Mayo</option>
+                                <option value="5">Junio</option>
+                                <option value="6">Julio</option>
+                                <option value="7">Agosto</option>
+                                <option value="8">Septiembre</option>
+                                <option value="9">Octubre</option>
+                                <option value="10">Noviembre</option>
+                                <option value="11">Diciembre</option>
+                            </select>
+                            <select id="nominaFilterEmployee" onchange="loadNomina()" class="border border-gray-300 rounded-lg px-3 py-1 text-sm">
+                                <option value="all">Todos los empleados</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-sm">
+                            <thead class="bg-gray-50 text-gray-600">
+                                <tr>
+                                    <th class="px-4 py-3 text-left">Fecha</th>
+                                    <th class="px-4 py-3 text-left">Empleado</th>
+                                    <th class="px-4 py-3 text-right">Sueldo Base</th>
+                                    <th class="px-4 py-3 text-center">Horas Extras</th>
+                                    <th class="px-4 py-3 text-right">Pago H.E.</th>
+                                    <th class="px-4 py-3 text-right">Bono</th>
+                                    <th class="px-4 py-3 text-right">Bono Punt.</th>
+                                    <th class="px-4 py-3 text-right">Total</th>
+                                    <th class="px-4 py-3 text-center">Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody id="nominaTableBody" class="divide-y divide-gray-100">
+                                <!-- Dynamic content -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Employee Nomina Summary -->
+                <div class="mt-6 glass-panel p-6 rounded-2xl">
+                    <h3 class="text-lg font-bold text-brand-800 mb-4">Resumen por Empleado (Mes Actual)</h3>
+                    <div id="nominaResumenEmpleados" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                        <!-- Dynamic content -->
+                    </div>
+                </div>
+            </div>
+
+        </main>
+    </div>
+
+    <!-- Modals -->
+
+    <!-- Custom Product Modal -->
+    <div id="customProductModal" class="modal">
+        <div class="bg-white rounded-2xl p-6 w-full max-w-md mx-4 shadow-2xl">
+            <h3 class="text-xl font-bold text-brand-800 mb-4">Pastel Personalizado</h3>
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Descripción</label>
+                    <textarea id="customDesc" rows="2" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-brand-500 outline-none" placeholder="Ej: Pastel 3 pisos, fondant rosa..."></textarea>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Precio Final (IVA incluido si aplica) ($)</label>
+                    <input type="number" id="customPrice" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-brand-500 outline-none" placeholder="0.00">
+                </div>
+                <div class="flex items-center gap-2">
+                    <input type="checkbox" id="customIVA" class="w-4 h-4 text-brand-600 rounded">
+                    <label for="customIVA" class="text-sm text-gray-700">Precio ya incluye IVA (16%)</label>
+                </div>
+            </div>
+            <div class="flex gap-3 mt-6">
+                <button onclick="closeModal('customProductModal')" class="flex-1 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">Cancelar</button>
+                <button onclick="addCustomProduct()" class="flex-1 py-2 bg-brand-600 text-white rounded-lg hover:bg-brand-700 transition-colors">Agregar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Expense Modal -->
+    <div id="expenseModal" class="modal">
+        <div class="bg-white rounded-2xl p-6 w-full max-w-md mx-4 shadow-2xl">
+            <h3 class="text-xl font-bold text-brand-800 mb-4">Registrar Gasto</h3>
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Área</label>
+                    <select id="expenseArea" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-brand-500 outline-none">
+                        <option value="produccion">Producción</option>
+                        <option value="atencion">Atención a Clientes</option>
+                        <option value="administrativo">Administrativo</option>
+                        <option value="otros">Otros</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Concepto</label>
+                    <input type="text" id="expenseConcept" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-brand-500 outline-none" placeholder="Ej: Compra de harina">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Monto sin IVA ($)</label>
+                    <input type="number" id="expenseAmount" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-brand-500 outline-none" placeholder="0.00" oninput="calculateExpenseIVA()">
+                </div>
+                <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                    <div class="flex items-center gap-2">
+                        <input type="checkbox" id="expenseHasIVA" class="w-4 h-4 text-brand-600 rounded" onchange="calculateExpenseIVA()">
+                        <label for="expenseHasIVA" class="text-sm text-gray-700">Factura con IVA (16%)</label>
+                    </div>
+                    <span class="text-sm font-bold text-brand-700" id="expenseTotalDisplay">$0.00</span>
+                </div>
+                <div id="expenseIVABreakdown" class="hidden text-xs text-gray-500 space-y-1">
+                    <div class="flex justify-between">
+                        <span>Subtotal:</span>
+                        <span id="expenseSubtotalDisplay">$0.00</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span>IVA (16%):</span>
+                        <span id="expenseIVADisplay">$0.00</span>
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Método de Pago</label>
+                    <select id="expenseMethod" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-brand-500 outline-none">
+                        <option value="efectivo">Efectivo</option>
+                        <option value="transferencia">Transferencia</option>
+                        <option value="tarjeta">Tarjeta</option>
+                    </select>
+                </div>
+            </div>
+            <div class="flex gap-3 mt-6">
+                <button onclick="closeModal('expenseModal')" class="flex-1 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">Cancelar</button>
+                <button onclick="saveExpense()" class="flex-1 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors">Guardar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Product Modal -->
+    <div id="productModal" class="modal">
+        <div class="bg-white rounded-2xl p-6 w-full max-w-md mx-4 shadow-2xl">
+            <h3 class="text-xl font-bold text-brand-800 mb-4" id="productModalTitle">Nuevo Producto</h3>
+            <input type="hidden" id="prodId">
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Nombre *</label>
+                    <input type="text" id="prodName" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-brand-500 outline-none">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Categoría</label>
+                    <select id="prodCategory" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-brand-500 outline-none">
+                        <option value="pasteles">Pasteles</option>
+                        <option value="postres">Postres</option>
+                        <option value="decoracion">Decoración</option>
+                        <option value="herramientas">Herramientas</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Precio Final (con IVA si aplica) ($) *</label>
+                    <input type="number" id="prodPrice" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-brand-500 outline-none" step="0.01">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Stock Actual</label>
+                    <input type="number" id="prodStock" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-brand-500 outline-none">
+                </div>
+                <div class="flex items-center gap-2">
+                    <input type="checkbox" id="prodIVA" class="w-4 h-4 text-brand-600 rounded">
+                    <label for="prodIVA" class="text-sm text-gray-700">Precio incluye IVA (16%)</label>
+                </div>
+            </div>
+            <div class="flex gap-3 mt-6">
+                <button onclick="closeModal('productModal')" class="flex-1 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">Cancelar</button>
+                <button onclick="saveProduct()" class="flex-1 py-2 bg-brand-600 text-white rounded-lg hover:bg-brand-700 transition-colors">Guardar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Employee Modal -->
+    <div id="employeeModal" class="modal">
+        <div class="bg-white rounded-2xl p-6 w-full max-w-md mx-4 shadow-2xl">
+            <h3 class="text-xl font-bold text-brand-800 mb-4">Agregar Empleado</h3>
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Nombre Completo *</label>
+                    <input type="text" id="empName" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-brand-500 outline-none">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Área *</label>
+                    <select id="empArea" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-brand-500 outline-none">
+                        <option value="produccion">Producción</option>
+                        <option value="atencion">Atención a Clientes</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Puesto/Rol *</label>
+                    <input type="text" id="empRole" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-brand-500 outline-none">
+                </div>
+            </div>
+            <div class="flex gap-3 mt-6">
+                <button onclick="closeModal('employeeModal')" class="flex-1 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">Cancelar</button>
+                <button onclick="saveEmployee()" class="flex-1 py-2 bg-brand-600 text-white rounded-lg hover:bg-brand-700 transition-colors">Guardar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- NOMINA MODAL - NEW -->
+    <div id="nominaModal" class="modal">
+        <div class="bg-white rounded-2xl p-6 w-full max-w-lg mx-4 shadow-2xl max-h-[90vh] overflow-y-auto">
+            <h3 class="text-xl font-bold text-brand-800 mb-4">Registrar Pago de Nómina</h3>
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Empleado *</label>
+                    <select id="nominaEmployee" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-brand-500 outline-none">
+                        <option value="">Seleccionar empleado...</option>
+                    </select>
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Periodo (Mes)</label>
+                        <select id="nominaMonth" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-brand-500 outline-none">
+                            <option value="0">Enero</option>
+                            <option value="1">Febrero</option>
+                            <option value="2">Marzo</option>
+                            <option value="3">Abril</option>
+                            <option value="4">Mayo</option>
+                            <option value="5">Junio</option>
+                            <option value="6">Julio</option>
+                            <option value="7">Agosto</option>
+                            <option value="8">Septiembre</option>
+                            <option value="9">Octubre</option>
+                            <option value="10">Noviembre</option>
+                            <option value="11">Diciembre</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Año</label>
+                        <input type="number" id="nominaYear" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-brand-500 outline-none" value="2024">
+                    </div>
+                </div>
+                <div class="border-t pt-4">
+                    <h4 class="font-bold text-gray-800 mb-3">Conceptos de Pago</h4>
+                    <div class="space-y-3">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Sueldo Base Quincenal/Mensual ($)</label>
+                            <input type="number" id="nominaSueldo" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-brand-500 outline-none" placeholder="0.00" oninput="calculateNominaTotal()">
+                        </div>
+                        <div class="grid grid-cols-2 gap-3">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Horas Extras (cantidad)</label>
+                                <input type="number" id="nominaHorasExtras" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-brand-500 outline-none" placeholder="0" oninput="calculateNominaTotal()">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Pago por Hora Extra ($)</label>
+                                <input type="number" id="nominaPagoHoraExtra" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-brand-500 outline-none" placeholder="0.00" oninput="calculateNominaTotal()">
+                            </div>
+                        </div>
+                        <div class="grid grid-cols-2 gap-3">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Bono Productividad ($)</label>
+                                <input type="number" id="nominaBono" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-brand-500 outline-none" placeholder="0.00" oninput="calculateNominaTotal()">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Bono Puntualidad ($)</label>
+                                <input type="number" id="nominaBonoPuntualidad" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-brand-500 outline-none" placeholder="0.00" oninput="calculateNominaTotal()">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="bg-brand-50 p-4 rounded-lg border-2 border-brand-200">
+                    <div class="flex justify-between items-center">
+                        <span class="font-bold text-brand-800">TOTAL A PAGAR:</span>
+                        <span class="text-2xl font-bold text-brand-800" id="nominaTotal">$0.00</span>
+                    </div>
+                    <div class="text-xs text-gray-500 mt-1 text-right">
+                        Sueldo + H.E. + Bonos
+                    </div>
+                </div>
+            </div>
+            <div class="flex gap-3 mt-6">
+                <button onclick="closeModal('nominaModal')" class="flex-1 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">Cancelar</button>
+                <button onclick="saveNomina()" class="flex-1 py-2 bg-brand-600 text-white rounded-lg hover:bg-brand-700 transition-colors">Guardar Pago</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Daily Cut Modal -->
+    <div id="cutModal" class="modal">
+        <div class="bg-white rounded-2xl p-6 w-full max-w-lg mx-4 shadow-2xl max-h-[90vh] overflow-y-auto">
+            <div class="text-center mb-6">
+                <div class="w-16 h-16 bg-brand-100 rounded-full mx-auto mb-3 flex items-center justify-center text-brand-600 text-2xl">
+                    <i class="fas fa-cut"></i>
+                </div>
+                <h3 class="text-2xl font-bold text-brand-800">Corte del Día</h3>
+                <p class="text-gray-500" id="cutDate"></p>
+            </div>
+
+            <div class="space-y-4 mb-6">
+                <div class="flex justify-between items-center p-3 bg-green-50 rounded-lg">
+                    <span class="text-green-800">Ventas Reales:</span>
+                    <span class="font-bold text-green-900" id="cutTotal">$0.00</span>
+                </div>
+                <div class="grid grid-cols-3 gap-2 text-center">
+                    <div class="p-2 bg-gray-50 rounded">
+                        <p class="text-xs text-gray-500">Efectivo</p>
+                        <p class="font-bold text-gray-800" id="cutCash">$0</p>
+                    </div>
+                    <div class="p-2 bg-gray-50 rounded">
+                        <p class="text-xs text-gray-500">Transfer</p>
+                        <p class="font-bold text-gray-800" id="cutTransfer">$0</p>
+                    </div>
+                    <div class="p-2 bg-gray-50 rounded">
+                        <p class="text-xs text-gray-500">Tarjeta</p>
+                        <p class="font-bold text-gray-800" id="cutCard">$0</p>
+                    </div>
+                </div>
+                <div class="flex justify-between items-center p-3 bg-blue-50 rounded-lg">
+                    <span class="text-blue-800">IVA Generado:</span>
+                    <span class="font-bold text-blue-900" id="cutIVA">$0.00</span>
+                </div>
+                <div class="flex justify-between items-center p-3 bg-purple-50 rounded-lg">
+                    <span class="text-purple-800">Transacciones:</span>
+                    <span class="font-bold text-purple-900" id="cutTransactions">0</span>
+                </div>
+                <div id="cutCancelledSection" class="hidden flex justify-between items-center p-3 bg-red-50 rounded-lg border border-red-200">
+                    <span class="text-red-800">Ventas Canceladas:</span>
+                    <span class="font-bold text-red-900" id="cutCancelledAmount">$0.00</span>
+                </div>
+            </div>
+
+            <div class="border-t pt-4">
+                <h4 class="font-bold text-gray-800 mb-2">Desglose de Ventas:</h4>
+                <div id="cutDetails" class="text-sm space-y-1 max-h-40 overflow-y-auto"></div>
+            </div>
+
+            <button onclick="closeModal('cutModal')" class="w-full mt-6 py-3 bg-brand-600 text-white rounded-lg hover:bg-brand-700 transition-colors">
+                Cerrar
+            </button>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        // Data Store
+        let currentUser = null;
+        let cart = [];
+        let currentPaymentMethod = 'efectivo';
+        let editingProductId = null;
+        let sidebarCollapsed = false;
+        
+        // Passwords storage
+        let userPasswords = JSON.parse(localStorage.getItem('dulceBocado_passwords')) || {
+            admin: 'admin',
+            cajero: 'cajero'
+        };
+        
+        // Sample Data
+        let products = [
+            { id: 1, name: 'Pastel de Chocolate', category: 'pasteles', price: 450, stock: 5, hasIVA: false, image: '🎂' },
+            { id: 2, name: 'Pastel de Vainilla', category: 'pasteles', price: 420, stock: 3, hasIVA: false, image: '🍰' },
+            { id: 3, name: 'Cupcakes (6 pz)', category: 'postres', price: 180, stock: 10, hasIVA: false, image: '🧁' },
+            { id: 4, name: 'Galletas Decoradas', category: 'postres', price: 120, stock: 20, hasIVA: false, image: '🍪' },
+            { id: 5, name: 'Fondant Blanco 1kg', category: 'decoracion', price: 150, stock: 15, hasIVA: true, image: '🎨' },
+            { id: 6, name: 'Colorantes Gel', category: 'decoracion', price: 85, stock: 30, hasIVA: true, image: '🌈' },
+            { id: 7, name: 'Manga Pastelera', category: 'herramientas', price: 45, stock: 25, hasIVA: true, image: '👨‍🍳' },
+            { id: 8, name: 'Espátula Angular', category: 'herramientas', price: 120, stock: 12, hasIVA: true, image: '🔪' },
+            { id: 9, name: 'Base para Pastel', category: 'decoracion', price: 65, stock: 40, hasIVA: true, image: '🍽️' },
+            { id: 10, name: 'Velas de Cumpleaños', category: 'decoracion', price: 35, stock: 50, hasIVA: true, image: '🕯️' }
+        ];
+
+        let sales = JSON.parse(localStorage.getItem('dulceBocado_sales')) || [];
+        let expenses = JSON.parse(localStorage.getItem('dulceBocado_expenses')) || [];
+        let employees = JSON.parse(localStorage.getItem('dulceBocado_employees')) || [
+            { id: 1, name: 'María González', area: 'produccion', role: 'Pastelera Principal' },
+            { id: 2, name: 'Juan Pérez', area: 'produccion', role: 'Panadero' },
+            { id: 3, name: 'Ana López', area: 'produccion', role: 'Ayudante' },
+            { id: 4, name: 'Carmen Ruiz', area: 'atencion', role: 'Atención Clientes' },
+            { id: 5, name: 'Luis Hernández', area: 'atencion', role: 'Cajero' },
+            { id: 6, name: 'Sofía Martínez', area: 'atencion', role: 'Atención Clientes' }
+        ];
+        
+        // Nomina data
+        let nominaRecords = JSON.parse(localStorage.getItem('dulceBocado_nomina')) || [];
+
+        // Auth Functions
+        function login() {
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+
+            if (username === 'admin' && password === userPasswords.admin) {
+                currentUser = { name: 'Administrador', role: 'admin', id: 'admin_001' };
+                initializeApp();
+            } else if (username === 'cajero' && password === userPasswords.cajero) {
+                currentUser = { name: 'Cajero', role: 'cashier', id: 'cashier_001' };
+                initializeApp();
+            } else {
+                alert('Credenciales incorrectas');
+            }
+        }
+
+        function openChangePasswordModal() {
+            document.getElementById('changePassUser').value = 'admin';
+            document.getElementById('currentPass').value = '';
+            document.getElementById('newPass').value = '';
+            document.getElementById('confirmNewPass').value = '';
+            openModal('changePasswordModal');
+        }
+
+        function saveNewPassword() {
+            const user = document.getElementById('changePassUser').value;
+            const current = document.getElementById('currentPass').value;
+            const newPass = document.getElementById('newPass').value;
+            const confirm = document.getElementById('confirmNewPass').value;
+
+            if (current !== userPasswords[user]) {
+                alert('Contraseña actual incorrecta');
+                return;
+            }
+
+            if (newPass.length < 4) {
+                alert('La nueva contraseña debe tener al menos 4 caracteres');
+                return;
+            }
+
+            if (newPass !== confirm) {
+                alert('Las contraseñas no coinciden');
+                return;
+            }
+
+            userPasswords[user] = newPass;
+            localStorage.setItem('dulceBocado_passwords', JSON.stringify(userPasswords));
+            closeModal('changePasswordModal');
+            alert('Contraseña actualizada correctamente');
+        }
+
+        function logout() {
+            location.reload();
+        }
+
+        function initializeApp() {
+            document.getElementById('loginScreen').classList.add('hidden');
+            document.getElementById('mainApp').classList.remove('hidden');
+            document.getElementById('hamburgerBtn').classList.remove('hidden');
+            document.getElementById('currentUserName').textContent = currentUser.name;
+            document.getElementById('currentUserRole').textContent = currentUser.role === 'admin' ? 'Administrador' : 'Cajero';
+
+            // Configure UI based on role
+            if (currentUser.role === 'cashier') {
+                document.querySelectorAll('.admin-only').forEach(el => el.style.display = 'none');
+                document.querySelectorAll('.admin-only-inline').forEach(el => el.style.display = 'none');
+                document.getElementById('expensesMenuText').textContent = 'Mis Gastos';
+                document.getElementById('adminExpenseStats').classList.add('hidden');
+                document.getElementById('cashierExpenseStats').classList.remove('hidden');
+                document.getElementById('expenseFilterLabel').classList.remove('hidden');
+                document.getElementById('expensesTableTitle').textContent = 'Mis Gastos Registrados';
+                
+                document.querySelectorAll('.admin-only-content').forEach(el => {
+                    if (el.id !== 'products') {
+                        el.innerHTML = '<div class="text-center py-20"><i class="fas fa-lock text-6xl text-gray-300 mb-4"></i><h2 class="text-2xl font-bold text-gray-400">Acceso Restringido</h2><p class="text-gray-500">Solo administradores pueden ver esta sección</p></div>';
+                    }
+                });
+                
+                showModule('pos');
+            } else {
+                document.getElementById('cashierExpenseStats').classList.add('hidden');
+                showModule('dashboard');
+                initCharts();
+                loadNominaFilters();
+            }
+
+            loadProducts();
+            loadTodaySales();
+            updateDashboard();
+        }
+
+        // Sidebar Toggle
+        function toggleSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            const hamburger = document.getElementById('hamburgerBtn');
+            
+            sidebarCollapsed = !sidebarCollapsed;
+            
+            if (sidebarCollapsed) {
+                sidebar.classList.add('collapsed');
+                hamburger.innerHTML = '<i class="fas fa-bars text-brand-800 text-xl"></i>';
+                hamburger.classList.remove('hidden');
+            } else {
+                sidebar.classList.remove('collapsed');
+                hamburger.classList.add('hidden');
+            }
+        }
+
+        // Navigation
+        function showModule(moduleName) {
+            document.querySelectorAll('.module').forEach(m => m.classList.add('hidden'));
+            document.getElementById(moduleName).classList.remove('hidden');
+            
+            if (moduleName === 'pos') loadProducts();
+            if (moduleName === 'salesHistory') loadTodaySales();
+            if (moduleName === 'expenses') loadExpenses();
+            if (moduleName === 'products') loadProductsTable();
+            if (moduleName === 'bank') updateBankModule();
+            if (moduleName === 'taxes') calculateTaxes();
+            if (moduleName === 'employees') loadEmployees();
+            if (moduleName === 'nomina') loadNomina();
+            if (moduleName === 'dashboard') updateDashboard();
+            
+            // Auto-collapse sidebar on mobile after selection
+            if (window.innerWidth < 768 && !sidebarCollapsed) {
+                toggleSidebar();
+            }
+        }
+
+        // Dashboard Functions
+        function updateDashboard() {
+            const today = new Date().toDateString();
+            const todaySales = sales.filter(s => new Date(s.date).toDateString() === today && !s.cancelled);
+            const todayCancelled = sales.filter(s => new Date(s.date).toDateString() === today && s.cancelled);
+            
+            const todayTotal = todaySales.reduce((sum, s) => sum + s.total, 0);
+            const cancelledTotal = todayCancelled.reduce((sum, s) => sum + s.total, 0);
+            
+            document.getElementById('dashboardTodaySales').textContent = formatMoney(todayTotal);
+            
+            const cancelledAlert = document.getElementById('cancelledAlert');
+            if (todayCancelled.length > 0) {
+                cancelledAlert.classList.remove('hidden');
+                document.getElementById('cancelledAmount').textContent = formatMoney(cancelledTotal);
+                document.getElementById('cancelledCount').textContent = todayCancelled.length;
+                document.getElementById('salesStatus').innerHTML = `<i class="fas fa-exclamation-circle text-red-500"></i> ${todayCancelled.length} venta(s) cancelada(s)`;
+                document.getElementById('salesStatus').className = 'text-xs text-red-600 mt-2';
+            } else {
+                cancelledAlert.classList.add('hidden');
+                document.getElementById('salesStatus').innerHTML = '<i class="fas fa-check-circle"></i> Sin cancelaciones';
+                document.getElementById('salesStatus').className = 'text-xs text-green-600 mt-2';
+            }
+            
+            const ivaTotal = sales.filter(s => !s.cancelled).reduce((sum, s) => sum + s.iva, 0);
+            document.getElementById('dashboardIVA').textContent = formatMoney(ivaTotal);
+            
+            const totalIncome = sales.filter(s => !s.cancelled).reduce((sum, s) => sum + s.subtotal, 0);
+            const isr = totalIncome * 0.025;
+            document.getElementById('dashboardISR').textContent = formatMoney(isr);
+            
+            const totalExpenses = expenses.reduce((sum, e) => sum + e.amount, 0);
+            document.getElementById('dashboardExpenses').textContent = formatMoney(totalExpenses);
+            
+            const recent = [
+                ...sales.filter(s => !s.cancelled).slice(-5).map(s => ({...s, type: 'sale'})), 
+                ...expenses.slice(-5).map(e => ({...e, type: 'expense'}))
+            ];
+            recent.sort((a, b) => new Date(b.date) - new Date(a.date));
+            
+            const tbody = document.getElementById('recentActivityTable');
+            tbody.innerHTML = recent.slice(0, 5).map(item => `
+                <tr class="hover:bg-gray-50 transition-colors">
+                    <td class="px-4 py-3 text-gray-600">${new Date(item.date).toLocaleDateString()}</td>
+                    <td class="px-4 py-3 font-medium">${item.type === 'sale' ? 'Venta #' + item.id : item.concept}</td>
+                    <td class="px-4 py-3">
+                        <span class="px-2 py-1 rounded-full text-xs ${item.type === 'sale' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}">
+                            ${item.type === 'sale' ? 'Ingreso' : 'Egreso - ' + item.area}
+                        </span>
+                    </td>
+                    <td class="px-4 py-3 text-right font-bold ${item.type === 'sale' ? 'text-green-600' : 'text-red-600'}">
+                        ${item.type === 'sale' ? '+' : '-'}${formatMoney(item.total || item.amount)}
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        function initCharts() {
+            const ctx1 = document.getElementById('salesChart').getContext('2d');
+            const last7Days = Array.from({length: 7}, (_, i) => {
+                const d = new Date();
+                d.setDate(d.getDate() - (6 - i));
+                return d;
+            });
+            
+            const dailySales = last7Days.map(date => {
+                const dayStr = date.toDateString();
+                return sales.filter(s => new Date(s.date).toDateString() === dayStr && !s.cancelled).reduce((sum, s) => sum + s.total, 0);
+            });
+            
+            const dailyExpenses = last7Days.map(date => {
+                const dayStr = date.toDateString();
+                return expenses.filter(e => new Date(e.date).toDateString() === dayStr).reduce((sum, e) => sum + e.amount, 0);
+            });
+
+            new Chart(ctx1, {
+                type: 'line',
+                data: {
+                    labels: last7Days.map(d => d.toLocaleDateString('es', {weekday: 'short'})),
+                    datasets: [{
+                        label: 'Ventas',
+                        data: dailySales,
+                        borderColor: '#a77f70',
+                        backgroundColor: 'rgba(167, 127, 112, 0.1)',
+                        tension: 0.4
+                    }, {
+                        label: 'Gastos',
+                        data: dailyExpenses,
+                        borderColor: '#e83e5f',
+                        backgroundColor: 'rgba(232, 62, 95, 0.1)',
+                        tension: 0.4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { position: 'bottom' }
+                    }
+                }
+            });
+
+            const ctx2 = document.getElementById('expensesChart').getContext('2d');
+            const areas = ['produccion', 'atencion', 'administrativo', 'otros'];
+            const areaTotals = areas.map(area => 
+                expenses.filter(e => e.area === area).reduce((sum, e) => sum + e.amount, 0)
+            );
+
+            new Chart(ctx2, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Producción', 'Atención Clientes', 'Administrativo', 'Otros'],
+                    datasets: [{
+                        data: areaTotals,
+                        backgroundColor: ['#f97316', '#3b82f6', '#eab308', '#a855f7']
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { position: 'bottom' }
+                    }
+                }
+            });
+        }
+
+        // POS Functions - IVA INCLUIDO
+        function loadProducts(filter = 'all') {
+            const grid = document.getElementById('productsGrid');
+            let filtered = products;
+            if (filter !== 'all') {
+                filtered = products.filter(p => p.category === filter);
+            }
+            
+            grid.innerHTML = filtered.map(p => `
+                <div onclick="addToCart(${p.id})" class="bg-white p-4 rounded-xl shadow-md hover:shadow-xl transition-all cursor-pointer transform hover:scale-105 border-2 border-transparent hover:border-brand-300 ${p.stock <= 0 ? 'opacity-50' : ''}">
+                    <div class="text-4xl mb-2 text-center">${p.image}</div>
+                    <h4 class="font-bold text-gray-800 text-sm mb-1">${p.name}</h4>
+                    <p class="text-xs ${p.hasIVA ? 'text-blue-600 font-medium' : 'text-gray-500'} mb-2">
+                        ${p.hasIVA ? 'IVA incluido' : 'Sin IVA'}
+                    </p>
+                    <div class="flex justify-between items-center">
+                        <span class="font-bold text-brand-700">${formatMoney(p.price)}</span>
+                        <span class="text-xs ${p.stock > 0 ? 'text-green-600' : 'text-red-600'}">${p.stock > 0 ? 'Stock: ' + p.stock : 'Agotado'}</span>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function filterProducts(category) {
+            loadProducts(category);
+        }
+
+        function addToCart(productId) {
+            const product = products.find(p => p.id === productId);
+            if (!product || product.stock <= 0) {
+                alert('Producto sin stock disponible');
+                return;
+            }
+            
+            const existing = cart.find(item => item.id === productId);
+            if (existing) {
+                if (existing.quantity >= product.stock) {
+                    alert('No hay suficiente stock');
+                    return;
+                }
+                existing.quantity++;
+            } else {
+                cart.push({...product, quantity: 1});
+            }
+            updateCart();
+        }
+
+        function addCustomProduct() {
+            const desc = document.getElementById('customDesc').value;
+            const price = parseFloat(document.getElementById('customPrice').value);
+            const hasIVA = document.getElementById('customIVA').checked;
+            
+            if (!desc || !price) {
+                alert('Complete todos los campos');
+                return;
+            }
+            
+            const customProd = {
+                id: 'custom_' + Date.now(),
+                name: desc,
+                price: price,
+                hasIVA: hasIVA,
+                quantity: 1,
+                isCustom: true
+            };
+            
+            cart.push(customProd);
+            updateCart();
+            closeModal('customProductModal');
+            
+            document.getElementById('customDesc').value = '';
+            document.getElementById('customPrice').value = '';
+            document.getElementById('customIVA').checked = false;
+        }
+
+        function updateCart() {
+            const container = document.getElementById('cartItems');
+            if (cart.length === 0) {
+                container.innerHTML = `
+                    <div class="text-center text-gray-400 py-8">
+                        <i class="fas fa-shopping-basket text-4xl mb-2"></i>
+                        <p>Carrito vacío</p>
+                    </div>
+                `;
+            } else {
+                container.innerHTML = cart.map((item, index) => `
+                    <div class="flex justify-between items-center bg-gray-50 p-3 rounded-lg">
+                        <div class="flex-1">
+                            <h4 class="font-medium text-sm text-gray-800">${item.name}</h4>
+                            <p class="text-xs text-gray-500">${formatMoney(item.price)} c/u ${item.hasIVA ? '(IVA incl.)' : ''}</p>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <button onclick="updateQuantity(${index}, -1)" class="w-6 h-6 rounded-full bg-gray-200 hover:bg-gray-300 flex items-center justify-center text-gray-600">-</button>
+                            <span class="font-medium w-6 text-center">${item.quantity}</span>
+                            <button onclick="updateQuantity(${index}, 1)" class="w-6 h-6 rounded-full bg-gray-200 hover:bg-gray-300 flex items-center justify-center text-gray-600">+</button>
+                            <button onclick="removeFromCart(${index})" class="ml-2 text-red-500 hover:text-red-700"><i class="fas fa-trash"></i></button>
+                        </div>
+                    </div>
+                `).join('');
+            }
+            
+            calculateTotals();
+        }
+
+        function updateQuantity(index, change) {
+            const item = cart[index];
+            if (change > 0 && !item.isCustom) {
+                const product = products.find(p => p.id === item.id);
+                if (product && item.quantity >= product.stock) {
+                    alert('No hay suficiente stock');
+                    return;
+                }
+            }
+            
+            cart[index].quantity += change;
+            if (cart[index].quantity <= 0) {
+                cart.splice(index, 1);
+            }
+            updateCart();
+        }
+
+        function removeFromCart(index) {
+            cart.splice(index, 1);
+            updateCart();
+        }
+
+        // IVA INCLUIDO - Calculamos el IVA interno de cada producto
+        function calculateTotals() {
+            let subtotalSinIVA = 0;
+            let totalIVA = 0;
+            let totalConIVA = 0;
+            
+            cart.forEach(item => {
+                const itemTotal = item.price * item.quantity;
+                
+                if (item.hasIVA) {
+                    // El precio ya incluye IVA, calculamos cuánto es IVA
+                    const subtotalSinIVAItem = itemTotal / 1.16;
+                    const ivaItem = itemTotal - subtotalSinIVAItem;
+                    subtotalSinIVA += subtotalSinIVAItem;
+                    totalIVA += ivaItem;
+                    totalConIVA += itemTotal;
+                } else {
+                    subtotalSinIVA += itemTotal;
+                    totalConIVA += itemTotal;
+                }
+            });
+            
+            document.getElementById('cartSubtotal').textContent = formatMoney(subtotalSinIVA);
+            document.getElementById('cartIVA').textContent = formatMoney(totalIVA);
+            document.getElementById('cartTotal').textContent = formatMoney(totalConIVA);
+        }
+
+        function setPaymentMethod(method) {
+            currentPaymentMethod = method;
+            document.querySelectorAll('.payment-btn').forEach(btn => {
+                btn.classList.remove('border-brand-500', 'bg-brand-50', 'text-brand-700');
+                btn.classList.add('border-gray-300', 'text-gray-600');
+            });
+            
+            const activeBtn = document.getElementById('btn' + method.charAt(0).toUpperCase() + method.slice(1));
+            activeBtn.classList.remove('border-gray-300', 'text-gray-600');
+            activeBtn.classList.add('border-brand-500', 'bg-brand-50', 'text-brand-700');
+        }
+
+        function processSale() {
+            if (cart.length === 0) {
+                alert('El carrito está vacío');
+                return;
+            }
+            
+            let subtotalSinIVA = 0;
+            let iva = 0;
+            
+            cart.forEach(item => {
+                const itemTotal = item.price * item.quantity;
+                if (item.hasIVA) {
+                    const sinIVA = itemTotal / 1.16;
+                    subtotalSinIVA += sinIVA;
+                    iva += (itemTotal - sinIVA);
+                } else {
+                    subtotalSinIVA += itemTotal;
+                }
+            });
+            
+            const total = subtotalSinIVA + iva;
+            
+            const sale = {
+                id: 'V-' + Date.now(),
+                date: new Date().toISOString(),
+                items: [...cart],
+                subtotal: subtotalSinIVA,
+                iva: iva,
+                total: total,
+                paymentMethod: currentPaymentMethod,
+                cancelled: false,
+                cashier: currentUser.name
+            };
+            
+            sales.push(sale);
+            localStorage.setItem('dulceBocado_sales', JSON.stringify(sales));
+            
+            cart.forEach(item => {
+                if (!item.isCustom) {
+                    const product = products.find(p => p.id === item.id);
+                    if (product) product.stock -= item.quantity;
+                }
+            });
+            
+            cart = [];
+            updateCart();
+            
+            alert('¡Venta realizada con éxito!\nTotal: ' + formatMoney(sale.total));
+            updateDashboard();
+        }
+
+        // Sales History - CAJERO PUEDE CANCELAR
+        function loadTodaySales() {
+            const today = new Date().toDateString();
+            const todaySales = sales.filter(s => new Date(s.date).toDateString() === today && !s.cancelled);
+            const todayCancelled = sales.filter(s => new Date(s.date).toDateString() === today && s.cancelled);
+            
+            const total = todaySales.reduce((sum, s) => sum + s.total, 0);
+            const grossTotal = total + todayCancelled.reduce((sum, s) => sum + s.total, 0);
+            const iva = todaySales.reduce((sum, s) => sum + s.iva, 0);
+            const count = todaySales.length;
+            
+            const cash = todaySales.filter(s => s.paymentMethod === 'efectivo').reduce((sum, s) => sum + s.total, 0);
+            const transfer = todaySales.filter(s => s.paymentMethod === 'transferencia').reduce((sum, s) => sum + s.total, 0);
+            const card = todaySales.filter(s => s.paymentMethod === 'tarjeta').reduce((sum, s) => sum + s.total, 0);
+            
+            document.getElementById('historyTotalSales').textContent = formatMoney(total);
+            document.getElementById('historyIVA').textContent = formatMoney(iva);
+            document.getElementById('historyCount').textContent = count;
+            document.getElementById('historyShouldHave').textContent = formatMoney(total);
+            document.getElementById('cashTotal').textContent = 'E: ' + formatMoney(cash);
+            document.getElementById('transferTotal').textContent = 'T: ' + formatMoney(transfer);
+            document.getElementById('cardTotal').textContent = 'C: ' + formatMoney(card);
+            
+            const cancelledSection = document.getElementById('historyCancelledSection');
+            if (todayCancelled.length > 0) {
+                cancelledSection.classList.remove('hidden');
+                document.getElementById('historyCancelledAmount').textContent = formatMoney(todayCancelled.reduce((sum, s) => sum + s.total, 0));
+                document.getElementById('historyCancelledCount').textContent = todayCancelled.length;
+                document.getElementById('historyGrossSales').textContent = formatMoney(grossTotal);
+            } else {
+                cancelledSection.classList.add('hidden');
+            }
+            
+            renderSalesTable(sales.filter(s => new Date(s.date).toDateString() === today));
+        }
+
+        function filterSales() {
+            const from = new Date(document.getElementById('filterDateFrom').value);
+            const to = new Date(document.getElementById('filterDateTo').value);
+            to.setHours(23, 59, 59);
+            
+            const filtered = sales.filter(s => {
+                const sDate = new Date(s.date);
+                return sDate >= from && sDate <= to;
+            });
+            
+            renderSalesTable(filtered);
+        }
+
+        function renderSalesTable(salesList) {
+            const tbody = document.getElementById('salesTableBody');
+            tbody.innerHTML = salesList.sort((a, b) => new Date(b.date) - new Date(a.date)).map(sale => `
+                <tr class="hover:bg-gray-50 transition-colors ${sale.cancelled ? 'bg-red-50' : ''}">
+                    <td class="px-4 py-3 font-medium ${sale.cancelled ? 'text-red-600 line-through' : 'text-brand-700'}">${sale.id}</td>
+                    <td class="px-4 py-3 text-gray-600">${new Date(sale.date).toLocaleString()}</td>
+                    <td class="px-4 py-3 text-sm">${sale.cashier || 'N/A'}</td>
+                    <td class="px-4 py-3 text-sm">${sale.items.length} productos</td>
+                    <td class="px-4 py-3">
+                        <span class="px-2 py-1 rounded-full text-xs ${getPaymentMethodColor(sale.paymentMethod)}">
+                            ${sale.paymentMethod}
+                        </span>
+                    </td>
+                    <td class="px-4 py-3 text-right font-bold ${sale.cancelled ? 'text-red-600 line-through' : ''}">${formatMoney(sale.total)}</td>
+                    <td class="px-4 py-3 text-center">
+                        ${sale.cancelled ? 
+                            '<span class="px-2 py-1 rounded-full text-xs bg-red-100 text-red-700">Cancelada</span>' : 
+                            '<span class="px-2 py-1 rounded-full text-xs bg-green-100 text-green-700">Activa</span>'
+                        }
+                    </td>
+                    <td class="px-4 py-3 text-center">
+                        ${!sale.cancelled ? `
+                            <button onclick="cancelSale('${sale.id}')" class="text-red-500 hover:text-red-700 text-xs bg-red-50 px-2 py-1 rounded transition-colors">
+                                <i class="fas fa-times mr-1"></i>Cancelar
+                            </button>
+                        ` : '<span class="text-xs text-gray-400">-</span>'}
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        function getPaymentMethodColor(method) {
+            const colors = {
+                'efectivo': 'bg-green-100 text-green-700',
+                'transferencia': 'bg-blue-100 text-blue-700',
+                'tarjeta': 'bg-purple-100 text-purple-700'
+            };
+            return colors[method] || 'bg-gray-100 text-gray-700';
+        }
+
+        function cancelSale(saleId) {
+            if (!confirm('¿Está seguro de cancelar esta venta? Se restaurará el stock.')) return;
+            
+            const sale = sales.find(s => s.id === saleId);
+            if (sale) {
+                sale.cancelled = true;
+                sale.cancelledAt = new Date().toISOString();
+                sale.cancelledBy = currentUser.name;
+                
+                sale.items.forEach(item => {
+                    if (!item.isCustom) {
+                        const product = products.find(p => p.id === item.id);
+                        if (product) product.stock += item.quantity;
+                    }
+                });
+                
+                localStorage.setItem('dulceBocado_sales', JSON.stringify(sales));
+                loadTodaySales();
+                updateDashboard();
+                alert('Venta cancelada correctamente. Stock restaurado.');
+            }
+        }
+
+        function generateDailyCut() {
+            const today = new Date();
+            const todaySales = sales.filter(s => new Date(s.date).toDateString() === today.toDateString() && !s.cancelled);
+            const todayCancelled = sales.filter(s => new Date(s.date).toDateString() === today.toDateString() && s.cancelled);
+            
+            const total = todaySales.reduce((sum, s) => sum + s.total, 0);
+            const iva = todaySales.reduce((sum, s) => sum + s.iva, 0);
+            const cash = todaySales.filter(s => s.paymentMethod === 'efectivo').reduce((sum, s) => sum + s.total, 0);
+            const transfer = todaySales.filter(s => s.paymentMethod === 'transferencia').reduce((sum, s) => sum + s.total, 0);
+            const card = todaySales.filter(s => s.paymentMethod === 'tarjeta').reduce((sum, s) => sum + s.total, 0);
+            
+            document.getElementById('cutDate').textContent = today.toLocaleDateString('es-MX', {weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'});
+            document.getElementById('cutTotal').textContent = formatMoney(total);
+            document.getElementById('cutCash').textContent = formatMoney(cash);
+            document.getElementById('cutTransfer').textContent = formatMoney(transfer);
+            document.getElementById('cutCard').textContent = formatMoney(card);
+            document.getElementById('cutIVA').textContent = formatMoney(iva);
+            document.getElementById('cutTransactions').textContent = todaySales.length;
+            
+            const cancelledSection = document.getElementById('cutCancelledSection');
+            if (todayCancelled.length > 0) {
+                cancelledSection.classList.remove('hidden');
+                document.getElementById('cutCancelledAmount').textContent = formatMoney(todayCancelled.reduce((sum, s) => sum + s.total, 0));
+            } else {
+                cancelledSection.classList.add('hidden');
+            }
+            
+            document.getElementById('cutDetails').innerHTML = todaySales.map(s => `
+                <div class="flex justify-between py-1 border-b border-gray-100">
+                    <span>${s.id} - ${s.items.length} items</span>
+                    <span class="font-medium">${formatMoney(s.total)}</span>
+                </div>
+            `).join('');
+            
+            openModal('cutModal');
+        }
+
+        // Expenses Functions
+        function calculateExpenseIVA() {
+            const amount = parseFloat(document.getElementById('expenseAmount').value) || 0;
+            const hasIVA = document.getElementById('expenseHasIVA').checked;
+            
+            if (hasIVA && amount > 0) {
+                const total = amount * 1.16;
+                const iva = total - amount;
+                document.getElementById('expenseTotalDisplay').textContent = formatMoney(total);
+                document.getElementById('expenseSubtotalDisplay').textContent = formatMoney(amount);
+                document.getElementById('expenseIVADisplay').textContent = formatMoney(iva);
+                document.getElementById('expenseIVABreakdown').classList.remove('hidden');
+            } else {
+                document.getElementById('expenseTotalDisplay').textContent = formatMoney(amount);
+                document.getElementById('expenseIVABreakdown').classList.add('hidden');
+            }
+        }
+
+        function loadExpenses() {
+            const filter = document.getElementById('expenseFilterArea').value;
+            let filtered = expenses;
+            
+            if (currentUser.role === 'cashier') {
+                filtered = expenses.filter(e => e.registeredBy === currentUser.name);
+            } else if (filter !== 'all') {
+                filtered = expenses.filter(e => e.area === filter);
+            }
+            
+            if (currentUser.role === 'admin') {
+                const stats = {
+                    produccion: expenses.filter(e => e.area === 'produccion').reduce((sum, e) => sum + e.amount, 0),
+                    atencion: expenses.filter(e => e.area === 'atencion').reduce((sum, e) => sum + e.amount, 0),
+                    administrativo: expenses.filter(e => e.area === 'administrativo').reduce((sum, e) => sum + e.amount, 0),
+                    otros: expenses.filter(e => e.area === 'otros').reduce((sum, e) => sum + e.amount, 0)
+                };
+                
+                document.getElementById('expenseProduction').textContent = formatMoney(stats.produccion);
+                document.getElementById('expenseCustomerService').textContent = formatMoney(stats.atencion);
+                document.getElementById('expenseAdmin').textContent = formatMoney(stats.administrativo);
+                document.getElementById('expenseOthers').textContent = formatMoney(stats.otros);
+            } else {
+                const cashierTotal = expenses
+                    .filter(e => e.registeredBy === currentUser.name)
+                    .reduce((sum, e) => sum + e.amount, 0);
+                document.getElementById('cashierTotalExpenses').textContent = formatMoney(cashierTotal);
+            }
+            
+            const tbody = document.getElementById('expensesTableBody');
+            tbody.innerHTML = filtered.sort((a, b) => new Date(b.date) - new Date(a.date)).map((exp, idx) => `
+                <tr class="hover:bg-gray-50 transition-colors">
+                    <td class="px-4 py-3 text-gray-600">${new Date(exp.date).toLocaleDateString()}</td>
+                    ${currentUser.role === 'admin' ? `<td class="px-4 py-3"><span class="px-2 py-1 rounded-full text-xs ${getAreaColor(exp.area)}">${exp.area}</span></td>` : ''}
+                    <td class="px-4 py-3 text-sm text-gray-700">${exp.registeredBy || 'Sistema'}</td>
+                    <td class="px-4 py-3 font-medium">${exp.concept}</td>
+                    <td class="px-4 py-3 text-gray-600 capitalize">${exp.method}</td>
+                    <td class="px-4 py-3 text-center">
+                        ${exp.hasIVA ? '<span class="text-blue-600"><i class="fas fa-check"></i> 16%</span>' : '<span class="text-gray-400">-</span>'}
+                    </td>
+                    <td class="px-4 py-3 text-right font-bold text-red-600">-${formatMoney(exp.amount)}</td>
+                    <td class="px-4 py-3 text-center">
+                        ${exp.registeredBy === currentUser.name || currentUser.role === 'admin' ? `
+                            <button onclick="deleteExpense(${expenses.indexOf(exp)})" class="text-gray-400 hover:text-red-500 transition-colors btn-action" title="Eliminar">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        ` : '<span class="text-gray-300">-</span>'}
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        function getAreaColor(area) {
+            const colors = {
+                'produccion': 'bg-orange-100 text-orange-700',
+                'atencion': 'bg-blue-100 text-blue-700',
+                'administrativo': 'bg-yellow-100 text-yellow-700',
+                'otros': 'bg-purple-100 text-purple-700'
+            };
+            return colors[area] || 'bg-gray-100 text-gray-700';
+        }
+
+        function saveExpense() {
+            const area = document.getElementById('expenseArea').value;
+            const concept = document.getElementById('expenseConcept').value;
+            const amount = parseFloat(document.getElementById('expenseAmount').value);
+            const method = document.getElementById('expenseMethod').value;
+            const hasIVA = document.getElementById('expenseHasIVA').checked;
+            
+            if (!concept || !amount) {
+                alert('Complete todos los campos');
+                return;
+            }
+            
+            let finalAmount = amount;
+            let ivaAmount = 0;
+            if (hasIVA) {
+                finalAmount = amount * 1.16;
+                ivaAmount = finalAmount - amount;
+            }
+            
+            expenses.push({
+                id: Date.now(),
+                date: new Date().toISOString(),
+                area,
+                concept,
+                amount: finalAmount,
+                method,
+                hasIVA,
+                ivaAmount,
+                registeredBy: currentUser.name
+            });
+            
+            localStorage.setItem('dulceBocado_expenses', JSON.stringify(expenses));
+            closeModal('expenseModal');
+            loadExpenses();
+            updateDashboard();
+            
+            document.getElementById('expenseConcept').value = '';
+            document.getElementById('expenseAmount').value = '';
+            document.getElementById('expenseHasIVA').checked = false;
+            calculateExpenseIVA();
+        }
+
+        function deleteExpense(index) {
+            if (!confirm('¿Eliminar este gasto?')) return;
+            expenses.splice(index, 1);
+            localStorage.setItem('dulceBocado_expenses', JSON.stringify(expenses));
+            loadExpenses();
+            updateDashboard();
+        }
+
+        // Products Management
+        function loadProductsTable() {
+            const tbody = document.getElementById('productsTableBody');
+            tbody.innerHTML = products.map(p => `
+                <tr class="hover:bg-gray-50 transition-colors">
+                    <td class="px-4 py-3 font-medium">${p.name}</td>
+                    <td class="px-4 py-3 capitalize">${p.category}</td>
+                    <td class="px-4 py-3 text-center">
+                        <span class="${p.stock < 5 ? 'text-red-600 font-bold' : 'text-gray-700'}">${p.stock}</span>
+                    </td>
+                    <td class="px-4 py-3 text-center">
+                        ${p.hasIVA ? '<span class="text-blue-600 font-medium">Sí (16%)</span>' : '<span class="text-gray-400">No</span>'}
+                    </td>
+                    <td class="px-4 py-3 text-right font-bold">${formatMoney(p.price)}</td>
+                    <td class="px-4 py-3 text-center">
+                        <span class="px-2 py-1 rounded-full text-xs ${p.stock > 0 ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}">
+                            ${p.stock > 0 ? 'Activo' : 'Agotado'}
+                        </span>
+                    </td>
+                    <td class="px-4 py-3 text-center">
+                        <button onclick="editProduct(${p.id})" class="text-blue-500 hover:text-blue-700 mr-3 btn-action" title="Editar">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                        <button onclick="deleteProduct(${p.id})" class="text-red-500 hover:text-red-700 btn-action" title="Eliminar">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        function openProductModal() {
+            editingProductId = null;
+            document.getElementById('productModalTitle').textContent = 'Nuevo Producto';
+            document.getElementById('prodId').value = '';
+            document.getElementById('prodName').value = '';
+            document.getElementById('prodCategory').value = 'pasteles';
+            document.getElementById('prodPrice').value = '';
+            document.getElementById('prodStock').value = '0';
+            document.getElementById('prodIVA').checked = false;
+            openModal('productModal');
+        }
+
+        function editProduct(productId) {
+            const product = products.find(p => p.id === productId);
+            if (!product) return;
+            
+            editingProductId = productId;
+            document.getElementById('productModalTitle').textContent = 'Editar Producto';
+            document.getElementById('prodId').value = product.id;
+            document.getElementById('prodName').value = product.name;
+            document.getElementById('prodCategory').value = product.category;
+            document.getElementById('prodPrice').value = product.price;
+            document.getElementById('prodStock').value = product.stock;
+            document.getElementById('prodIVA').checked = product.hasIVA;
+            openModal('productModal');
+        }
+
+        function saveProduct() {
+            const id = document.getElementById('prodId').value;
+            const name = document.getElementById('prodName').value;
+            const category = document.getElementById('prodCategory').value;
+            const price = parseFloat(document.getElementById('prodPrice').value);
+            const stock = parseInt(document.getElementById('prodStock').value) || 0;
+            const hasIVA = document.getElementById('prodIVA').checked;
+            
+            if (!name || !price) {
+                alert('Complete los campos obligatorios (Nombre y Precio)');
+                return;
+            }
+            
+            if (editingProductId) {
+                const product = products.find(p => p.id === editingProductId);
+                if (product) {
+                    product.name = name;
+                    product.category = category;
+                    product.price = price;
+                    product.stock = stock;
+                    product.hasIVA = hasIVA;
+                }
+            } else {
+                const newId = Math.max(...products.map(p => p.id), 0) + 1;
+                products.push({
+                    id: newId,
+                    name,
+                    category,
+                    price,
+                    stock,
+                    hasIVA,
+                    image: category === 'pasteles' ? '🎂' : 
+                            category === 'postres' ? '🧁' : 
+                            category === 'decoracion' ? '🎨' : '👨‍🍳'
+                });
+            }
+            
+            closeModal('productModal');
+            loadProductsTable();
+            alert(editingProductId ? 'Producto actualizado correctamente' : 'Producto creado correctamente');
+        }
+
+        function deleteProduct(productId) {
+            if (!confirm('¿Está seguro de eliminar este producto?')) return;
+            const index = products.findIndex(p => p.id === productId);
+            if (index > -1) {
+                products.splice(index, 1);
+                loadProductsTable();
+                alert('Producto eliminado');
+            }
+        }
+
+        // Bank Module
+        function updateBankModule() {
+            const cashIn = sales.filter(s => s.paymentMethod === 'efectivo' && !s.cancelled).reduce((sum, s) => sum + s.total, 0);
+            const bankIn = sales.filter(s => (s.paymentMethod === 'transferencia' || s.paymentMethod === 'tarjeta') && !s.cancelled).reduce((sum, s) => sum + s.total, 0);
+            
+            const cashOut = expenses.filter(e => e.method === 'efectivo').reduce((sum, e) => sum + e.amount, 0);
+            const bankOut = expenses.filter(e => e.method === 'transferencia' || e.method === 'tarjeta').reduce((sum, e) => sum + e.amount, 0);
+            
+            const cashBalance = cashIn - cashOut;
+            const bankBalance = bankIn - bankOut;
+            
+            document.getElementById('cashBalance').textContent = formatMoney(cashBalance);
+            document.getElementById('bankBalance').textContent = formatMoney(bankBalance);
+        }
+
+        // Taxes Module
+        function calculateTaxes() {
+            const currentMonth = new Date().getMonth();
+            const monthlySales = sales.filter(s => new Date(s.date).getMonth() === currentMonth && !s.cancelled);
+            
+            const totalSales = monthlySales.reduce((sum, s) => sum + s.total, 0);
+            const ivaSales = monthlySales.filter(s => s.items.some(i => i.hasIVA));
+            const ivaCharged = ivaSales.reduce((sum, s) => sum + s.iva, 0);
+            const noIVASales = totalSales - ivaSales.reduce((sum, s) => sum + s.total, 0);
+            
+            const ivaInExpenses = expenses
+                .filter(e => e.hasIVA && new Date(e.date).getMonth() === currentMonth)
+                .reduce((sum, e) => sum + (e.ivaAmount || 0), 0);
+            
+            const isr = totalSales * 0.025;
+            
+            document.getElementById('taxTotalSales').textContent = formatMoney(totalSales);
+            document.getElementById('taxIVASales').textContent = formatMoney(ivaSales.reduce((sum, s) => sum + s.total, 0));
+            document.getElementById('taxNoIVASales').textContent = formatMoney(noIVASales);
+            document.getElementById('ivaCharged').textContent = formatMoney(ivaCharged);
+            document.getElementById('ivaExpenses').textContent = formatMoney(ivaInExpenses);
+            document.getElementById('ivaToPay').textContent = formatMoney(ivaCharged - ivaInExpenses);
+            document.getElementById('isrIncome').textContent = formatMoney(totalSales);
+            document.getElementById('isrAmount').textContent = formatMoney(isr);
+        }
+
+        // Employees
+        function loadEmployees() {
+            const prodCount = employees.filter(e => e.area === 'produccion').length;
+            const servCount = employees.filter(e => e.area === 'atencion').length;
+            
+            document.getElementById('countProduction').textContent = prodCount + ' empleados';
+            document.getElementById('countService').textContent = servCount + ' empleados';
+            
+            document.getElementById('productionEmployees').innerHTML = employees
+                .filter(e => e.area === 'produccion')
+                .map(e => `
+                    <div class="flex items-center justify-between p-3 bg-orange-50 rounded-lg group">
+                        <div>
+                            <p class="font-medium text-gray-800">${e.name}</p>
+                            <p class="text-xs text-gray-500">${e.role}</p>
+                        </div>
+                        <button onclick="deleteEmployee(${e.id})" class="text-red-400 hover:text-red-600 opacity-0 group-hover:opacity-100 transition-all btn-action" title="Eliminar">
+                            <i class="fas fa-trash-alt"></i>
+                        </button>
+                    </div>
+                `).join('');
+                
+            document.getElementById('serviceEmployees').innerHTML = employees
+                .filter(e => e.area === 'atencion')
+                .map(e => `
+                    <div class="flex items-center justify-between p-3 bg-pink-50 rounded-lg group">
+                        <div>
+                            <p class="font-medium text-gray-800">${e.name}</p>
+                            <p class="text-xs text-gray-500">${e.role}</p>
+                        </div>
+                        <button onclick="deleteEmployee(${e.id})" class="text-red-400 hover:text-red-600 opacity-0 group-hover:opacity-100 transition-all btn-action" title="Eliminar">
+                            <i class="fas fa-trash-alt"></i>
+                        </button>
+                    </div>
+                `).join('');
+        }
+
+        function openEmployeeModal() {
+            document.getElementById('empName').value = '';
+            document.getElementById('empArea').value = 'produccion';
+            document.getElementById('empRole').value = '';
+            openModal('employeeModal');
+        }
+
+        function saveEmployee() {
+            const name = document.getElementById('empName').value;
+            const area = document.getElementById('empArea').value;
+            const role = document.getElementById('empRole').value;
+            
+            if (!name || !role) {
+                alert('Complete todos los campos');
+                return;
+            }
+            
+            const newId = employees.length > 0 ? Math.max(...employees.map(e => e.id)) + 1 : 1;
+            employees.push({ id: newId, name, area, role });
+            
+            localStorage.setItem('dulceBocado_employees', JSON.stringify(employees));
+            closeModal('employeeModal');
+            loadEmployees();
+            loadNominaFilters();
+            alert('Empleado agregado correctamente');
+        }
+
+        function deleteEmployee(empId) {
+            if (!confirm('¿Eliminar este empleado?')) return;
+            const index = employees.findIndex(e => e.id === empId);
+            if (index > -1) {
+                employees.splice(index, 1);
+                localStorage.setItem('dulceBocado_employees', JSON.stringify(employees));
+                loadEmployees();
+                loadNominaFilters();
+            }
+        }
+
+        // NOMINA FUNCTIONS - NEW
+        function loadNominaFilters() {
+            const select = document.getElementById('nominaEmployee');
+            const filterSelect = document.getElementById('nominaFilterEmployee');
+            
+            // Keep first option
+            select.innerHTML = '<option value="">Seleccionar empleado...</option>';
+            filterSelect.innerHTML = '<option value="all">Todos los empleados</option>';
+            
+            employees.forEach(emp => {
+                const option = `<option value="${emp.id}">${emp.name} - ${emp.role}</option>`;
+                select.innerHTML += option;
+                filterSelect.innerHTML += option;
+            });
+            
+            // Set current month
+            document.getElementById('nominaMonth').value = new Date().getMonth();
+            document.getElementById('nominaYear').value = new Date().getFullYear();
+        }
+
+        function calculateNominaTotal() {
+            const sueldo = parseFloat(document.getElementById('nominaSueldo').value) || 0;
+            const horasExtras = parseInt(document.getElementById('nominaHorasExtras').value) || 0;
+            const pagoHoraExtra = parseFloat(document.getElementById('nominaPagoHoraExtra').value) || 0;
+            const bono = parseFloat(document.getElementById('nominaBono').value) || 0;
+            const bonoPuntualidad = parseFloat(document.getElementById('nominaBonoPuntualidad').value) || 0;
+            
+            const totalHorasExtras = horasExtras * pagoHoraExtra;
+            const total = sueldo + totalHorasExtras + bono + bonoPuntualidad;
+            
+            document.getElementById('nominaTotal').textContent = formatMoney(total);
+        }
+
+        function openNominaModal() {
+            loadNominaFilters();
+            calculateNominaTotal();
+            openModal('nominaModal');
+        }
+
+        function saveNomina() {
+            const empId = parseInt(document.getElementById('nominaEmployee').value);
+            const month = parseInt(document.getElementById('nominaMonth').value);
+            const year = parseInt(document.getElementById('nominaYear').value);
+            const sueldo = parseFloat(document.getElementById('nominaSueldo').value) || 0;
+            const horasExtras = parseInt(document.getElementById('nominaHorasExtras').value) || 0;
+            const pagoHoraExtra = parseFloat(document.getElementById('nominaPagoHoraExtra').value) || 0;
+            const bono = parseFloat(document.getElementById('nominaBono').value) || 0;
+            const bonoPuntualidad = parseFloat(document.getElementById('nominaBonoPuntualidad').value) || 0;
+            
+            if (!empId) {
+                alert('Seleccione un empleado');
+                return;
+            }
+            
+            const employee = employees.find(e => e.id === empId);
+            const totalHorasExtras = horasExtras * pagoHoraExtra;
+            const total = sueldo + totalHorasExtras + bono + bonoPuntualidad;
+            
+            nominaRecords.push({
+                id: 'NOM-' + Date.now(),
+                date: new Date().toISOString(),
+                employeeId: empId,
+                employeeName: employee.name,
+                month: month,
+                year: year,
+                sueldo: sueldo,
+                horasExtras: horasExtras,
+                pagoHoraExtra: pagoHoraExtra,
+                totalHorasExtras: totalHorasExtras,
+                bono: bono,
+                bonoPuntualidad: bonoPuntualidad,
+                total: total,
+                registeredBy: currentUser.name
+            });
+            
+            localStorage.setItem('dulceBocado_nomina', JSON.stringify(nominaRecords));
+            closeModal('nominaModal');
+            loadNomina();
+            
+            // Reset form
+            document.getElementById('nominaSueldo').value = '';
+            document.getElementById('nominaHorasExtras').value = '';
+            document.getElementById('nominaPagoHoraExtra').value = '';
+            document.getElementById('nominaBono').value = '';
+            document.getElementById('nominaBonoPuntualidad').value = '';
+            calculateNominaTotal();
+            
+            alert('Pago de nómina registrado correctamente');
+        }
+
+        function loadNomina() {
+            const monthFilter = document.getElementById('nominaFilterMonth').value;
+            const empFilter = document.getElementById('nominaFilterEmployee').value;
+            const currentMonth = new Date().getMonth();
+            const currentYear = new Date().getFullYear();
+            
+            let filtered = nominaRecords;
+            
+            if (monthFilter !== 'all') {
+                filtered = filtered.filter(n => n.month === parseInt(monthFilter) && n.year === currentYear);
+            }
+            
+            if (empFilter !== 'all') {
+                filtered = filtered.filter(n => n.employeeId === parseInt(empFilter));
+            }
+            
+            // Calculate totals for current month
+            const currentMonthRecords = nominaRecords.filter(n => n.month === currentMonth && n.year === currentYear);
+            const totalMes = currentMonthRecords.reduce((sum, n) => sum + n.total, 0);
+            const totalSueldos = currentMonthRecords.reduce((sum, n) => sum + n.sueldo, 0);
+            const totalHorasExtras = currentMonthRecords.reduce((sum, n) => sum + n.totalHorasExtras, 0);
+            const totalBonos = currentMonthRecords.reduce((sum, n) => sum + n.bono + n.bonoPuntualidad, 0);
+            
+            document.getElementById('totalNominaMes').textContent = formatMoney(totalMes);
+            document.getElementById('totalSueldos').textContent = formatMoney(totalSueldos);
+            document.getElementById('totalHorasExtras').textContent = formatMoney(totalHorasExtras);
+            document.getElementById('totalBonos').textContent = formatMoney(totalBonos);
+            
+            // Render table
+            const tbody = document.getElementById('nominaTableBody');
+            tbody.innerHTML = filtered.sort((a, b) => new Date(b.date) - new Date(a.date)).map((rec, idx) => `
+                <tr class="hover:bg-gray-50 transition-colors">
+                    <td class="px-4 py-3 text-gray-600">${new Date(rec.date).toLocaleDateString()}</td>
+                    <td class="px-4 py-3 font-medium">${rec.employeeName}</td>
+                    <td class="px-4 py-3 text-right">${formatMoney(rec.sueldo)}</td>
+                    <td class="px-4 py-3 text-center">${rec.horasExtras}</td>
+                    <td class="px-4 py-3 text-right">${formatMoney(rec.totalHorasExtras)}</td>
+                    <td class="px-4 py-3 text-right text-green-600">${formatMoney(rec.bono)}</td>
+                    <td class="px-4 py-3 text-right text-purple-600">${formatMoney(rec.bonoPuntualidad)}</td>
+                    <td class="px-4 py-3 text-right font-bold">${formatMoney(rec.total)}</td>
+                    <td class="px-4 py-3 text-center">
+                        <button onclick="deleteNomina(${nominaRecords.indexOf(rec)})" class="text-gray-400 hover:text-red-500 transition-colors btn-action">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </td>
+                </tr>
+            `).join('');
+            
+            // Render summary by employee
+            const summaryContainer = document.getElementById('nominaResumenEmpleados');
+            const employeeTotals = {};
+            
+            currentMonthRecords.forEach(rec => {
+                if (!employeeTotals[rec.employeeId]) {
+                    employeeTotals[rec.employeeId] = {
+                        name: rec.employeeName,
+                        total: 0,
+                        sueldo: 0,
+                        horasExtras: 0,
+                        bonos: 0
+                    };
+                }
+                employeeTotals[rec.employeeId].total += rec.total;
+                employeeTotals[rec.employeeId].sueldo += rec.sueldo;
+                employeeTotals[rec.employeeId].horasExtras += rec.totalHorasExtras;
+                employeeTotals[rec.employeeId].bonos += rec.bono + rec.bonoPuntualidad;
+            });
+            
+            summaryContainer.innerHTML = Object.values(employeeTotals).map(emp => `
+                <div class="glass-panel p-4 rounded-xl border-l-4 border-brand-500">
+                    <h4 class="font-bold text-gray-800 mb-2">${emp.name}</h4>
+                    <div class="space-y-1 text-sm">
+                        <div class="flex justify-between">
+                            <span class="text-gray-600">Total:</span>
+                            <span class="font-bold">${formatMoney(emp.total)}</span>
+                        </div>
+                        <div class="flex justify-between text-xs text-gray-500">
+                            <span>Sueldo: ${formatMoney(emp.sueldo)}</span>
+                            <span>H.E.: ${formatMoney(emp.horasExtras)}</span>
+                            <span>Bonos: ${formatMoney(emp.bonos)}</span>
+                        </div>
+                    </div>
+                </div>
+            `).join('') || '<p class="text-gray-500 col-span-3 text-center">No hay registros de nómina este mes</p>';
+        }
+
+        function deleteNomina(index) {
+            if (!confirm('¿Eliminar este registro de nómina?')) return;
+            nominaRecords.splice(index, 1);
+            localStorage.setItem('dulceBocado_nomina', JSON.stringify(nominaRecords));
+            loadNomina();
+        }
+
+        function generateNominaReport() {
+            alert('Función de generación de reporte PDF - En desarrollo\n\nPuedes usar Ctrl+P para imprimir la tabla actual.');
+        }
+
+        // Utility Functions
+        function formatMoney(amount) {
+            return '$' + amount.toFixed(2).replace(/\d(?=(\d{3})+\.)/g, '$&,');
+        }
+
+        function openModal(modalId) {
+            document.getElementById(modalId).classList.add('active');
+        }
+
+        function closeModal(modalId) {
+            document.getElementById(modalId).classList.remove('active');
+        }
+
+        function openCustomProductModal() {
+            openModal('customProductModal');
+        }
+
+        function openExpenseModal() {
+            document.getElementById('expenseHasIVA').checked = false;
+            calculateExpenseIVA();
+            openModal('expenseModal');
+        }
+
+        window.onclick = function(event) {
+            if (event.target.classList.contains('modal')) {
+                event.target.classList.remove('active');
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            const today = new Date().toISOString().split('T')[0];
+            document.getElementById('filterDateFrom').value = today;
+            document.getElementById('filterDateTo').value = today;
+        });
+    </script>
+</body>
+</html>
