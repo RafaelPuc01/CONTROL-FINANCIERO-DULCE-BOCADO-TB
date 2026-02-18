@@ -407,7 +407,7 @@
                 </div>
             </div>
 
-            <!-- POS Module - IVA INCLUIDO -->
+            <!-- POS Module - IVA INCLUIDO Y PAGO MIXTO -->
             <div id="pos" class="module hidden fade-in">
                 <div class="mb-6 flex justify-between items-center">
                     <div>
@@ -464,16 +464,44 @@
 
                         <div class="mt-4 space-y-2">
                             <label class="text-sm font-medium text-gray-700">Método de Pago:</label>
-                            <div class="grid grid-cols-3 gap-2">
+                            <div class="grid grid-cols-2 gap-2 mb-2">
                                 <button onclick="setPaymentMethod('efectivo')" id="btnEfectivo" class="payment-btn py-2 border-2 border-brand-500 bg-brand-50 text-brand-700 rounded-lg text-sm font-medium transition-all">
                                     <i class="fas fa-money-bill-wave mr-1"></i>Efectivo
                                 </button>
                                 <button onclick="setPaymentMethod('transferencia')" id="btnTransferencia" class="payment-btn py-2 border-2 border-gray-300 text-gray-600 rounded-lg text-sm font-medium transition-all hover:border-brand-400">
                                     <i class="fas fa-mobile-alt mr-1"></i>Transfer
                                 </button>
+                            </div>
+                            <div class="grid grid-cols-2 gap-2">
                                 <button onclick="setPaymentMethod('tarjeta')" id="btnTarjeta" class="payment-btn py-2 border-2 border-gray-300 text-gray-600 rounded-lg text-sm font-medium transition-all hover:border-brand-400">
                                     <i class="fas fa-credit-card mr-1"></i>Tarjeta
                                 </button>
+                                <button onclick="openMixedPaymentModal()" id="btnMixto" class="payment-btn py-2 border-2 border-purple-300 text-purple-600 rounded-lg text-sm font-medium transition-all hover:border-purple-500 hover:bg-purple-50">
+                                    <i class="fas fa-calculator mr-1"></i>Pago Mixto
+                                </button>
+                            </div>
+                            
+                            <!-- Resumen de pago mixto (aparece cuando se selecciona) -->
+                            <div id="mixedPaymentSummary" class="hidden mt-3 p-3 bg-purple-50 rounded-lg border border-purple-200">
+                                <p class="text-xs font-bold text-purple-800 mb-2">Desglose del Pago:</p>
+                                <div class="space-y-1 text-sm">
+                                    <div class="flex justify-between">
+                                        <span class="text-gray-600">Efectivo:</span>
+                                        <span class="font-medium" id="mixedCash">$0.00</span>
+                                    </div>
+                                    <div class="flex justify-between">
+                                        <span class="text-gray-600">Transferencia:</span>
+                                        <span class="font-medium" id="mixedTransfer">$0.00</span>
+                                    </div>
+                                    <div class="flex justify-between">
+                                        <span class="text-gray-600">Tarjeta:</span>
+                                        <span class="font-medium" id="mixedCard">$0.00</span>
+                                    </div>
+                                    <div class="flex justify-between border-t border-purple-200 pt-1 mt-1">
+                                        <span class="font-bold text-purple-900">Total:</span>
+                                        <span class="font-bold text-purple-900" id="mixedTotal">$0.00</span>
+                                    </div>
+                                </div>
                             </div>
                         </div>
 
@@ -851,7 +879,7 @@
                 </div>
             </div>
 
-            <!-- NOMINA MODULE - NEW -->
+            <!-- NOMINA MODULE -->
             <div id="nomina" class="module hidden fade-in admin-only-content">
                 <div class="mb-6 flex justify-between items-center">
                     <div>
@@ -970,6 +998,111 @@
             <div class="flex gap-3 mt-6">
                 <button onclick="closeModal('customProductModal')" class="flex-1 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">Cancelar</button>
                 <button onclick="addCustomProduct()" class="flex-1 py-2 bg-brand-600 text-white rounded-lg hover:bg-brand-700 transition-colors">Agregar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Mixed Payment Modal -->
+    <div id="mixedPaymentModal" class="modal">
+        <div class="bg-white rounded-2xl p-6 w-full max-w-md mx-4 shadow-2xl">
+            <h3 class="text-xl font-bold text-purple-800 mb-4">
+                <i class="fas fa-calculator mr-2"></i>Pago Mixto
+            </h3>
+            <p class="text-sm text-gray-600 mb-4">Distribuye el pago entre diferentes métodos. El total debe coincidir con el monto de la venta.</p>
+            
+            <div class="space-y-4 mb-4">
+                <div class="flex items-center justify-between p-3 bg-green-50 rounded-lg">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 bg-green-500 rounded-full flex items-center justify-center text-white">
+                            <i class="fas fa-money-bill-wave"></i>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700">Efectivo</label>
+                            <p class="text-xs text-gray-500">Restante: <span id="remainingCash" class="font-bold">$0.00</span></p>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <span class="text-gray-500">$</span>
+                        <input type="number" id="mixedPaymentCash" class="w-24 border border-gray-300 rounded-lg px-3 py-2 text-right focus:ring-2 focus:ring-green-500 outline-none" placeholder="0.00" step="0.01" oninput="validateMixedPayment()">
+                    </div>
+                </div>
+
+                <div class="flex items-center justify-between p-3 bg-blue-50 rounded-lg">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 bg-blue-500 rounded-full flex items-center justify-center text-white">
+                            <i class="fas fa-mobile-alt"></i>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700">Transferencia</label>
+                            <p class="text-xs text-gray-500">Restante: <span id="remainingTransfer" class="font-bold">$0.00</span></p>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <span class="text-gray-500">$</span>
+                        <input type="number" id="mixedPaymentTransfer" class="w-24 border border-gray-300 rounded-lg px-3 py-2 text-right focus:ring-2 focus:ring-blue-500 outline-none" placeholder="0.00" step="0.01" oninput="validateMixedPayment()">
+                    </div>
+                </div>
+
+                <div class="flex items-center justify-between p-3 bg-purple-50 rounded-lg">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 bg-purple-500 rounded-full flex items-center justify-center text-white">
+                            <i class="fas fa-credit-card"></i>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700">Tarjeta</label>
+                            <p class="text-xs text-gray-500">Restante: <span id="remainingCard" class="font-bold">$0.00</span></p>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <span class="text-gray-500">$</span>
+                        <input type="number" id="mixedPaymentCard" class="w-24 border border-gray-300 rounded-lg px-3 py-2 text-right focus:ring-2 focus:ring-purple-500 outline-none" placeholder="0.00" step="0.01" oninput="validateMixedPayment()">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Resumen y validación -->
+            <div class="bg-gray-50 p-4 rounded-lg mb-4">
+                <div class="flex justify-between items-center mb-2">
+                    <span class="text-sm text-gray-600">Total a Pagar:</span>
+                    <span class="font-bold text-lg" id="mixedPaymentTotalRequired">$0.00</span>
+                </div>
+                <div class="flex justify-between items-center mb-2">
+                    <span class="text-sm text-gray-600">Total Distribuido:</span>
+                    <span class="font-bold text-lg" id="mixedPaymentDistributed">$0.00</span>
+                </div>
+                <div class="flex justify-between items-center pt-2 border-t border-gray-200">
+                    <span class="text-sm font-medium" id="mixedPaymentDiffLabel">Diferencia:</span>
+                    <span class="font-bold" id="mixedPaymentDifference">$0.00</span>
+                </div>
+                <div id="mixedPaymentAlert" class="hidden mt-2 p-2 bg-red-100 text-red-700 text-xs rounded text-center">
+                    <i class="fas fa-exclamation-circle mr-1"></i> Los montos no coinciden con el total
+                </div>
+                <div id="mixedPaymentSuccess" class="hidden mt-2 p-2 bg-green-100 text-green-700 text-xs rounded text-center">
+                    <i class="fas fa-check-circle mr-1"></i> ¡Montos correctos!
+                </div>
+            </div>
+
+            <!-- Botones rápidos para distribución automática -->
+            <div class="grid grid-cols-2 gap-2 mb-4">
+                <button onclick="autoDistribute('half')" class="py-2 bg-gray-100 hover:bg-gray-200 rounded-lg text-xs font-medium text-gray-700 transition-colors">
+                    <i class="fas fa-adjust mr-1"></i>50/50 Efectivo/Transfer
+                </button>
+                <button onclick="autoDistribute('thirds')" class="py-2 bg-gray-100 hover:bg-gray-200 rounded-lg text-xs font-medium text-gray-700 transition-colors">
+                    <i class="fas fa-chart-pie mr-1"></i>Tercios (3 partes)
+                </button>
+                <button onclick="autoDistribute('cash_transfer')" class="py-2 bg-gray-100 hover:bg-gray-200 rounded-lg text-xs font-medium text-gray-700 transition-colors">
+                    <i class="fas fa-money-bill-wave mr-1"></i>70% Efectivo / 30% Transfer
+                </button>
+                <button onclick="clearMixedPayment()" class="py-2 bg-red-50 hover:bg-red-100 text-red-600 rounded-lg text-xs font-medium transition-colors">
+                    <i class="fas fa-eraser mr-1"></i>Limpiar
+                </button>
+            </div>
+
+            <div class="flex gap-3">
+                <button onclick="closeModal('mixedPaymentModal')" class="flex-1 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">Cancelar</button>
+                <button onclick="confirmMixedPayment()" id="btnConfirmMixed" class="flex-1 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors opacity-50 cursor-not-allowed" disabled>
+                    Confirmar Pago
+                </button>
             </div>
         </div>
     </div>
@@ -1096,7 +1229,7 @@
         </div>
     </div>
 
-    <!-- NOMINA MODAL - NEW -->
+    <!-- NOMINA MODAL -->
     <div id="nominaModal" class="modal">
         <div class="bg-white rounded-2xl p-6 w-full max-w-lg mx-4 shadow-2xl max-h-[90vh] overflow-y-auto">
             <h3 class="text-xl font-bold text-brand-800 mb-4">Registrar Pago de Nómina</h3>
@@ -1239,6 +1372,14 @@
         let currentPaymentMethod = 'efectivo';
         let editingProductId = null;
         let sidebarCollapsed = false;
+        
+        // PAGO MIXTO - Variables nuevas
+        let mixedPaymentData = {
+            efectivo: 0,
+            transferencia: 0,
+            tarjeta: 0
+        };
+        let isMixedPayment = false;
         
         // Passwords storage
         let userPasswords = JSON.parse(localStorage.getItem('dulceBocado_passwords')) || {
@@ -1530,7 +1671,7 @@
             });
         }
 
-        // POS Functions - IVA INCLUIDO
+        // POS Functions - IVA INCLUIDO Y PAGO MIXTO
         function loadProducts(filter = 'all') {
             const grid = document.getElementById('productsGrid');
             let filtered = products;
@@ -1683,22 +1824,266 @@
             document.getElementById('cartTotal').textContent = formatMoney(totalConIVA);
         }
 
+        // PAGO MIXTO - Nueva función setPaymentMethod
         function setPaymentMethod(method) {
             currentPaymentMethod = method;
+            isMixedPayment = false;
+            mixedPaymentData = { efectivo: 0, transferencia: 0, tarjeta: 0 };
+            
+            // Ocultar resumen de pago mixto
+            document.getElementById('mixedPaymentSummary').classList.add('hidden');
+            
+            // Resetear estilos de botones
             document.querySelectorAll('.payment-btn').forEach(btn => {
-                btn.classList.remove('border-brand-500', 'bg-brand-50', 'text-brand-700');
+                btn.classList.remove('border-brand-500', 'bg-brand-50', 'text-brand-700', 'border-purple-500', 'bg-purple-50', 'text-purple-700');
                 btn.classList.add('border-gray-300', 'text-gray-600');
             });
             
+            // Aplicar estilo activo
             const activeBtn = document.getElementById('btn' + method.charAt(0).toUpperCase() + method.slice(1));
-            activeBtn.classList.remove('border-gray-300', 'text-gray-600');
-            activeBtn.classList.add('border-brand-500', 'bg-brand-50', 'text-brand-700');
+            if (activeBtn) {
+                activeBtn.classList.remove('border-gray-300', 'text-gray-600');
+                if (method === 'mixto') {
+                    activeBtn.classList.add('border-purple-500', 'bg-purple-50', 'text-purple-700');
+                } else {
+                    activeBtn.classList.add('border-brand-500', 'bg-brand-50', 'text-brand-700');
+                }
+            }
         }
 
+        // PAGO MIXTO - Abrir modal
+        function openMixedPaymentModal() {
+            if (cart.length === 0) {
+                alert('El carrito está vacío');
+                return;
+            }
+            
+            // Calcular totales
+            let subtotalSinIVA = 0;
+            let totalIVA = 0;
+            
+            cart.forEach(item => {
+                const itemTotal = item.price * item.quantity;
+                if (item.hasIVA) {
+                    const sinIVA = itemTotal / 1.16;
+                    subtotalSinIVA += sinIVA;
+                    totalIVA += (itemTotal - sinIVA);
+                } else {
+                    subtotalSinIVA += itemTotal;
+                }
+            });
+            
+            const total = subtotalSinIVA + totalIVA;
+            
+            // Mostrar totales en el modal
+            document.getElementById('mixedPaymentTotalRequired').textContent = formatMoney(total);
+            document.getElementById('mixedPaymentDistributed').textContent = '$0.00';
+            document.getElementById('mixedPaymentDifference').textContent = formatMoney(total);
+            document.getElementById('mixedPaymentDifference').className = 'font-bold text-red-600';
+            
+            // Limpiar inputs
+            document.getElementById('mixedPaymentCash').value = '';
+            document.getElementById('mixedPaymentTransfer').value = '';
+            document.getElementById('mixedPaymentCard').value = '';
+            
+            // Actualizar labels de restante
+            document.getElementById('remainingCash').textContent = formatMoney(total);
+            document.getElementById('remainingTransfer').textContent = formatMoney(total);
+            document.getElementById('remainingCard').textContent = formatMoney(total);
+            
+            // Resetear validación
+            document.getElementById('mixedPaymentAlert').classList.add('hidden');
+            document.getElementById('mixedPaymentSuccess').classList.add('hidden');
+            document.getElementById('btnConfirmMixed').disabled = true;
+            document.getElementById('btnConfirmMixed').classList.add('opacity-50', 'cursor-not-allowed');
+            
+            setPaymentMethod('mixto');
+            openModal('mixedPaymentModal');
+        }
+
+        // PAGO MIXTO - Validar en tiempo real
+        function validateMixedPayment() {
+            const cash = parseFloat(document.getElementById('mixedPaymentCash').value) || 0;
+            const transfer = parseFloat(document.getElementById('mixedPaymentTransfer').value) || 0;
+            const card = parseFloat(document.getElementById('mixedPaymentCard').value) || 0;
+            
+            const distributed = cash + transfer + card;
+            
+            // Calcular totales del carrito
+            let subtotalSinIVA = 0;
+            let totalIVA = 0;
+            cart.forEach(item => {
+                const itemTotal = item.price * item.quantity;
+                if (item.hasIVA) {
+                    const sinIVA = itemTotal / 1.16;
+                    subtotalSinIVA += sinIVA;
+                    totalIVA += (itemTotal - sinIVA);
+                } else {
+                    subtotalSinIVA += itemTotal;
+                }
+            });
+            const total = subtotalSinIVA + totalIVA;
+            
+            const difference = total - distributed;
+            
+            // Actualizar UI
+            document.getElementById('mixedPaymentDistributed').textContent = formatMoney(distributed);
+            document.getElementById('mixedPaymentDifference').textContent = formatMoney(Math.abs(difference));
+            
+            const diffLabel = document.getElementById('mixedPaymentDiffLabel');
+            const alertBox = document.getElementById('mixedPaymentAlert');
+            const successBox = document.getElementById('mixedPaymentSuccess');
+            const confirmBtn = document.getElementById('btnConfirmMixed');
+            
+            if (Math.abs(difference) < 0.01) { // Permitir pequeña diferencia por redondeo
+                diffLabel.textContent = '¡Cuadre perfecto!';
+                diffLabel.className = 'text-sm font-medium text-green-600';
+                document.getElementById('mixedPaymentDifference').className = 'font-bold text-green-600';
+                alertBox.classList.add('hidden');
+                successBox.classList.remove('hidden');
+                confirmBtn.disabled = false;
+                confirmBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+            } else if (difference > 0) {
+                diffLabel.textContent = 'Falta por distribuir:';
+                diffLabel.className = 'text-sm font-medium text-orange-600';
+                document.getElementById('mixedPaymentDifference').className = 'font-bold text-orange-600';
+                alertBox.textContent = `Faltan ${formatMoney(difference)} por distribuir`;
+                alertBox.classList.remove('hidden');
+                successBox.classList.add('hidden');
+                confirmBtn.disabled = true;
+                confirmBtn.classList.add('opacity-50', 'cursor-not-allowed');
+            } else {
+                diffLabel.textContent = 'Excedente:';
+                diffLabel.className = 'text-sm font-medium text-red-600';
+                document.getElementById('mixedPaymentDifference').className = 'font-bold text-red-600';
+                alertBox.textContent = `Hay un excedente de ${formatMoney(Math.abs(difference))}`;
+                alertBox.classList.remove('hidden');
+                successBox.classList.add('hidden');
+                confirmBtn.disabled = true;
+                confirmBtn.classList.add('opacity-50', 'cursor-not-allowed');
+            }
+            
+            // Actualizar labels de restante dinámicamente
+            document.getElementById('remainingCash').textContent = formatMoney(Math.max(0, total - cash));
+            document.getElementById('remainingTransfer').textContent = formatMoney(Math.max(0, total - transfer));
+            document.getElementById('remainingCard').textContent = formatMoney(Math.max(0, total - card));
+        }
+
+        // PAGO MIXTO - Distribución automática
+        function autoDistribute(type) {
+            // Calcular totales del carrito
+            let subtotalSinIVA = 0;
+            let totalIVA = 0;
+            cart.forEach(item => {
+                const itemTotal = item.price * item.quantity;
+                if (item.hasIVA) {
+                    const sinIVA = itemTotal / 1.16;
+                    subtotalSinIVA += sinIVA;
+                    totalIVA += (itemTotal - sinIVA);
+                } else {
+                    subtotalSinIVA += itemTotal;
+                }
+            });
+            const total = subtotalSinIVA + totalIVA;
+            
+            let cash = 0, transfer = 0, card = 0;
+            
+            switch(type) {
+                case 'half':
+                    cash = total / 2;
+                    transfer = total / 2;
+                    break;
+                case 'thirds':
+                    cash = total / 3;
+                    transfer = total / 3;
+                    card = total / 3;
+                    break;
+                case 'cash_transfer':
+                    cash = total * 0.7;
+                    transfer = total * 0.3;
+                    break;
+            }
+            
+            // Redondear a 2 decimales
+            cash = Math.round(cash * 100) / 100;
+            transfer = Math.round(transfer * 100) / 100;
+            card = Math.round(card * 100) / 100;
+            
+            // Ajustar por redondeo si es necesario
+            const sum = cash + transfer + card;
+            if (sum !== total) {
+                cash += (total - sum); // Ajustar diferencia en efectivo
+            }
+            
+            document.getElementById('mixedPaymentCash').value = cash.toFixed(2);
+            document.getElementById('mixedPaymentTransfer').value = transfer > 0 ? transfer.toFixed(2) : '';
+            document.getElementById('mixedPaymentCard').value = card > 0 ? card.toFixed(2) : '';
+            
+            validateMixedPayment();
+        }
+
+        function clearMixedPayment() {
+            document.getElementById('mixedPaymentCash').value = '';
+            document.getElementById('mixedPaymentTransfer').value = '';
+            document.getElementById('mixedPaymentCard').value = '';
+            validateMixedPayment();
+        }
+
+        function confirmMixedPayment() {
+            const cash = parseFloat(document.getElementById('mixedPaymentCash').value) || 0;
+            const transfer = parseFloat(document.getElementById('mixedPaymentTransfer').value) || 0;
+            const card = parseFloat(document.getElementById('mixedPaymentCard').value) || 0;
+            
+            mixedPaymentData = {
+                efectivo: cash,
+                transferencia: transfer,
+                tarjeta: card
+            };
+            
+            isMixedPayment = true;
+            
+            // Mostrar resumen en el POS
+            document.getElementById('mixedPaymentSummary').classList.remove('hidden');
+            document.getElementById('mixedCash').textContent = formatMoney(cash);
+            document.getElementById('mixedTransfer').textContent = formatMoney(transfer);
+            document.getElementById('mixedCard').textContent = formatMoney(card);
+            
+            const total = cash + transfer + card;
+            document.getElementById('mixedTotal').textContent = formatMoney(total);
+            
+            closeModal('mixedPaymentModal');
+        }
+
+        // Modificar processSale para manejar pago mixto
         function processSale() {
             if (cart.length === 0) {
                 alert('El carrito está vacío');
                 return;
+            }
+            
+            // Validar pago mixto si está activo
+            if (isMixedPayment) {
+                const totalMixed = mixedPaymentData.efectivo + mixedPaymentData.transferencia + mixedPaymentData.tarjeta;
+                let subtotalSinIVA = 0;
+                let iva = 0;
+                
+                cart.forEach(item => {
+                    const itemTotal = item.price * item.quantity;
+                    if (item.hasIVA) {
+                        const sinIVA = itemTotal / 1.16;
+                        subtotalSinIVA += sinIVA;
+                        iva += (itemTotal - sinIVA);
+                    } else {
+                        subtotalSinIVA += itemTotal;
+                    }
+                });
+                
+                const total = subtotalSinIVA + iva;
+                
+                if (Math.abs(totalMixed - total) > 0.01) {
+                    alert('Los montos del pago mixto no coinciden con el total de la venta');
+                    return;
+                }
             }
             
             let subtotalSinIVA = 0;
@@ -1724,7 +2109,8 @@
                 subtotal: subtotalSinIVA,
                 iva: iva,
                 total: total,
-                paymentMethod: currentPaymentMethod,
+                paymentMethod: isMixedPayment ? 'mixto' : currentPaymentMethod,
+                paymentDetails: isMixedPayment ? {...mixedPaymentData} : null,
                 cancelled: false,
                 cashier: currentUser.name
             };
@@ -1740,13 +2126,31 @@
             });
             
             cart = [];
+            isMixedPayment = false;
+            mixedPaymentData = { efectivo: 0, transferencia: 0, tarjeta: 0 };
             updateCart();
             
-            alert('¡Venta realizada con éxito!\nTotal: ' + formatMoney(sale.total));
+            // Ocultar resumen de pago mixto
+            document.getElementById('mixedPaymentSummary').classList.add('hidden');
+            
+            // Mensaje de éxito detallado
+            let paymentMsg = '';
+            if (sale.paymentMethod === 'mixto') {
+                paymentMsg = `\n\nDesglose de pago:\n💵 Efectivo: ${formatMoney(sale.paymentDetails.efectivo)}\n📱 Transfer: ${formatMoney(sale.paymentDetails.transferencia)}\n💳 Tarjeta: ${formatMoney(sale.paymentDetails.tarjeta)}`;
+            } else {
+                const methodNames = {
+                    'efectivo': '💵 Efectivo',
+                    'transferencia': '📱 Transferencia',
+                    'tarjeta': '💳 Tarjeta'
+                };
+                paymentMsg = `\n\nMétodo: ${methodNames[sale.paymentMethod]}`;
+            }
+            
+            alert('¡Venta realizada con éxito!' + paymentMsg + '\n\nTotal: ' + formatMoney(sale.total));
             updateDashboard();
         }
 
-        // Sales History - CAJERO PUEDE CANCELAR
+        // Sales History - Actualizado para mostrar pago mixto
         function loadTodaySales() {
             const today = new Date().toDateString();
             const todaySales = sales.filter(s => new Date(s.date).toDateString() === today && !s.cancelled);
@@ -1757,9 +2161,19 @@
             const iva = todaySales.reduce((sum, s) => sum + s.iva, 0);
             const count = todaySales.length;
             
-            const cash = todaySales.filter(s => s.paymentMethod === 'efectivo').reduce((sum, s) => sum + s.total, 0);
-            const transfer = todaySales.filter(s => s.paymentMethod === 'transferencia').reduce((sum, s) => sum + s.total, 0);
-            const card = todaySales.filter(s => s.paymentMethod === 'tarjeta').reduce((sum, s) => sum + s.total, 0);
+            // Calcular totales por método incluyendo pagos mixtos
+            let cash = 0, transfer = 0, card = 0;
+            todaySales.forEach(s => {
+                if (s.paymentMethod === 'mixto' && s.paymentDetails) {
+                    cash += s.paymentDetails.efectivo || 0;
+                    transfer += s.paymentDetails.transferencia || 0;
+                    card += s.paymentDetails.tarjeta || 0;
+                } else {
+                    if (s.paymentMethod === 'efectivo') cash += s.total;
+                    if (s.paymentMethod === 'transferencia') transfer += s.total;
+                    if (s.paymentMethod === 'tarjeta') card += s.total;
+                }
+            });
             
             document.getElementById('historyTotalSales').textContent = formatMoney(total);
             document.getElementById('historyIVA').textContent = formatMoney(iva);
@@ -1797,17 +2211,25 @@
 
         function renderSalesTable(salesList) {
             const tbody = document.getElementById('salesTableBody');
-            tbody.innerHTML = salesList.sort((a, b) => new Date(b.date) - new Date(a.date)).map(sale => `
+            tbody.innerHTML = salesList.sort((a, b) => new Date(b.date) - new Date(a.date)).map(sale => {
+                let paymentDisplay = '';
+                if (sale.paymentMethod === 'mixto' && sale.paymentDetails) {
+                    const parts = [];
+                    if (sale.paymentDetails.efectivo > 0) parts.push(`Ef: ${formatMoney(sale.paymentDetails.efectivo)}`);
+                    if (sale.paymentDetails.transferencia > 0) parts.push(`Tr: ${formatMoney(sale.paymentDetails.transferencia)}`);
+                    if (sale.paymentDetails.tarjeta > 0) parts.push(`Ta: ${formatMoney(sale.paymentDetails.tarjeta)}`);
+                    paymentDisplay = `<span class="px-2 py-1 rounded-full text-xs bg-purple-100 text-purple-700" title="${parts.join(' | ')}">Mixto (${parts.length})</span>`;
+                } else {
+                    paymentDisplay = `<span class="px-2 py-1 rounded-full text-xs ${getPaymentMethodColor(sale.paymentMethod)}">${sale.paymentMethod}</span>`;
+                }
+                
+                return `
                 <tr class="hover:bg-gray-50 transition-colors ${sale.cancelled ? 'bg-red-50' : ''}">
                     <td class="px-4 py-3 font-medium ${sale.cancelled ? 'text-red-600 line-through' : 'text-brand-700'}">${sale.id}</td>
                     <td class="px-4 py-3 text-gray-600">${new Date(sale.date).toLocaleString()}</td>
                     <td class="px-4 py-3 text-sm">${sale.cashier || 'N/A'}</td>
                     <td class="px-4 py-3 text-sm">${sale.items.length} productos</td>
-                    <td class="px-4 py-3">
-                        <span class="px-2 py-1 rounded-full text-xs ${getPaymentMethodColor(sale.paymentMethod)}">
-                            ${sale.paymentMethod}
-                        </span>
-                    </td>
+                    <td class="px-4 py-3">${paymentDisplay}</td>
                     <td class="px-4 py-3 text-right font-bold ${sale.cancelled ? 'text-red-600 line-through' : ''}">${formatMoney(sale.total)}</td>
                     <td class="px-4 py-3 text-center">
                         ${sale.cancelled ? 
@@ -1823,7 +2245,7 @@
                         ` : '<span class="text-xs text-gray-400">-</span>'}
                     </td>
                 </tr>
-            `).join('');
+            `}).join('');
         }
 
         function getPaymentMethodColor(method) {
@@ -1863,11 +2285,22 @@
             const todaySales = sales.filter(s => new Date(s.date).toDateString() === today.toDateString() && !s.cancelled);
             const todayCancelled = sales.filter(s => new Date(s.date).toDateString() === today.toDateString() && s.cancelled);
             
-            const total = todaySales.reduce((sum, s) => sum + s.total, 0);
+            let cash = 0, transfer = 0, card = 0;
+            
+            todaySales.forEach(s => {
+                if (s.paymentMethod === 'mixto' && s.paymentDetails) {
+                    cash += s.paymentDetails.efectivo || 0;
+                    transfer += s.paymentDetails.transferencia || 0;
+                    card += s.paymentDetails.tarjeta || 0;
+                } else {
+                    if (s.paymentMethod === 'efectivo') cash += s.total;
+                    if (s.paymentMethod === 'transferencia') transfer += s.total;
+                    if (s.paymentMethod === 'tarjeta') card += s.total;
+                }
+            });
+            
+            const total = cash + transfer + card;
             const iva = todaySales.reduce((sum, s) => sum + s.iva, 0);
-            const cash = todaySales.filter(s => s.paymentMethod === 'efectivo').reduce((sum, s) => sum + s.total, 0);
-            const transfer = todaySales.filter(s => s.paymentMethod === 'transferencia').reduce((sum, s) => sum + s.total, 0);
-            const card = todaySales.filter(s => s.paymentMethod === 'tarjeta').reduce((sum, s) => sum + s.total, 0);
             
             document.getElementById('cutDate').textContent = today.toLocaleDateString('es-MX', {weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'});
             document.getElementById('cutTotal').textContent = formatMoney(total);
@@ -1885,12 +2318,26 @@
                 cancelledSection.classList.add('hidden');
             }
             
-            document.getElementById('cutDetails').innerHTML = todaySales.map(s => `
+            // Mejorar el desglose para mostrar pagos mixtos
+            document.getElementById('cutDetails').innerHTML = todaySales.map(s => {
+                let paymentInfo = '';
+                if (s.paymentMethod === 'mixto') {
+                    const parts = [];
+                    if (s.paymentDetails.efectivo > 0) parts.push(`Ef`);
+                    if (s.paymentDetails.transferencia > 0) parts.push(`Tr`);
+                    if (s.paymentDetails.tarjeta > 0) parts.push(`Ta`);
+                    paymentInfo = `<span class="text-purple-600 font-medium">[${parts.join('+')}]</span>`;
+                } else {
+                    const icons = { 'efectivo': '💵', 'transferencia': '📱', 'tarjeta': '💳' };
+                    paymentInfo = icons[s.paymentMethod] || '';
+                }
+                
+                return `
                 <div class="flex justify-between py-1 border-b border-gray-100">
-                    <span>${s.id} - ${s.items.length} items</span>
+                    <span>${s.id} ${paymentInfo} - ${s.items.length} items</span>
                     <span class="font-medium">${formatMoney(s.total)}</span>
                 </div>
-            `).join('');
+            `}).join('');
             
             openModal('cutModal');
         }
@@ -2135,10 +2582,19 @@
             }
         }
 
-        // Bank Module
+        // Bank Module - Actualizado para pagos mixtos
         function updateBankModule() {
-            const cashIn = sales.filter(s => s.paymentMethod === 'efectivo' && !s.cancelled).reduce((sum, s) => sum + s.total, 0);
-            const bankIn = sales.filter(s => (s.paymentMethod === 'transferencia' || s.paymentMethod === 'tarjeta') && !s.cancelled).reduce((sum, s) => sum + s.total, 0);
+            let cashIn = 0, bankIn = 0;
+            
+            sales.filter(s => !s.cancelled).forEach(s => {
+                if (s.paymentMethod === 'mixto' && s.paymentDetails) {
+                    cashIn += s.paymentDetails.efectivo || 0;
+                    bankIn += (s.paymentDetails.transferencia || 0) + (s.paymentDetails.tarjeta || 0);
+                } else {
+                    if (s.paymentMethod === 'efectivo') cashIn += s.total;
+                    if (s.paymentMethod === 'transferencia' || s.paymentMethod === 'tarjeta') bankIn += s.total;
+                }
+            });
             
             const cashOut = expenses.filter(e => e.method === 'efectivo').reduce((sum, e) => sum + e.amount, 0);
             const bankOut = expenses.filter(e => e.method === 'transferencia' || e.method === 'tarjeta').reduce((sum, e) => sum + e.amount, 0);
@@ -2166,9 +2622,6 @@
             
             const isr = totalSales * 0.025;
             
-            document.getElementById('taxTotalSales').textContent = formatMoney(totalSales);
-            document.getElementById('taxIVASales').textContent = formatMoney(ivaSales.reduce((sum, s) => sum + s.total, 0));
-            document.getElementById('taxNoIVASales').textContent = formatMoney(noIVASales);
             document.getElementById('ivaCharged').textContent = formatMoney(ivaCharged);
             document.getElementById('ivaExpenses').textContent = formatMoney(ivaInExpenses);
             document.getElementById('ivaToPay').textContent = formatMoney(ivaCharged - ivaInExpenses);
@@ -2251,7 +2704,7 @@
             }
         }
 
-        // NOMINA FUNCTIONS - NEW
+        // NOMINA FUNCTIONS
         function loadNominaFilters() {
             const select = document.getElementById('nominaEmployee');
             const filterSelect = document.getElementById('nominaFilterEmployee');
