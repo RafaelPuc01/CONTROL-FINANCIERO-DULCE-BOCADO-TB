@@ -1388,10 +1388,10 @@
         // ============================================
         const SUPABASE_URL = 'https://qvisoofgwuuhfnbzytnb.supabase.co';
         const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InF2aXNvb2Znd3V1aGZuYnp5dG5iIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzEzODE4MDAsImV4cCI6MjA4Njk1NzgwMH0.816vyiAx3RBlGWyyjC-4AU_-4yMHv0wW1g0CXqhahjs';
-        
-        // Inicializar cliente Supabase
-        const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-        
+
+        // Inicializar cliente Supabase (window.supabase es la librería, supabaseClient es tu conexión)
+        const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
         // Variables globales
         let currentUser = null;
         let currentProfile = null;
@@ -1430,7 +1430,7 @@
             }
 
             try {
-                const { data: authData, error: authError } = await supabase.auth.signUp({
+                const { data: authData, error: authError } = await supabaseClient.auth.signUp({
                     email,
                     password
                 });
@@ -1438,7 +1438,7 @@
                 if (authError) throw authError;
 
                 // Crear perfil
-                const { error: profileError } = await supabase
+                const { error: profileError } = await supabaseClient
                     .from('profiles')
                     .insert([{
                         id: authData.user.id,
@@ -1461,7 +1461,7 @@
             const password = document.getElementById('loginPassword').value;
 
             try {
-                const { data, error } = await supabase.auth.signInWithPassword({
+                const { data, error } = await supabaseClient.auth.signInWithPassword({
                     email,
                     password
                 });
@@ -1475,12 +1475,12 @@
         }
 
         async function logout() {
-            await supabase.auth.signOut();
+            await supabaseClient.auth.signOut();
             location.reload();
         }
 
         async function checkSession() {
-            const { data: { session } } = await supabase.auth.getSession();
+            const { data: { session } } = await supabaseClient.auth.getSession();
             if (session) {
                 await initializeApp();
             }
@@ -1493,11 +1493,11 @@
         async function initializeApp() {
             try {
                 // Obtener usuario actual
-                const { data: { user } } = await supabase.auth.getUser();
+                const { data: { user } } = await supabaseClient.auth.getUser();
                 if (!user) return;
 
                 // Obtener perfil
-                const { data: profile, error } = await supabase
+                const { data: profile, error } = await supabaseClient
                     .from('profiles')
                     .select('*')
                     .eq('id', user.id)
@@ -1554,7 +1554,7 @@
 
         function setupRealtimeSubscriptions() {
             // Suscripción a cambios en ventas
-            supabase
+            supabaseClient
                 .channel('sales_changes')
                 .on('postgres_changes', { event: '*', schema: 'public', table: 'sales' }, payload => {
                     if (currentProfile?.role === 'admin') {
@@ -1607,13 +1607,13 @@
                 const today = new Date().toISOString().split('T')[0];
                 
                 // Ventas de hoy
-                const { data: todaySales } = await supabase
+                const { data: todaySales } = await supabaseClient
                     .from('sales')
                     .select('*')
                     .gte('created_at', today)
                     .eq('cancelled', false);
 
-                const { data: todayCancelled } = await supabase
+                const { data: todayCancelled } = await supabaseClient
                     .from('sales')
                     .select('*')
                     .gte('created_at', today)
@@ -1641,7 +1641,7 @@
                 const firstDayOfMonth = new Date();
                 firstDayOfMonth.setDate(1);
                 
-                const { data: monthSales } = await supabase
+                const { data: monthSales } = await supabaseClient
                     .from('sales')
                     .select('iva')
                     .gte('created_at', firstDayOfMonth.toISOString())
@@ -1656,7 +1656,7 @@
                 document.getElementById('dashboardISR').textContent = formatMoney(isr);
                 
                 // Gastos del mes
-                const { data: monthExpenses } = await supabase
+                const { data: monthExpenses } = await supabaseClient
                     .from('expenses')
                     .select('amount')
                     .gte('created_at', firstDayOfMonth.toISOString());
@@ -1665,14 +1665,14 @@
                 document.getElementById('dashboardExpenses').textContent = formatMoney(totalExpenses);
                 
                 // Actividad reciente
-                const { data: recentSales } = await supabase
+                const { data: recentSales } = await supabaseClient
                     .from('sales')
                     .select('*')
                     .eq('cancelled', false)
                     .order('created_at', { ascending: false })
                     .limit(5);
 
-                const { data: recentExpenses } = await supabase
+                const { data: recentExpenses } = await supabaseClient
                     .from('expenses')
                     .select('*')
                     .order('created_at', { ascending: false })
@@ -1718,13 +1718,13 @@
                     return d.toISOString().split('T')[0];
                 });
 
-                const { data: salesData } = await supabase
+                const { data: salesData } = await supabaseClient
                     .from('sales')
                     .select('total, created_at')
                     .eq('cancelled', false)
                     .gte('created_at', last7Days[0]);
 
-                const { data: expensesData } = await supabase
+                const { data: expensesData } = await supabaseClient
                     .from('expenses')
                     .select('amount, created_at')
                     .gte('created_at', last7Days[0]);
@@ -1772,7 +1772,7 @@
                 }
 
                 // Gráfico de gastos por área
-                const { data: allExpenses } = await supabase
+                const { data: allExpenses } = await supabaseClient
                     .from('expenses')
                     .select('area, amount');
 
@@ -1812,7 +1812,7 @@
 
         async function loadProducts(filter = 'all') {
             try {
-                const { data, error } = await supabase
+                const { data, error } = await supabaseClient
                     .from('products')
                     .select('*')
                     .eq('is_active', true)
@@ -2228,7 +2228,7 @@
             };
             
             try {
-                const { error } = await supabase.from('sales').insert([sale]);
+                const { error } = await supabaseClient.from('sales').insert([sale]);
                 if (error) throw error;
                 
                 // Actualizar stock
@@ -2236,7 +2236,7 @@
                     if (!item.isCustom) {
                         const product = products.find(p => p.id === item.id);
                         if (product) {
-                            await supabase
+                            await supabaseClient
                                 .from('products')
                                 .update({ stock: product.stock - item.quantity })
                                 .eq('id', item.id);
@@ -2266,14 +2266,14 @@
             try {
                 const today = new Date().toISOString().split('T')[0];
                 
-                const { data: todaySales } = await supabase
+                const { data: todaySales } = await supabaseClient
                     .from('sales')
                     .select('*')
                     .gte('created_at', today)
                     .eq('cancelled', false)
                     .order('created_at', { ascending: false });
 
-                const { data: todayCancelled } = await supabase
+                const { data: todayCancelled } = await supabaseClient
                     .from('sales')
                     .select('*')
                     .gte('created_at', today)
@@ -2373,7 +2373,7 @@
             if (!confirm('¿Cancelar esta venta? Se restaurará el stock.')) return;
             
             try {
-                const { data: sale } = await supabase
+                const { data: sale } = await supabaseClient
                     .from('sales')
                     .select('*')
                     .eq('id', saleId)
@@ -2384,14 +2384,14 @@
                 // Restaurar stock
                 for (const item of sale.items) {
                     if (!item.isCustom) {
-                        const { data: product } = await supabase
+                        const { data: product } = await supabaseClient
                             .from('products')
                             .select('stock')
                             .eq('id', item.id)
                             .single();
                         
                         if (product) {
-                            await supabase
+                            await supabaseClient
                                 .from('products')
                                 .update({ stock: product.stock + item.quantity })
                                 .eq('id', item.id);
@@ -2400,7 +2400,7 @@
                 }
 
                 // Marcar como cancelada
-                await supabase
+                await supabaseClient
                     .from('sales')
                     .update({ 
                         cancelled: true, 
@@ -2425,7 +2425,7 @@
             if (!from || !to) return;
             
             try {
-                const { data } = await supabase
+                const { data } = await supabaseClient
                     .from('sales')
                     .select('*')
                     .gte('created_at', from)
@@ -2439,7 +2439,6 @@
         }
 
         function generateDailyCut() {
-            // Implementación similar a loadTodaySales pero en modal
             loadTodaySales();
             const today = new Date();
             document.getElementById('cutDate').textContent = today.toLocaleDateString('es-MX', {weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'});
@@ -2454,7 +2453,7 @@
             try {
                 const filter = document.getElementById('expenseFilterArea').value;
                 
-                let query = supabase.from('expenses').select('*').order('created_at', { ascending: false });
+                let query = supabaseClient.from('expenses').select('*').order('created_at', { ascending: false });
                 
                 if (currentProfile?.role === 'cashier') {
                     query = query.eq('user_id', currentUser.id);
@@ -2467,7 +2466,7 @@
                 
                 // Estadísticas
                 if (currentProfile?.role === 'admin') {
-                    const { data: allExpenses } = await supabase.from('expenses').select('area, amount');
+                    const { data: allExpenses } = await supabaseClient.from('expenses').select('area, amount');
                     
                     const stats = {
                         produccion: allExpenses?.filter(e => e.area === 'produccion').reduce((sum, e) => sum + e.amount, 0) || 0,
@@ -2550,7 +2549,7 @@
             }
             
             try {
-                const { error } = await supabase.from('expenses').insert([{
+                const { error } = await supabaseClient.from('expenses').insert([{
                     user_id: currentUser.id,
                     registered_by: currentProfile.full_name,
                     area,
@@ -2581,8 +2580,7 @@
             if (!confirm('¿Eliminar este gasto?')) return;
             
             try {
-                const { error } = await supabase.from('expenses').delete().eq('id', id);
-                if (error) throw error;
+                await supabaseClient.from('expenses').delete().eq('id', id);
                 await loadExpenses();
                 await updateDashboard();
             } catch (error) {
@@ -2606,7 +2604,7 @@
 
         async function loadProductsTable() {
             try {
-                const { data, error } = await supabase
+                const { data, error } = await supabaseClient
                     .from('products')
                     .select('*')
                     .order('name');
@@ -2699,9 +2697,9 @@
             
             try {
                 if (id) {
-                    await supabase.from('products').update(productData).eq('id', id);
+                    await supabaseClient.from('products').update(productData).eq('id', id);
                 } else {
-                    await supabase.from('products').insert([productData]);
+                    await supabaseClient.from('products').insert([productData]);
                 }
                 
                 closeModal('productModal');
@@ -2717,7 +2715,7 @@
             if (!confirm('¿Eliminar este producto?')) return;
             
             try {
-                await supabase.from('products').update({ is_active: false }).eq('id', id);
+                await supabaseClient.from('products').update({ is_active: false }).eq('id', id);
                 await loadProductsTable();
                 await loadProducts();
             } catch (error) {
@@ -2731,7 +2729,7 @@
 
         async function updateBankModule() {
             try {
-                const { data: salesData } = await supabase
+                const { data: salesData } = await supabaseClient
                     .from('sales')
                     .select('payment_method, payment_details, total')
                     .eq('cancelled', false);
@@ -2748,7 +2746,7 @@
                     }
                 });
                 
-                const { data: expensesData } = await supabase
+                const { data: expensesData } = await supabaseClient
                     .from('expenses')
                     .select('method, amount');
                 
@@ -2796,14 +2794,14 @@
             if (!fromDate || !toDate) return;
             
             try {
-                const { data: salesData } = await supabase
+                const { data: salesData } = await supabaseClient
                     .from('sales')
                     .select('*')
                     .gte('created_at', fromDate)
                     .lte('created_at', toDate + 'T23:59:59')
                     .eq('cancelled', false);
 
-                const { data: expensesData } = await supabase
+                const { data: expensesData } = await supabaseClient
                     .from('expenses')
                     .select('*')
                     .gte('created_at', fromDate)
@@ -2881,7 +2879,7 @@
 
         async function loadEmployees() {
             try {
-                const { data, error } = await supabase
+                const { data, error } = await supabaseClient
                     .from('employees')
                     .select('*')
                     .eq('is_active', true)
@@ -2953,7 +2951,7 @@
             }
             
             try {
-                const { error } = await supabase.from('employees').insert([{ name, area, role }]);
+                const { error } = await supabaseClient.from('employees').insert([{ name, area, role }]);
                 if (error) throw error;
                 
                 closeModal('employeeModal');
@@ -2971,7 +2969,7 @@
             if (!confirm('¿Eliminar este empleado?')) return;
             
             try {
-                await supabase.from('employees').update({ is_active: false }).eq('id', id);
+                await supabaseClient.from('employees').update({ is_active: false }).eq('id', id);
                 await loadEmployees();
             } catch (error) {
                 alert('Error al eliminar: ' + error.message);
@@ -2989,7 +2987,7 @@
                 const currentMonth = new Date().getMonth();
                 const currentYear = new Date().getFullYear();
                 
-                let query = supabase.from('nomina').select('*').order('created_at', { ascending: false });
+                let query = supabaseClient.from('nomina').select('*').order('created_at', { ascending: false });
                 
                 if (monthFilter !== 'all') {
                     query = query.eq('month', parseInt(monthFilter)).eq('year', currentYear);
@@ -3107,7 +3105,7 @@
             const total = sueldo + totalHorasExtras + bono + bonoPuntualidad;
             
             try {
-                const { error } = await supabase.from('nomina').insert([{
+                const { error } = await supabaseClient.from('nomina').insert([{
                     employee_id: empId,
                     employee_name: employee.name,
                     user_id: currentUser.id,
@@ -3137,7 +3135,7 @@
             if (!confirm('¿Eliminar este registro de nómina?')) return;
             
             try {
-                await supabase.from('nomina').delete().eq('id', id);
+                await supabaseClient.from('nomina').delete().eq('id', id);
                 await loadNomina();
             } catch (error) {
                 alert('Error al eliminar: ' + error.message);
