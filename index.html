@@ -96,7 +96,6 @@
             transition: all 0.3s;
         }
         .hamburger-btn:hover { background: #f3f4f6; transform: scale(1.05); }
-        .hamburger-btn.hidden { display: none; }
         .nomina-card { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
     </style>
 </head>
@@ -458,7 +457,7 @@
                         <h1 class="text-3xl font-serif font-bold text-brand-900 mb-2">Historial de Ventas</h1>
                         <p class="text-gray-600">Corte del día y ventas anteriores</p>
                     </div>
-                    <button onclick="generateDailyCut()" class="bg-brand-600 hover:bg-brand-700 text-white px-6 py-2 rounded-lg transition-colors shadow-lg">
+                    <button onclick="generateDailyCut()" class="bg-brand-600 hover:bg-brand-700 text-white px-6 py-2 rounded-lg transition-colors shadow-lg admin-only-inline">
                         <i class="fas fa-cut mr-2"></i>Generar Corte del Día
                     </button>
                 </div>
@@ -555,7 +554,7 @@
                                     <th class="px-4 py-3 text-left">Método</th>
                                     <th class="px-4 py-3 text-right">Total</th>
                                     <th class="px-4 py-3 text-center">Estado</th>
-                                    <th class="px-4 py-3 text-center">Acciones</th>
+                                    <th class="px-4 py-3 text-center admin-only-inline">Acciones</th>
                                 </tr>
                             </thead>
                             <tbody id="salesTableBody" class="divide-y divide-gray-100">
@@ -653,7 +652,7 @@
                         <h1 class="text-3xl font-serif font-bold text-brand-900 mb-2">Catálogo de Productos</h1>
                         <p class="text-gray-600">Precios con IVA ya incluyen el 16%</p>
                     </div>
-                    <button onclick="openProductModal()" class="bg-brand-600 hover:bg-brand-700 text-white px-6 py-2 rounded-lg transition-colors shadow-lg admin-only-inline">
+                    <button onclick="openProductModal()" class="bg-brand-600 hover:bg-brand-700 text-white px-6 py-2 rounded-lg transition-colors shadow-lg">
                         <i class="fas fa-plus mr-2"></i>Nuevo Producto
                     </button>
                 </div>
@@ -669,7 +668,7 @@
                                     <th class="px-4 py-3 text-center">IVA Incluido</th>
                                     <th class="px-4 py-3 text-right">Precio Final</th>
                                     <th class="px-4 py-3 text-center">Estado</th>
-                                    <th class="px-4 py-3 text-center admin-only-inline">Acciones</th>
+                                    <th class="px-4 py-3 text-center">Acciones</th>
                                 </tr>
                             </thead>
                             <tbody id="productsTableBody" class="divide-y divide-gray-100">
@@ -1511,28 +1510,47 @@
                 // Configurar UI
                 document.getElementById('loginScreen').classList.add('hidden');
                 document.getElementById('mainApp').classList.remove('hidden');
-                document.getElementById('hamburgerBtn').classList.remove('hidden');
                 document.getElementById('currentUserName').textContent = profile.full_name || profile.username;
                 document.getElementById('currentUserRole').textContent = profile.role === 'admin' ? 'Administrador' : 'Cajero';
 
                 // Configurar según rol
                 if (profile.role === 'cashier') {
-                    document.querySelectorAll('.admin-only').forEach(el => el.style.display = 'none');
-                    document.querySelectorAll('.admin-only-inline').forEach(el => el.style.display = 'none');
+                    // Ocultar elementos del menú lateral
+                    document.querySelectorAll('.admin-only').forEach(el => {
+                        el.style.display = 'none';
+                    });
+                    
+                    // Ocultar botones inline de admin
+                    document.querySelectorAll('.admin-only-inline').forEach(el => {
+                        el.style.display = 'none';
+                    });
+                    
+                    // Ocultar secciones de contenido admin completamente
+                    document.querySelectorAll('.admin-only-content').forEach(el => {
+                        el.classList.add('hidden');
+                    });
+                    
+                    // Configurar textos específicos para cajero
                     document.getElementById('expensesMenuText').textContent = 'Mis Gastos';
                     document.getElementById('adminExpenseStats').classList.add('hidden');
                     document.getElementById('cashierExpenseStats').classList.remove('hidden');
                     document.getElementById('expenseFilterLabel').classList.remove('hidden');
                     document.getElementById('expensesTableTitle').textContent = 'Mis Gastos Registrados';
                     
-                    document.querySelectorAll('.admin-only-content').forEach(el => {
-                        if (el.id !== 'products') {
-                            el.innerHTML = '<div class="text-center py-20"><i class="fas fa-lock text-6xl text-gray-300 mb-4"></i><h2 class="text-2xl font-bold text-gray-400">Acceso Restringido</h2></div>';
-                        }
-                    });
-                    
+                    // Mostrar POS por defecto
                     showModule('pos');
                 } else {
+                    // Admin: asegurar que todo esté visible
+                    document.querySelectorAll('.admin-only').forEach(el => {
+                        el.style.display = '';
+                    });
+                    document.querySelectorAll('.admin-only-inline').forEach(el => {
+                        el.style.display = '';
+                    });
+                    document.querySelectorAll('.admin-only-content').forEach(el => {
+                        el.classList.remove('hidden');
+                    });
+                    
                     document.getElementById('cashierExpenseStats').classList.add('hidden');
                     showModule('dashboard');
                 }
@@ -1571,13 +1589,19 @@
 
         function toggleSidebar() {
             const sidebar = document.getElementById('sidebar');
-            const hamburger = document.getElementById('hamburgerBtn');
-            
             sidebar.classList.toggle('collapsed');
-            hamburger.classList.toggle('hidden');
         }
 
         async function showModule(moduleName) {
+            // Validación de permisos
+            if (currentProfile?.role === 'cashier') {
+                const allowedModules = ['pos', 'salesHistory', 'expenses', 'products'];
+                if (!allowedModules.includes(moduleName)) {
+                    alert('No tienes permisos para acceder a esta sección');
+                    return;
+                }
+            }
+            
             document.querySelectorAll('.module').forEach(m => m.classList.add('hidden'));
             document.getElementById(moduleName).classList.remove('hidden');
             
@@ -2629,7 +2653,6 @@
                                 ${p.stock > 0 ? 'Activo' : 'Agotado'}
                             </span>
                         </td>
-                        ${currentProfile?.role === 'admin' ? `
                         <td class="px-4 py-3 text-center">
                             <button onclick="editProduct('${p.id}')" class="text-blue-500 hover:text-blue-700 mr-3 btn-action">
                                 <i class="fas fa-edit"></i>
@@ -2638,7 +2661,6 @@
                                 <i class="fas fa-trash"></i>
                             </button>
                         </td>
-                        ` : ''}
                     </tr>
                 `).join('');
             } catch (error) {
