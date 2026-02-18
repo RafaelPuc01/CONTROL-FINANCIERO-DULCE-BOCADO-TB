@@ -1516,47 +1516,22 @@
                 document.getElementById('currentUserRole').textContent = profile.role === 'admin' ? 'Administrador' : 'Cajero';
 
                 // Configurar según rol
-                // ✅ CÓDIGO CORREGIDO
-if (profile.role === 'cashier') {
-    // Ocultar elementos del menú lateral
-    document.querySelectorAll('.admin-only').forEach(el => {
-        el.style.display = 'none';
-    });
-    
-    // Ocultar botones inline de admin
-    document.querySelectorAll('.admin-only-inline').forEach(el => {
-        el.style.display = 'none';
-    });
-    
-    // Ocultar secciones de contenido admin completamente
-    document.querySelectorAll('.admin-only-content').forEach(el => {
-        el.classList.add('hidden');
-    });
-    
-    // Configurar textos específicos para cajero
-    document.getElementById('expensesMenuText').textContent = 'Mis Gastos';
-    document.getElementById('adminExpenseStats').classList.add('hidden');
-    document.getElementById('cashierExpenseStats').classList.remove('hidden');
-    document.getElementById('expenseFilterLabel').classList.remove('hidden');
-    document.getElementById('expensesTableTitle').textContent = 'Mis Gastos Registrados';
-    
-    // Mostrar POS por defecto
-    showModule('pos');
-} else {
-    // Admin: asegurar que todo esté visible
-    document.querySelectorAll('.admin-only').forEach(el => {
-        el.style.display = '';
-    });
-    document.querySelectorAll('.admin-only-inline').forEach(el => {
-        el.style.display = '';
-    });
-    document.querySelectorAll('.admin-only-content').forEach(el => {
-        el.classList.remove('hidden');
-    });
-    
-    document.getElementById('cashierExpenseStats').classList.add('hidden');
-    showModule('dashboard');
-}
+                if (profile.role === 'cashier') {
+                    document.querySelectorAll('.admin-only').forEach(el => el.style.display = 'none');
+                    document.querySelectorAll('.admin-only-inline').forEach(el => el.style.display = 'none');
+                    document.getElementById('expensesMenuText').textContent = 'Mis Gastos';
+                    document.getElementById('adminExpenseStats').classList.add('hidden');
+                    document.getElementById('cashierExpenseStats').classList.remove('hidden');
+                    document.getElementById('expenseFilterLabel').classList.remove('hidden');
+                    document.getElementById('expensesTableTitle').textContent = 'Mis Gastos Registrados';
+                    
+                    document.querySelectorAll('.admin-only-content').forEach(el => {
+                        if (el.id !== 'products') {
+                            el.innerHTML = '<div class="text-center py-20"><i class="fas fa-lock text-6xl text-gray-300 mb-4"></i><h2 class="text-2xl font-bold text-gray-400">Acceso Restringido</h2></div>';
+                        }
+                    });
+                    
+                    showModule('pos');
                 } else {
                     document.getElementById('cashierExpenseStats').classList.add('hidden');
                     showModule('dashboard');
