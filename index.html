@@ -136,6 +136,13 @@
         .nomina-card {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
         }
+        /* Tax report styles */
+        .tax-card-0 {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+        }
+        .tax-card-16 {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+        }
     </style>
 </head>
 <body class="text-gray-800 h-screen overflow-hidden">
@@ -791,13 +798,128 @@
                 </div>
             </div>
 
-            <!-- Taxes Module -->
+            <!-- Taxes Module - MEJORADO CON SELECTOR DE PERÍODO -->
             <div id="taxes" class="module hidden fade-in admin-only-content">
                 <div class="mb-6">
                     <h1 class="text-3xl font-serif font-bold text-brand-900 mb-2">Impuestos</h1>
-                    <p class="text-gray-600">Cálculo de IVA e ISR (RESICO - Panificación Tradicional)</p>
+                    <p class="text-gray-600">Desglose de ventas por tipo de IVA y cálculo de impuestos</p>
                 </div>
 
+                <!-- Selector de Período -->
+                <div class="glass-panel p-6 rounded-2xl mb-6 border-l-4 border-brand-500">
+                    <h3 class="text-lg font-bold text-brand-800 mb-4">
+                        <i class="fas fa-calendar-alt mr-2"></i>Seleccionar Período de Análisis
+                    </h3>
+                    <div class="flex flex-wrap gap-4 items-end">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Fecha Inicio</label>
+                            <input type="date" id="taxDateFrom" class="border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-brand-500 outline-none">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Fecha Fin</label>
+                            <input type="date" id="taxDateTo" class="border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-brand-500 outline-none">
+                        </div>
+                        <button onclick="calculateTaxesByPeriod()" class="bg-brand-600 hover:bg-brand-700 text-white px-6 py-2 rounded-lg transition-colors shadow-lg">
+                            <i class="fas fa-search mr-2"></i>Analizar Período
+                        </button>
+                        <button onclick="setTaxPeriodThisMonth()" class="bg-gray-200 hover:bg-gray-300 text-gray-700 px-4 py-2 rounded-lg transition-colors">
+                            Este Mes
+                        </button>
+                        <button onclick="setTaxPeriodLastMonth()" class="bg-gray-200 hover:bg-gray-300 text-gray-700 px-4 py-2 rounded-lg transition-colors">
+                            Mes Pasado
+                        </button>
+                    </div>
+                    <p class="text-xs text-gray-500 mt-2">
+                        <i class="fas fa-info-circle mr-1"></i>
+                        Selecciona un rango de fechas para ver el desglose detallado de ventas por tipo de IVA
+                    </p>
+                </div>
+
+                <!-- Resumen del Período Seleccionado -->
+                <div id="taxPeriodSummary" class="hidden mb-6">
+                    <div class="glass-panel p-4 rounded-xl bg-brand-50 border border-brand-200 mb-4">
+                        <h4 class="font-bold text-brand-800 mb-2">
+                            <i class="fas fa-file-invoice mr-2"></i>Resumen del Período: 
+                            <span id="taxPeriodLabel" class="text-brand-600"></span>
+                        </h4>
+                        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+                            <div>
+                                <span class="text-gray-600">Total Ventas:</span>
+                                <span class="font-bold text-brand-800 ml-2" id="taxPeriodTotalSales">$0.00</span>
+                            </div>
+                            <div>
+                                <span class="text-gray-600">Transacciones:</span>
+                                <span class="font-bold text-brand-800 ml-2" id="taxPeriodTransactions">0</span>
+                            </div>
+                            <div>
+                                <span class="text-gray-600">Ventas IVA 0%:</span>
+                                <span class="font-bold text-pink-600 ml-2" id="taxPeriodCount0">0</span>
+                            </div>
+                            <div>
+                                <span class="text-gray-600">Ventas IVA 16%:</span>
+                                <span class="font-bold text-blue-600 ml-2" id="taxPeriodCount16">0</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Desglose de Ventas por Tipo de IVA -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+                    <!-- Ventas IVA 0% -->
+                    <div class="glass-panel p-6 rounded-2xl relative overflow-hidden border-t-4 border-pink-400">
+                        <div class="absolute top-0 right-0 w-32 h-32 bg-pink-100 rounded-full -mr-16 -mt-16 opacity-50"></div>
+                        <div class="relative z-10">
+                            <div class="flex items-center gap-3 mb-4">
+                                <div class="w-12 h-12 bg-pink-500 rounded-full flex items-center justify-center text-white text-xl">
+                                    <i class="fas fa-percentage"></i>
+                                </div>
+                                <div>
+                                    <h3 class="text-lg font-bold text-gray-800">Ventas con IVA 0%</h3>
+                                    <p class="text-sm text-gray-500">Productos sin IVA (Exentos)</p>
+                                </div>
+                            </div>
+                            <div class="text-3xl font-bold text-pink-700 mb-2" id="salesIVA0">$0.00</div>
+                            <div class="text-sm text-gray-600 mb-4">
+                                <span id="transactionsIVA0">0</span> transacciones
+                            </div>
+                            <div class="bg-pink-50 p-3 rounded-lg">
+                                <p class="text-xs text-pink-800">
+                                    <i class="fas fa-info-circle mr-1"></i>
+                                    Incluye: Pasteles básicos, postres tradicionales sin factura
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Ventas IVA 16% -->
+                    <div class="glass-panel p-6 rounded-2xl relative overflow-hidden border-t-4 border-blue-400">
+                        <div class="absolute top-0 right-0 w-32 h-32 bg-blue-100 rounded-full -mr-16 -mt-16 opacity-50"></div>
+                        <div class="relative z-10">
+                            <div class="flex items-center gap-3 mb-4">
+                                <div class="w-12 h-12 bg-blue-500 rounded-full flex items-center justify-center text-white text-xl">
+                                    <i class="fas fa-receipt"></i>
+                                </div>
+                                <div>
+                                    <h3 class="text-lg font-bold text-gray-800">Ventas con IVA 16%</h3>
+                                    <p class="text-sm text-gray-500">IVA incluido en precios</p>
+                                </div>
+                            </div>
+                            <div class="text-3xl font-bold text-blue-700 mb-2" id="salesIVA16">$0.00</div>
+                            <div class="text-sm text-gray-600 mb-4">
+                                <span id="transactionsIVA16">0</span> transacciones | 
+                                IVA incluido: <span class="font-bold text-blue-600" id="ivaIncluded16">$0.00</span>
+                            </div>
+                            <div class="bg-blue-50 p-3 rounded-lg">
+                                <p class="text-xs text-blue-800">
+                                    <i class="fas fa-info-circle mr-1"></i>
+                                    Incluye: Decoración, herramientas, insumos con factura
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tarjetas de IVA y ISR (se mantienen como estaban) -->
                 <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
                     <div class="glass-panel p-6 rounded-2xl border-t-4 border-blue-500">
                         <h3 class="text-lg font-bold text-gray-800 mb-4">IVA (16% incluido en precios)</h3>
@@ -834,6 +956,31 @@
                                 <span class="font-bold text-xl text-purple-900" id="isrAmount">$0.00</span>
                             </div>
                         </div>
+                    </div>
+                </div>
+
+                <!-- Tabla Detallada de Ventas del Período -->
+                <div class="glass-panel rounded-2xl overflow-hidden">
+                    <div class="p-4 border-b border-gray-200">
+                        <h3 class="font-bold text-brand-800">Detalle de Ventas del Período Analizado</h3>
+                    </div>
+                    <div class="overflow-x-auto max-h-96 overflow-y-auto">
+                        <table class="w-full text-sm">
+                            <thead class="bg-gray-50 text-gray-600 sticky top-0">
+                                <tr>
+                                    <th class="px-4 py-3 text-left">Folio</th>
+                                    <th class="px-4 py-3 text-left">Fecha</th>
+                                    <th class="px-4 py-3 text-left">Productos</th>
+                                    <th class="px-4 py-3 text-center">Tipo IVA</th>
+                                    <th class="px-4 py-3 text-right">Subtotal</th>
+                                    <th class="px-4 py-3 text-right">IVA</th>
+                                    <th class="px-4 py-3 text-right">Total</th>
+                                </tr>
+                            </thead>
+                            <tbody id="taxSalesDetailTable" class="divide-y divide-gray-100">
+                                <!-- Dynamic content -->
+                            </tbody>
+                        </table>
                     </div>
                 </div>
             </div>
@@ -1504,6 +1651,9 @@
             loadProducts();
             loadTodaySales();
             updateDashboard();
+            
+            // Inicializar fechas de impuestos con el mes actual
+            setTaxPeriodThisMonth();
         }
 
         // Sidebar Toggle
@@ -1533,7 +1683,7 @@
             if (moduleName === 'expenses') loadExpenses();
             if (moduleName === 'products') loadProductsTable();
             if (moduleName === 'bank') updateBankModule();
-            if (moduleName === 'taxes') calculateTaxes();
+            if (moduleName === 'taxes') calculateTaxesByPeriod(); // Usar la nueva función
             if (moduleName === 'employees') loadEmployees();
             if (moduleName === 'nomina') loadNomina();
             if (moduleName === 'dashboard') updateDashboard();
@@ -2606,28 +2756,157 @@
             document.getElementById('bankBalance').textContent = formatMoney(bankBalance);
         }
 
-        // Taxes Module
-        function calculateTaxes() {
-            const currentMonth = new Date().getMonth();
-            const monthlySales = sales.filter(s => new Date(s.date).getMonth() === currentMonth && !s.cancelled);
+        // ============================================
+        // NUEVA FUNCIÓN: IMPUESTOS POR PERÍODO
+        // ============================================
+        
+        function setTaxPeriodThisMonth() {
+            const now = new Date();
+            const firstDay = new Date(now.getFullYear(), now.getMonth(), 1);
+            const lastDay = new Date(now.getFullYear(), now.getMonth() + 1, 0);
             
-            const totalSales = monthlySales.reduce((sum, s) => sum + s.total, 0);
-            const ivaSales = monthlySales.filter(s => s.items.some(i => i.hasIVA));
-            const ivaCharged = ivaSales.reduce((sum, s) => sum + s.iva, 0);
-            const noIVASales = totalSales - ivaSales.reduce((sum, s) => sum + s.total, 0);
+            document.getElementById('taxDateFrom').value = firstDay.toISOString().split('T')[0];
+            document.getElementById('taxDateTo').value = lastDay.toISOString().split('T')[0];
             
-            const ivaInExpenses = expenses
-                .filter(e => e.hasIVA && new Date(e.date).getMonth() === currentMonth)
+            calculateTaxesByPeriod();
+        }
+        
+        function setTaxPeriodLastMonth() {
+            const now = new Date();
+            const firstDay = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+            const lastDay = new Date(now.getFullYear(), now.getMonth(), 0);
+            
+            document.getElementById('taxDateFrom').value = firstDay.toISOString().split('T')[0];
+            document.getElementById('taxDateTo').value = lastDay.toISOString().split('T')[0];
+            
+            calculateTaxesByPeriod();
+        }
+        
+        function calculateTaxesByPeriod() {
+            const fromDate = new Date(document.getElementById('taxDateFrom').value);
+            const toDate = new Date(document.getElementById('taxDateTo').value);
+            toDate.setHours(23, 59, 59, 999);
+            
+            // Validar fechas
+            if (isNaN(fromDate.getTime()) || isNaN(toDate.getTime())) {
+                alert('Por favor selecciona un rango de fechas válido');
+                return;
+            }
+            
+            // Mostrar resumen del período
+            document.getElementById('taxPeriodSummary').classList.remove('hidden');
+            document.getElementById('taxPeriodLabel').textContent = 
+                `${fromDate.toLocaleDateString('es-MX')} - ${toDate.toLocaleDateString('es-MX')}`;
+            
+            // Filtrar ventas del período (no canceladas)
+            const periodSales = sales.filter(s => {
+                const saleDate = new Date(s.date);
+                return saleDate >= fromDate && saleDate <= toDate && !s.cancelled;
+            });
+            
+            // Calcular totales generales
+            const totalSales = periodSales.reduce((sum, s) => sum + s.total, 0);
+            const totalTransactions = periodSales.length;
+            
+            // Separar ventas por tipo de IVA
+            // Una venta tiene IVA 16% si ALGUNO de sus items tiene hasIVA = true
+            // Una venta tiene IVA 0% si NINGUNO de sus items tiene hasIVA = true
+            
+            let salesIVA0 = [];
+            let salesIVA16 = [];
+            
+            periodSales.forEach(sale => {
+                const hasIVAItems = sale.items.some(item => item.hasIVA);
+                if (hasIVAItems) {
+                    salesIVA16.push(sale);
+                } else {
+                    salesIVA0.push(sale);
+                }
+            });
+            
+            // Calcular montos
+            const totalIVA0 = salesIVA0.reduce((sum, s) => sum + s.total, 0);
+            const totalIVA16 = salesIVA16.reduce((sum, s) => sum + s.total, 0);
+            const ivaFrom16 = salesIVA16.reduce((sum, s) => sum + s.iva, 0);
+            
+            // Actualizar tarjetas de desglose
+            document.getElementById('salesIVA0').textContent = formatMoney(totalIVA0);
+            document.getElementById('transactionsIVA0').textContent = salesIVA0.length;
+            
+            document.getElementById('salesIVA16').textContent = formatMoney(totalIVA16);
+            document.getElementById('transactionsIVA16').textContent = salesIVA16.length;
+            document.getElementById('ivaIncluded16').textContent = formatMoney(ivaFrom16);
+            
+            // Actualizar resumen del período
+            document.getElementById('taxPeriodTotalSales').textContent = formatMoney(totalSales);
+            document.getElementById('taxPeriodTransactions').textContent = totalTransactions;
+            document.getElementById('taxPeriodCount0').textContent = salesIVA0.length;
+            document.getElementById('taxPeriodCount16').textContent = salesIVA16.length;
+            
+            // Calcular IVA de gastos del período
+            const periodExpenses = expenses.filter(e => {
+                const expDate = new Date(e.date);
+                return expDate >= fromDate && expDate <= toDate;
+            });
+            
+            const ivaInExpenses = periodExpenses
+                .filter(e => e.hasIVA)
                 .reduce((sum, e) => sum + (e.ivaAmount || 0), 0);
             
-            const isr = totalSales * 0.025;
-            
-            document.getElementById('ivaCharged').textContent = formatMoney(ivaCharged);
+            // Actualizar tarjetas de IVA e ISR
+            document.getElementById('ivaCharged').textContent = formatMoney(ivaFrom16);
             document.getElementById('ivaExpenses').textContent = formatMoney(ivaInExpenses);
-            document.getElementById('ivaToPay').textContent = formatMoney(ivaCharged - ivaInExpenses);
+            document.getElementById('ivaToPay').textContent = formatMoney(ivaFrom16 - ivaInExpenses);
+            
+            // ISR (2.5% de todos los ingresos)
+            const isr = totalSales * 0.025;
             document.getElementById('isrIncome').textContent = formatMoney(totalSales);
             document.getElementById('isrAmount').textContent = formatMoney(isr);
+            
+            // Generar tabla detallada
+            renderTaxSalesDetail(periodSales);
         }
+        
+        function renderTaxSalesDetail(salesList) {
+            const tbody = document.getElementById('taxSalesDetailTable');
+            
+            if (salesList.length === 0) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="7" class="px-4 py-8 text-center text-gray-500">
+                            <i class="fas fa-inbox text-4xl mb-2"></i>
+                            <p>No hay ventas en el período seleccionado</p>
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+            
+            tbody.innerHTML = salesList.sort((a, b) => new Date(b.date) - new Date(a.date)).map(sale => {
+                // Determinar tipo de IVA
+                const hasIVAItems = sale.items.some(item => item.hasIVA);
+                const ivaType = hasIVAItems ? '16%' : '0%';
+                const ivaClass = hasIVAItems ? 'bg-blue-100 text-blue-700' : 'bg-pink-100 text-pink-700';
+                
+                // Productos resumidos
+                const productsSummary = sale.items.map(i => i.name).join(', ').substring(0, 50) + (sale.items.length > 2 ? '...' : '');
+                
+                return `
+                <tr class="hover:bg-gray-50 transition-colors">
+                    <td class="px-4 py-3 font-medium text-brand-700">${sale.id}</td>
+                    <td class="px-4 py-3 text-gray-600">${new Date(sale.date).toLocaleDateString('es-MX')}</td>
+                    <td class="px-4 py-3 text-sm text-gray-700" title="${sale.items.map(i => i.name).join(', ')}">${productsSummary}</td>
+                    <td class="px-4 py-3 text-center">
+                        <span class="px-2 py-1 rounded-full text-xs ${ivaClass} font-bold">${ivaType}</span>
+                    </td>
+                    <td class="px-4 py-3 text-right">${formatMoney(sale.subtotal)}</td>
+                    <td class="px-4 py-3 text-right ${hasIVAItems ? 'text-blue-600' : 'text-gray-400'}">${formatMoney(sale.iva)}</td>
+                    <td class="px-4 py-3 text-right font-bold">${formatMoney(sale.total)}</td>
+                </tr>
+            `}).join('');
+        }
+
+        // ============================================
 
         // Employees
         function loadEmployees() {
