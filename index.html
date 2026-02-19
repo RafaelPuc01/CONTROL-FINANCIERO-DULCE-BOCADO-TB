@@ -24,8 +24,8 @@
             theme: {
                 extend: {
                     fontFamily: {
-                        sans: ['Poppins', sans-serif'],
-                        serif: ['Playfair Display', serif],
+                        sans: ['Poppins', 'sans-serif'],
+                        serif: ['Playfair Display', 'serif'],
                     },
                     colors: {
                         brand: {
@@ -91,34 +91,35 @@
         .modal.active { display: flex; }
         .btn-action { transition: all 0.2s; }
         .btn-action:hover { transform: scale(1.1); }
-        .sidebar { transition: transform 0.3s ease-in-out, width 0.3s ease-in-out; }
-        .sidebar.collapsed { transform: translateX(-100%); width: 0; overflow: hidden; }
-        .main-content { transition: margin-left 0.3s ease-in-out; }
         
-        /* BOTÓN HAMBURGUESA CORREGIDO - SIEMPRE VISIBLE */
-        .hamburger-btn {
-            position: fixed;
-            top: 20px;
-            left: 20px;
-            z-index: 9999; /* Z-index muy alto para estar siempre encima */
-            background: white;
-            border-radius: 8px;
-            padding: 10px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-            cursor: pointer;
-            transition: all 0.3s;
-            border: 1px solid #e5e7eb;
+        /* NUEVO: Sidebar mini-mode en lugar de colapsar */
+        .sidebar { 
+            transition: width 0.3s ease-in-out; 
+            width: 16rem; /* w-64 */
         }
-        .hamburger-btn:hover { 
-            background: #f3f4f6; 
-            transform: scale(1.05);
-            box-shadow: 0 4px 15px rgba(0,0,0,0.15);
+        .sidebar.mini { 
+            width: 4.5rem; /* w-[4.5rem] - solo iconos */
         }
-        /* Cuando el sidebar está abierto, mover el botón a la derecha */
-        .sidebar:not(.collapsed) ~ .hamburger-btn,
-        .sidebar:not(.collapsed) + .hamburger-btn {
-            left: 280px; /* 256px del sidebar + margen */
+        .sidebar.mini .sidebar-text,
+        .sidebar.mini .sidebar-header-text,
+        .sidebar.mini .user-info {
+            display: none;
         }
+        .sidebar.mini .sidebar-item {
+            justify-content: center;
+            padding-left: 0;
+            padding-right: 0;
+        }
+        .sidebar.mini .sidebar-item i {
+            margin: 0;
+            font-size: 1.25rem;
+        }
+        .sidebar.mini .sidebar-section-title {
+            display: none;
+        }
+        
+        /* Botón hamburguesa eliminado - ahora usamos el botón de toggle en el sidebar */
+        .main-content { transition: margin-left 0.3s ease-in-out; }
         
         .nomina-card { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
         
@@ -194,27 +195,24 @@
         .stock-badge.low { background: #f59e0b; color: white; }
         .stock-badge.none { background: #ef4444; color: white; }
         
-        /* Estilos para el botón de stock en POS */
-        .stock-btn {
-            position: absolute;
-            top: 8px;
-            left: 8px;
-            width: 28px;
-            height: 28px;
-            background: rgba(255,255,255,0.95);
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
-            transition: all 0.2s;
-            z-index: 10;
+        /* Tooltip para mini-sidebar */
+        .sidebar.mini .sidebar-item {
+            position: relative;
         }
-        .stock-btn:hover {
-            background: #6d453c;
+        .sidebar.mini .sidebar-item:hover::after {
+            content: attr(data-title);
+            position: absolute;
+            left: 100%;
+            top: 50%;
+            transform: translateY(-50%);
+            background: #2d1b17;
             color: white;
-            transform: scale(1.1);
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            white-space: nowrap;
+            margin-left: 8px;
+            z-index: 100;
         }
     </style>
 </head>
@@ -223,11 +221,6 @@
     <!-- PWA Install Button -->
     <button id="installPWA" onclick="installApp()">
         <i class="fas fa-download mr-2"></i>Instalar App
-    </button>
-
-    <!-- BOTÓN HAMBURGUESA - FUERA DEL FLUJO NORMAL Y SIEMPRE VISIBLE -->
-    <button class="hamburger-btn" onclick="toggleSidebar()" id="hamburgerBtn">
-        <i class="fas fa-bars text-xl text-brand-700"></i>
     </button>
 
     <!-- Login Screen -->
@@ -263,19 +256,19 @@
             <div id="registerForm" class="space-y-4 hidden">
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-1">Nombre Completo</label>
-                    <input type="text" id="regName" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-500 outline-none" placeholder="Tu nombre">
+                    <input type="text" id="regName" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-brand-500 outline-none" placeholder="Tu nombre">
                 </div>
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-1">Email</label>
-                    <input type="email" id="regEmail" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-500 outline-none" placeholder="tu@email.com">
+                    <input type="email" id="regEmail" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-brand-500 outline-none" placeholder="tu@email.com">
                 </div>
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-1">Contraseña</label>
-                    <input type="password" id="regPassword" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-500 outline-none" placeholder="Mínimo 6 caracteres">
+                    <input type="password" id="regPassword" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-brand-500 outline-none" placeholder="Mínimo 6 caracteres">
                 </div>
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-1">Rol</label>
-                    <select id="regRole" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-500 outline-none">
+                    <select id="regRole" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-brand-500 outline-none">
                         <option value="cashier">Cajero</option>
                         <option value="admin">Administrador</option>
                     </select>
@@ -298,10 +291,10 @@
 
     <!-- Main App -->
     <div id="mainApp" class="hidden h-full flex">
-        <!-- Sidebar -->
-        <aside id="sidebar" class="sidebar w-64 bg-gradient-to-b from-brand-900 to-brand-800 text-white flex flex-col shadow-2xl z-50">
-            <div class="p-6 border-b border-brand-700 flex justify-between items-center">
-                <div class="flex items-center gap-3">
+        <!-- Sidebar - AHORA CON MODO MINI -->
+        <aside id="sidebar" class="sidebar bg-gradient-to-b from-brand-900 to-brand-800 text-white flex flex-col shadow-2xl z-50">
+            <div class="p-4 border-b border-brand-700 flex justify-between items-center">
+                <div class="flex items-center gap-3 sidebar-header-text">
                     <div class="w-10 h-10 bg-sweet-500 rounded-full flex items-center justify-center">
                         <i class="fas fa-cookie-bite text-white"></i>
                     </div>
@@ -310,75 +303,77 @@
                         <p class="text-xs text-brand-300">ERP Supabase</p>
                     </div>
                 </div>
-                <button onclick="toggleSidebar()" class="text-white hover:text-brand-200 transition-colors">
-                    <i class="fas fa-times text-xl"></i>
+                <!-- Botón de toggle reemplaza al hamburguesa externo -->
+                <button onclick="toggleSidebar()" class="text-white hover:text-brand-200 transition-colors p-2 rounded-lg hover:bg-brand-700" title="Contraer/Expandir menú">
+                    <i class="fas fa-chevron-left text-lg" id="toggleIcon"></i>
                 </button>
             </div>
 
-            <nav class="flex-1 p-4 space-y-2 overflow-y-auto custom-scrollbar">
-                <div class="text-xs font-semibold text-brand-400 uppercase tracking-wider mb-2 px-2">Principal</div>
+            <nav class="flex-1 p-3 space-y-2 overflow-y-auto custom-scrollbar">
+                <div class="text-xs font-semibold text-brand-400 uppercase tracking-wider mb-2 px-2 sidebar-section-title">Principal</div>
                 
-                <button onclick="showModule('dashboard')" class="sidebar-item w-full flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-brand-700 transition-colors text-left admin-only">
-                    <i class="fas fa-chart-pie w-5"></i>
-                    <span>Dashboard Financiero</span>
+                <button onclick="showModule('dashboard')" data-title="Dashboard" class="sidebar-item w-full flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-brand-700 transition-colors text-left admin-only">
+                    <i class="fas fa-chart-pie w-5 text-center"></i>
+                    <span class="sidebar-text">Dashboard Financiero</span>
                 </button>
 
-                <button onclick="showModule('pos')" class="sidebar-item w-full flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-brand-700 transition-colors text-left">
-                    <i class="fas fa-cash-register w-5"></i>
-                    <span>Punto de Venta (POS)</span>
+                <button onclick="showModule('pos')" data-title="Punto de Venta" class="sidebar-item w-full flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-brand-700 transition-colors text-left">
+                    <i class="fas fa-cash-register w-5 text-center"></i>
+                    <span class="sidebar-text">Punto de Venta (POS)</span>
                 </button>
 
-                <button onclick="showModule('salesHistory')" class="sidebar-item w-full flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-brand-700 transition-colors text-left">
-                    <i class="fas fa-receipt w-5"></i>
-                    <span>Historial de Ventas</span>
+                <button onclick="showModule('salesHistory')" data-title="Historial" class="sidebar-item w-full flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-brand-700 transition-colors text-left">
+                    <i class="fas fa-receipt w-5 text-center"></i>
+                    <span class="sidebar-text">Historial de Ventas</span>
                 </button>
 
-                <button onclick="showModule('expenses')" class="sidebar-item w-full flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-brand-700 transition-colors text-left">
-                    <i class="fas fa-wallet w-5"></i>
-                    <span id="expensesMenuText">Mis Gastos</span>
+                <button onclick="showModule('expenses')" data-title="Gastos" class="sidebar-item w-full flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-brand-700 transition-colors text-left">
+                    <i class="fas fa-wallet w-5 text-center"></i>
+                    <span class="sidebar-text" id="expensesMenuText">Mis Gastos</span>
                 </button>
 
-                <button onclick="showModule('products')" class="sidebar-item w-full flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-brand-700 transition-colors text-left">
-                    <i class="fas fa-box w-5"></i>
-                    <span>Productos</span>
+                <button onclick="showModule('products')" data-title="Productos" class="sidebar-item w-full flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-brand-700 transition-colors text-left">
+                    <i class="fas fa-box w-5 text-center"></i>
+                    <span class="sidebar-text">Productos</span>
                 </button>
 
-                <div class="text-xs font-semibold text-brand-400 uppercase tracking-wider mt-6 mb-2 px-2 admin-only">Administración</div>
+                <div class="text-xs font-semibold text-brand-400 uppercase tracking-wider mt-6 mb-2 px-2 sidebar-section-title admin-only">Administración</div>
 
-                <button onclick="showModule('bank')" class="sidebar-item w-full flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-brand-700 transition-colors text-left admin-only">
-                    <i class="fas fa-university w-5"></i>
-                    <span>Bancos y Efectivo</span>
+                <button onclick="showModule('bank')" data-title="Bancos" class="sidebar-item w-full flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-brand-700 transition-colors text-left admin-only">
+                    <i class="fas fa-university w-5 text-center"></i>
+                    <span class="sidebar-text">Bancos y Efectivo</span>
                 </button>
 
-                <button onclick="showModule('taxes')" class="sidebar-item w-full flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-brand-700 transition-colors text-left admin-only">
-                    <i class="fas fa-calculator w-5"></i>
-                    <span>Impuestos (IVA/ISR)</span>
+                <button onclick="showModule('taxes')" data-title="Impuestos" class="sidebar-item w-full flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-brand-700 transition-colors text-left admin-only">
+                    <i class="fas fa-calculator w-5 text-center"></i>
+                    <span class="sidebar-text">Impuestos (IVA/ISR)</span>
                 </button>
 
-                <button onclick="showModule('employees')" class="sidebar-item w-full flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-brand-700 transition-colors text-left admin-only">
-                    <i class="fas fa-users w-5"></i>
-                    <span>Empleados</span>
+                <button onclick="showModule('employees')" data-title="Empleados" class="sidebar-item w-full flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-brand-700 transition-colors text-left admin-only">
+                    <i class="fas fa-users w-5 text-center"></i>
+                    <span class="sidebar-text">Empleados</span>
                 </button>
 
-                <button onclick="showModule('nomina')" class="sidebar-item w-full flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-brand-700 transition-colors text-left admin-only">
-                    <i class="fas fa-money-check-alt w-5"></i>
-                    <span>Nómina</span>
+                <button onclick="showModule('nomina')" data-title="Nómina" class="sidebar-item w-full flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-brand-700 transition-colors text-left admin-only">
+                    <i class="fas fa-money-check-alt w-5 text-center"></i>
+                    <span class="sidebar-text">Nómina</span>
                 </button>
             </nav>
 
-            <div class="p-4 border-t border-brand-700">
-                <div class="flex items-center gap-3 mb-3">
+            <div class="p-3 border-t border-brand-700">
+                <div class="flex items-center gap-3 mb-3 user-info">
                     <div class="w-8 h-8 bg-brand-600 rounded-full flex items-center justify-center">
                         <i class="fas fa-user text-sm"></i>
                     </div>
-                    <div class="flex-1">
-                        <p class="text-sm font-medium" id="currentUserName">Usuario</p>
+                    <div class="flex-1 min-w-0">
+                        <p class="text-sm font-medium truncate" id="currentUserName">Usuario</p>
                         <p class="text-xs text-brand-400" id="currentUserRole">Rol</p>
                     </div>
                 </div>
-                <button onclick="logout()" class="w-full flex items-center justify-center gap-2 px-4 py-2 bg-red-600 hover:bg-red-700 rounded-lg transition-colors text-sm">
-                    <i class="fas fa-sign-out-alt"></i>
-                    Cerrar Sesión
+                <!-- Cerrar sesión - Solo icono de power en modo mini -->
+                <button onclick="logout()" data-title="Cerrar Sesión" class="w-full flex items-center justify-center gap-2 px-4 py-2 bg-red-600 hover:bg-red-700 rounded-lg transition-colors text-sm group">
+                    <i class="fas fa-power-off text-lg"></i>
+                    <span class="sidebar-text">Cerrar Sesión</span>
                 </button>
             </div>
         </aside>
@@ -492,7 +487,7 @@
                 <div class="mb-6 flex justify-between items-center">
                     <div>
                         <h1 class="text-3xl font-serif font-bold text-brand-900 mb-2">Punto de Venta</h1>
-                        <p class="text-gray-600">Nueva venta - Los precios con IVA ya incluyen el 16%. <span class="text-brand-600 font-medium"><i class="fas fa-info-circle"></i> Click en el ícono <i class="fas fa-boxes"></i> para ajustar stock</span></p>
+                        <p class="text-gray-600">Nueva venta - Los precios con IVA ya incluyen el 16%</p>
                     </div>
                     <button onclick="openCustomProductModal()" class="bg-sweet-500 hover:bg-sweet-600 text-white px-4 py-2 rounded-lg transition-colors">
                         <i class="fas fa-plus mr-2"></i>Pastel Personalizado
@@ -787,7 +782,8 @@
                         <h1 class="text-3xl font-serif font-bold text-brand-900 mb-2">Catálogo de Productos</h1>
                         <p class="text-gray-600">Precios con IVA ya incluyen el 16%</p>
                     </div>
-                    <button onclick="openProductModal()" class="bg-brand-600 hover:bg-brand-700 text-white px-6 py-2 rounded-lg transition-colors shadow-lg admin-only-inline">
+                    <!-- Botón Nuevo Producto solo visible para admin -->
+                    <button onclick="openProductModal()" class="bg-brand-600 hover:bg-brand-700 text-white px-6 py-2 rounded-lg transition-colors shadow-lg admin-only-inline" id="btnNewProduct">
                         <i class="fas fa-plus mr-2"></i>Nuevo Producto
                     </button>
                 </div>
@@ -803,7 +799,7 @@
                                     <th class="px-4 py-3 text-center">IVA Incluido</th>
                                     <th class="px-4 py-3 text-right">Precio Final</th>
                                     <th class="px-4 py-3 text-center">Estado</th>
-                                    <th class="px-4 py-3 text-center admin-only-inline">Acciones</th>
+                                    <th class="px-4 py-3 text-center">Acciones</th>
                                 </tr>
                             </thead>
                             <tbody id="productsTableBody" class="divide-y divide-gray-100">
@@ -1175,38 +1171,6 @@
         </div>
     </div>
 
-    <!-- MODAL PARA AJUSTAR STOCK RÁPIDO -->
-    <div id="quickStockModal" class="modal">
-        <div class="bg-white rounded-2xl p-6 w-full max-w-sm mx-4 shadow-2xl">
-            <h3 class="text-xl font-bold text-brand-800 mb-2">Ajustar Stock</h3>
-            <p class="text-sm text-gray-600 mb-4" id="quickStockProductName">Producto</p>
-            <input type="hidden" id="quickStockProductId">
-            
-            <div class="space-y-4">
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">Stock Actual</label>
-                    <input type="number" id="quickStockCurrent" class="w-full border border-gray-300 rounded-lg px-3 py-2 bg-gray-100" readonly>
-                </div>
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">Nuevo Stock</label>
-                    <input type="number" id="quickStockNew" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-brand-500 outline-none" placeholder="0">
-                </div>
-                <div class="flex gap-2">
-                    <button onclick="adjustQuickStock(-1)" class="flex-1 py-2 bg-red-100 text-red-700 rounded-lg hover:bg-red-200 transition-colors">
-                        <i class="fas fa-minus"></i> Quitar 1
-                    </button>
-                    <button onclick="adjustQuickStock(1)" class="flex-1 py-2 bg-green-100 text-green-700 rounded-lg hover:bg-green-200 transition-colors">
-                        <i class="fas fa-plus"></i> Agregar 1
-                    </button>
-                </div>
-            </div>
-            <div class="flex gap-3 mt-6">
-                <button onclick="closeModal('quickStockModal')" class="flex-1 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">Cancelar</button>
-                <button onclick="saveQuickStock()" class="flex-1 py-2 bg-brand-600 text-white rounded-lg hover:bg-brand-700 transition-colors">Guardar</button>
-            </div>
-        </div>
-    </div>
-
     <div id="mixedPaymentModal" class="modal">
         <div class="bg-white rounded-2xl p-6 w-full max-w-md mx-4 shadow-2xl">
             <h3 class="text-xl font-bold text-purple-800 mb-4">
@@ -1571,6 +1535,7 @@
         let expensesChartInstance = null;
         let currentProductFilter = 'all';
         let deferredPrompt = null;
+        let isSidebarMini = false;
 
         // ============================================
         // PWA - SERVICE WORKER & INSTALL
@@ -1747,7 +1712,7 @@
                         el.style.display = 'none';
                     });
                     
-                    // Ocultar botones inline de admin (excepto en productos, que ahora puede ver pero no editar)
+                    // Ocultar botones inline de admin
                     document.querySelectorAll('.admin-only-inline').forEach(el => {
                         el.style.display = 'none';
                     });
@@ -1811,19 +1776,23 @@
         }
 
         // ============================================
-        // NAVEGACIÓN
+        // NAVEGACIÓN - SIDEBAR MINI MODE
         // ============================================
 
         function toggleSidebar() {
             const sidebar = document.getElementById('sidebar');
-            sidebar.classList.toggle('collapsed');
+            const toggleIcon = document.getElementById('toggleIcon');
             
-            // Actualizar posición del botón hamburguesa
-            const hamburgerBtn = document.getElementById('hamburgerBtn');
-            if (sidebar.classList.contains('collapsed')) {
-                hamburgerBtn.style.left = '20px';
+            isSidebarMini = !isSidebarMini;
+            
+            if (isSidebarMini) {
+                sidebar.classList.add('mini');
+                toggleIcon.classList.remove('fa-chevron-left');
+                toggleIcon.classList.add('fa-chevron-right');
             } else {
-                hamburgerBtn.style.left = '280px';
+                sidebar.classList.remove('mini');
+                toggleIcon.classList.remove('fa-chevron-right');
+                toggleIcon.classList.add('fa-chevron-left');
             }
         }
 
@@ -1852,7 +1821,8 @@
                 case 'dashboard': await updateDashboard(); break;
             }
             
-            if (window.innerWidth < 768) {
+            // En móvil, si está expandido, contraer al cambiar de módulo
+            if (window.innerWidth < 768 && !isSidebarMini) {
                 toggleSidebar();
             }
         }
@@ -2108,74 +2078,22 @@
                 const stockText = p.stock > 0 ? `Stock: ${p.stock}` : 'Agotado';
                 
                 return `
-                    <div class="product-card ${hasStock ? 'has-stock' : 'no-stock'} bg-white p-4 rounded-xl shadow-md hover:shadow-xl transition-all border-2 border-transparent hover:border-brand-300 relative">
-                        
-                        <!-- Botón de stock para cajero -->
-                        <div class="stock-btn" onclick="event.stopPropagation(); openQuickStockModal('${p.id}')" title="Ajustar stock">
-                            <i class="fas fa-boxes text-brand-700 text-sm"></i>
-                        </div>
+                    <div onclick="${hasStock ? `addToCart('${p.id}')` : ''}" 
+                         class="product-card ${hasStock ? 'has-stock' : 'no-stock'} bg-white p-4 rounded-xl shadow-md hover:shadow-xl transition-all cursor-pointer transform hover:scale-105 border-2 border-transparent hover:border-brand-300 relative">
                         
                         ${hasStock ? `<span class="stock-badge ${stockClass}">${stockText}</span>` : '<span class="stock-badge none">AGOTADO</span>'}
                         
-                        <div class="text-4xl mb-2 text-center pt-6" onclick="addToCart('${p.id}')">${p.image || '📦'}</div>
-                        <h4 class="font-bold text-gray-800 text-sm mb-1 cursor-pointer" onclick="addToCart('${p.id}')">${p.name}</h4>
-                        <p class="text-xs ${p.has_iva ? 'text-blue-600 font-medium' : 'text-gray-500'} mb-2 cursor-pointer" onclick="addToCart('${p.id}')">
+                        <div class="text-4xl mb-2 text-center">${p.image || '📦'}</div>
+                        <h4 class="font-bold text-gray-800 text-sm mb-1">${p.name}</h4>
+                        <p class="text-xs ${p.has_iva ? 'text-blue-600 font-medium' : 'text-gray-500'} mb-2">
                             ${p.has_iva ? 'IVA incluido' : 'Sin IVA'}
                         </p>
-                        <div class="flex justify-between items-center cursor-pointer" onclick="addToCart('${p.id}')">
+                        <div class="flex justify-between items-center">
                             <span class="font-bold text-brand-700">${formatMoney(p.price)}</span>
                         </div>
                     </div>
                 `;
             }).join('');
-        }
-
-        // NUEVA FUNCIÓN: Abrir modal rápido de stock
-        function openQuickStockModal(productId) {
-            const product = products.find(p => p.id === productId);
-            if (!product) return;
-            
-            document.getElementById('quickStockProductId').value = productId;
-            document.getElementById('quickStockProductName').textContent = product.name;
-            document.getElementById('quickStockCurrent').value = product.stock;
-            document.getElementById('quickStockNew').value = product.stock;
-            
-            openModal('quickStockModal');
-        }
-
-        // NUEVA FUNCIÓN: Ajustar stock rápido (+1 o -1)
-        function adjustQuickStock(change) {
-            const currentInput = document.getElementById('quickStockNew');
-            let newValue = parseInt(currentInput.value) || 0;
-            newValue += change;
-            if (newValue < 0) newValue = 0;
-            currentInput.value = newValue;
-        }
-
-        // NUEVA FUNCIÓN: Guardar ajuste rápido de stock
-        async function saveQuickStock() {
-            const productId = document.getElementById('quickStockProductId').value;
-            const newStock = parseInt(document.getElementById('quickStockNew').value) || 0;
-            
-            try {
-                const { error } = await supabaseClient
-                    .from('products')
-                    .update({ stock: newStock })
-                    .eq('id', productId);
-                
-                if (error) throw error;
-                
-                closeModal('quickStockModal');
-                await loadProducts(currentProductFilter);
-                
-                // Si estamos en la tabla de productos, recargarla también
-                if (!document.getElementById('products').classList.contains('hidden')) {
-                    await loadProductsTable();
-                }
-                
-            } catch (error) {
-                alert('Error al actualizar stock: ' + error.message);
-            }
         }
 
         function filterProducts(category) {
@@ -2947,6 +2865,140 @@
             
             let finalAmount = amount;
             let ivaAmount = 0;
+            if (hasIVA) += s.payment_details.efectivo || 0;
+                            transfer += s.payment_details.transferencia || 0;
+                            card += s.payment_details.tarjeta || 0;
+                        } else {
+                            if (s.payment_method === 'efectivo') cash += s.total;
+                            if (s.payment_method === 'transferencia') transfer += s.total;
+                            if (s.payment_method === 'tarjeta') card += s.total;
+                        }
+                    });
+                    
+                    document.getElementById('cutTotal').textContent = formatMoney(total);
+                    document.getElementById('cutCash').textContent = formatMoney(cash);
+                    document.getElementById('cutTransfer').textContent = formatMoney(transfer);
+                    document.getElementById('cutCard').textContent = formatMoney(card);
+                    document.getElementById('cutIVA').textContent = formatMoney(iva);
+                    document.getElementById('cutTransactions').textContent = todaySales?.length || 0;
+                    
+                    // Ventas canceladas
+                    return supabaseClient
+                        .from('sales')
+                        .select('*')
+                        .gte('created_at', todayStr)
+                        .eq('cancelled', true);
+                })
+                .then(({ data: cancelledSales }) => {
+                    if (cancelledSales?.length > 0) {
+                        document.getElementById('cutCancelledSection').classList.remove('hidden');
+                        document.getElementById('cutCancelledAmount').textContent = formatMoney(cancelledSales.reduce((sum, s) => sum + s.total, 0));
+                    } else {
+                        document.getElementById('cutCancelledSection').classList.add('hidden');
+                    }
+                });
+            
+            openModal('cutModal');
+        }
+
+        // ============================================
+        // GASTOS
+        // ============================================
+
+        async function loadExpenses() {
+            try {
+                const filter = document.getElementById('expenseFilterArea').value;
+                
+                let query = supabaseClient.from('expenses').select('*').order('created_at', { ascending: false });
+                
+                if (currentProfile?.role === 'cashier') {
+                    query = query.eq('user_id', currentUser.id);
+                } else if (filter !== 'all') {
+                    query = query.eq('area', filter);
+                }
+                
+                const { data, error } = await query;
+                if (error) throw error;
+                
+                // Estadísticas
+                if (currentProfile?.role === 'admin') {
+                    const { data: allExpenses } = await supabaseClient.from('expenses').select('area, amount');
+                    
+                    const stats = {
+                        produccion: allExpenses?.filter(e => e.area === 'produccion').reduce((sum, e) => sum + e.amount, 0) || 0,
+                        atencion: allExpenses?.filter(e => e.area === 'atencion').reduce((sum, e) => sum + e.amount, 0) || 0,
+                        administrativo: allExpenses?.filter(e => e.area === 'administrativo').reduce((sum, e) => sum + e.amount, 0) || 0,
+                        otros: allExpenses?.filter(e => e.area === 'otros').reduce((sum, e) => sum + e.amount, 0) || 0
+                    };
+                    
+                    document.getElementById('expenseProduction').textContent = formatMoney(stats.produccion);
+                    document.getElementById('expenseCustomerService').textContent = formatMoney(stats.atencion);
+                    document.getElementById('expenseAdmin').textContent = formatMoney(stats.administrativo);
+                    document.getElementById('expenseOthers').textContent = formatMoney(stats.otros);
+                } else {
+                    const cashierTotal = data?.reduce((sum, e) => sum + e.amount, 0) || 0;
+                    document.getElementById('cashierTotalExpenses').textContent = formatMoney(cashierTotal);
+                }
+                
+                // Tabla
+                const tbody = document.getElementById('expensesTableBody');
+                tbody.innerHTML = (data || []).map(exp => `
+                    <tr class="hover:bg-gray-50 transition-colors">
+                        <td class="px-4 py-3 text-gray-600">${new Date(exp.created_at).toLocaleDateString()}</td>
+                        ${currentProfile?.role === 'admin' ? `<td class="px-4 py-3"><span class="px-2 py-1 rounded-full text-xs ${getAreaColor(exp.area)}">${exp.area}</span></td>` : ''}
+                        <td class="px-4 py-3 text-sm text-gray-700">${exp.registered_by || 'Sistema'}</td>
+                        <td class="px-4 py-3 font-medium">${exp.concept}</td>
+                        <td class="px-4 py-3 text-gray-600 capitalize">${exp.method}</td>
+                        <td class="px-4 py-3 text-center">
+                            ${exp.has_iva ? '<span class="text-blue-600"><i class="fas fa-check"></i> 16%</span>' : '<span class="text-gray-400">-</span>'}
+                        </td>
+                        <td class="px-4 py-3 text-right font-bold text-red-600">-${formatMoney(exp.amount)}</td>
+                        <td class="px-4 py-3 text-center">
+                            ${exp.user_id === currentUser.id ? `
+                                <button onclick="deleteExpense('${exp.id}')" class="text-gray-400 hover:text-red-500 transition-colors btn-action">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            ` : '<span class="text-gray-300">-</span>'}
+                        </td>
+                    </tr>
+                `).join('');
+                
+            } catch (error) {
+                console.error('Error loading expenses:', error);
+            }
+        }
+
+        function calculateExpenseIVA() {
+            const amount = parseFloat(document.getElementById('expenseAmount').value) || 0;
+            const hasIVA = document.getElementById('expenseHasIVA').checked;
+            
+            if (hasIVA && amount > 0) {
+                const total = amount * 1.16;
+                const iva = total - amount;
+                document.getElementById('expenseTotalDisplay').textContent = formatMoney(total);
+                document.getElementById('expenseSubtotalDisplay').textContent = formatMoney(amount);
+                document.getElementById('expenseIVADisplay').textContent = formatMoney(iva);
+                document.getElementById('expenseIVABreakdown').classList.remove('hidden');
+            } else {
+                document.getElementById('expenseTotalDisplay').textContent = formatMoney(amount);
+                document.getElementById('expenseIVABreakdown').classList.add('hidden');
+            }
+        }
+
+        async function saveExpense() {
+            const area = document.getElementById('expenseArea').value;
+            const concept = document.getElementById('expenseConcept').value;
+            const amount = parseFloat(document.getElementById('expenseAmount').value);
+            const method = document.getElementById('expenseMethod').value;
+            const hasIVA = document.getElementById('expenseHasIVA').checked;
+            
+            if (!concept || !amount) {
+                alert('Complete todos los campos');
+                return;
+            }
+            
+            let finalAmount = amount;
+            let ivaAmount = 0;
             if (hasIVA) {
                 finalAmount = amount * 1.16;
                 ivaAmount = finalAmount - amount;
@@ -3003,7 +3055,7 @@
         }
 
         // ============================================
-        // PRODUCTOS (ADMIN)
+        // PRODUCTOS (ADMIN) - CORREGIDO PARA CAJERO
         // ============================================
 
         async function loadProductsTable() {
@@ -3017,7 +3069,22 @@
                 products = data || [];
                 
                 const tbody = document.getElementById('productsTableBody');
-                tbody.innerHTML = products.map(p => `
+                tbody.innerHTML = products.map(p => {
+                    // Determinar qué botones mostrar según el rol
+                    const canEdit = currentProfile?.role === 'admin';
+                    const editButton = canEdit ? `
+                        <button onclick="editProduct('${p.id}')" class="text-blue-500 hover:text-blue-700 mr-3 btn-action">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                    ` : '';
+                    
+                    const deleteButton = canEdit ? `
+                        <button onclick="deleteProduct('${p.id}')" class="text-red-500 hover:text-red-700 btn-action">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    ` : '';
+                    
+                    return `
                     <tr class="hover:bg-gray-50 transition-colors">
                         <td class="px-4 py-3 font-medium">${p.name}</td>
                         <td class="px-4 py-3 capitalize">${p.category}</td>
@@ -3034,21 +3101,29 @@
                             </span>
                         </td>
                         <td class="px-4 py-3 text-center">
-                            <button onclick="editProduct('${p.id}')" class="text-blue-500 hover:text-blue-700 mr-3 btn-action">
-                                <i class="fas fa-edit"></i>
-                            </button>
-                            <button onclick="deleteProduct('${p.id}')" class="text-red-500 hover:text-red-700 btn-action">
-                                <i class="fas fa-trash"></i>
-                            </button>
+                            ${editButton}${deleteButton}
                         </td>
                     </tr>
-                `).join('');
+                `}).join('');
+                
+                // Mostrar/ocultar botón de nuevo producto según rol
+                const btnNewProduct = document.getElementById('btnNewProduct');
+                if (btnNewProduct) {
+                    btnNewProduct.style.display = currentProfile?.role === 'admin' ? 'inline-flex' : 'none';
+                }
+                
             } catch (error) {
                 console.error('Error loading products table:', error);
             }
         }
 
         function openProductModal() {
+            // Verificar permisos
+            if (currentProfile?.role !== 'admin') {
+                alert('No tienes permisos para crear productos');
+                return;
+            }
+            
             document.getElementById('productModalTitle').textContent = 'Nuevo Producto';
             document.getElementById('prodId').value = '';
             document.getElementById('prodName').value = '';
@@ -3060,6 +3135,12 @@
         }
 
         function editProduct(id) {
+            // Verificar permisos
+            if (currentProfile?.role !== 'admin') {
+                alert('No tienes permisos para editar productos');
+                return;
+            }
+            
             const product = products.find(p => p.id === id);
             if (!product) return;
             
@@ -3074,6 +3155,12 @@
         }
 
         async function saveProduct() {
+            // Verificar permisos
+            if (currentProfile?.role !== 'admin') {
+                alert('No tienes permisos para guardar productos');
+                return;
+            }
+            
             const id = document.getElementById('prodId').value;
             const name = document.getElementById('prodName').value;
             const category = document.getElementById('prodCategory').value;
@@ -3114,6 +3201,499 @@
         }
 
         async function deleteProduct(id) {
+            // Verificar permisos
+            if (currentProfile?.role !== 'admin') {
+                alert('No tienes permisos para eliminar productos');
+                return;
+            }
+            
+            if (!confirm('¿Eliminar este producto?')) return;
+            
+            try {
+                await supabaseClient.from('products').update({ is_active: false }).eq('id', id);
+                await loadProductsTable();
+                await loadProducts();
+            } catch (error) {
+                alert('Error al eliminar: ' + error.message);
+            }
+        }
+
+        // ============================================
+        // BANCOS
+        // ============================================
+
+        async function updateBankModule() {
+            try {
+                const { data: salesData } = await supabaseClient
+                    .from('sales')
+                    .select('payment_method, payment_details, total')
+                    .eq('cancelled', false);
+
+                let cashIn = 0, bankIn = 0;
+                
+                salesData?.forEach(s => {
+                    if (s.payment_method === 'mixto' && s.payment_details) {
+                        cashIn += s.payment_details.efectivo || 0;
+                        bankIn += (s.payment_details.transferencia || 0) + (s.payment_details.tarjeta || 0);
+                    } else {
+                        if (s.payment_method === 'efectivo') cashIn += s.total;
+                        if (s.payment_method === 'transferencia' || s.payment_method === 'tarjeta') bankIn += s.total;
+                    }
+                });
+                
+                const { data: expensesData } = await supabaseClient
+                    .from('expenses')
+                    .select('method, amount');
+                
+                const cashOut = expensesData?.filter(e => e.method === 'efectivo').reduce((sum, e) => sum + e.amount, 0) || 0;
+                const bankOut = expensesData?.filter(e => e.method === 'transferencia' || e.method === 'tarjeta').reduce((sum, e) => sum + e.amount, 0) || 0;
+                
+                document.getElementById('cashBalance').textContent = formatMoney(cashIn - cashOut);
+                document.getElementById('bankBalance').textContent = formatMoney(bankIn - bankOut);
+                
+            } catch (error) {
+                console.error('Error updating bank:', error);
+            }
+        }
+
+        // ============================================
+        // IMPUESTOS
+        // ============================================
+
+        function setTaxPeriodThisMonth() {
+            const now = new Date();
+            const firstDay = new Date(now.getFullYear(), now.getMonth(), 1);
+            const lastDay = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+            
+            document.getElementById('taxDateFrom').value = firstDay.toISOString().split('T')[0];
+            document.getElementById('taxDateTo').value = lastDay.toISOString().split('T')[0];
+            
+            calculateTaxesByPeriod();
+        }
+
+        function setTaxPeriodLastMonth() {
+            const now = new Date();
+            const firstDay = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+            const lastDay = new Date(now.getFullYear(), now.getMonth(), 0);
+            
+            document.getElementById('taxDateFrom').value = firstDay.toISOString().split('T')[0];
+            document.getElementById('taxDateTo').value = lastDay.toISOString().split('T')[0];
+            
+            calculateTaxesByPeriod();
+        }
+
+        async function calculateTaxesByPeriod() {
+            const fromDate = document.getElementById('taxDateFrom').value;
+            const toDate = document.getElementById('taxDateTo').value;
+            
+            if (!fromDate || !toDate) return;
+            
+            try {
+                const { data: salesData } = await supabaseClient
+                    .from('sales')
+                    .select('*')
+                    .gte('created_at', fromDate)
+                    .lte('created_at', toDate + 'T23:59:59')
+                    .eq('cancelled', false);
+
+                const { data: expensesData } = await supabaseClient
+                    .from('expenses')
+                    .select('*')
+                    .gte('created_at', fromDate)
+                    .lte('created_at', toDate + 'T23:59:59');
+
+                // Procesar datos
+                const totalSales = salesData?.reduce((sum, s) => sum + s.total, 0) || 0;
+                
+                let salesIVA0 = [], salesIVA16 = [];
+                salesData?.forEach(sale => {
+                    const hasIVAItems = sale.items.some(item => item.hasIVA);
+                    if (hasIVAItems) salesIVA16.push(sale);
+                    else salesIVA0.push(sale);
+                });
+
+                const totalIVA0 = salesIVA0.reduce((sum, s) => sum + s.total, 0);
+                const totalIVA16 = salesIVA16.reduce((sum, s) => sum + s.total, 0);
+                const ivaFrom16 = salesIVA16.reduce((sum, s) => sum + s.iva, 0);
+                
+                // Actualizar UI
+                document.getElementById('taxPeriodSummary').classList.remove('hidden');
+                document.getElementById('taxPeriodLabel').textContent = `${new Date(fromDate).toLocaleDateString('es-MX')} - ${new Date(toDate).toLocaleDateString('es-MX')}`;
+                document.getElementById('taxPeriodTotalSales').textContent = formatMoney(totalSales);
+                document.getElementById('taxPeriodTransactions').textContent = salesData?.length || 0;
+                document.getElementById('taxPeriodCount0').textContent = salesIVA0.length;
+                document.getElementById('taxPeriodCount16').textContent = salesIVA16.length;
+                
+                document.getElementById('salesIVA0').textContent = formatMoney(totalIVA0);
+                document.getElementById('transactionsIVA0').textContent = salesIVA0.length;
+                document.getElementById('salesIVA16').textContent = formatMoney(totalIVA16);
+                document.getElementById('transactionsIVA16').textContent = salesIVA16.length;
+                document.getElementById('ivaIncluded16').textContent = formatMoney(ivaFrom16);
+                
+                // IVA en gastos
+                const ivaInExpenses = expensesData?.filter(e => e.has_iva).reduce((sum, e) => sum + (e.iva_amount || 0), 0) || 0;
+                
+                document.getElementById('ivaCharged').textContent = formatMoney(ivaFrom16);
+                document.getElementById('ivaExpenses').textContent = formatMoney(ivaInExpenses);
+                document.getElementById('ivaToPay').textContent = formatMoney(ivaFrom16 - ivaInExpenses);
+                
+                // ISR
+                const isr = totalSales * 0.025;
+                document.getElementById('isrIncome').textContent = formatMoney(totalSales);
+                document.getElementById('isrAmount').textContent = formatMoney(isr);
+                
+                // Tabla detalle
+                const tbody = document.getElementById('taxSalesDetailTable');
+                tbody.innerHTML = (salesData || []).sort((a, b) => new Date(b.created_at) - new Date(a.created_at)).map(sale => {
+                    const hasIVAItems = sale.items.some(item => item.hasIVA);
+                    const ivaType = hasIVAItems ? '16%' : '0%';
+                    const ivaClass = hasIVAItems ? 'bg-blue-100 text-blue-700' : 'bg-pink-100 text-pink-700';
+                    
+                    return `
+                    <tr class="hover:bg-gray-50 transition-colors">
+                        <td class="px-4 py-3 font-medium text-brand-700">${sale.id.slice(0, 8)}...</td>
+                        <td class="px += s.payment_details.efectivo || 0;
+                            transfer += s.payment_details.transferencia || 0;
+                            card += s.payment_details.tarjeta || 0;
+                        } else {
+                            if (s.payment_method === 'efectivo') cash += s.total;
+                            if (s.payment_method === 'transferencia') transfer += s.total;
+                            if (s.payment_method === 'tarjeta') card += s.total;
+                        }
+                    });
+                    
+                    document.getElementById('cutTotal').textContent = formatMoney(total);
+                    document.getElementById('cutCash').textContent = formatMoney(cash);
+                    document.getElementById('cutTransfer').textContent = formatMoney(transfer);
+                    document.getElementById('cutCard').textContent = formatMoney(card);
+                    document.getElementById('cutIVA').textContent = formatMoney(iva);
+                    document.getElementById('cutTransactions').textContent = todaySales?.length || 0;
+                    
+                    // Ventas canceladas
+                    return supabaseClient
+                        .from('sales')
+                        .select('*')
+                        .gte('created_at', todayStr)
+                        .eq('cancelled', true);
+                })
+                .then(({ data: cancelledSales }) => {
+                    if (cancelledSales?.length > 0) {
+                        document.getElementById('cutCancelledSection').classList.remove('hidden');
+                        document.getElementById('cutCancelledAmount').textContent = formatMoney(cancelledSales.reduce((sum, s) => sum + s.total, 0));
+                    } else {
+                        document.getElementById('cutCancelledSection').classList.add('hidden');
+                    }
+                });
+            
+            openModal('cutModal');
+        }
+
+        // ============================================
+        // GASTOS
+        // ============================================
+
+        async function loadExpenses() {
+            try {
+                const filter = document.getElementById('expenseFilterArea').value;
+                
+                let query = supabaseClient.from('expenses').select('*').order('created_at', { ascending: false });
+                
+                if (currentProfile?.role === 'cashier') {
+                    query = query.eq('user_id', currentUser.id);
+                } else if (filter !== 'all') {
+                    query = query.eq('area', filter);
+                }
+                
+                const { data, error } = await query;
+                if (error) throw error;
+                
+                // Estadísticas
+                if (currentProfile?.role === 'admin') {
+                    const { data: allExpenses } = await supabaseClient.from('expenses').select('area, amount');
+                    
+                    const stats = {
+                        produccion: allExpenses?.filter(e => e.area === 'produccion').reduce((sum, e) => sum + e.amount, 0) || 0,
+                        atencion: allExpenses?.filter(e => e.area === 'atencion').reduce((sum, e) => sum + e.amount, 0) || 0,
+                        administrativo: allExpenses?.filter(e => e.area === 'administrativo').reduce((sum, e) => sum + e.amount, 0) || 0,
+                        otros: allExpenses?.filter(e => e.area === 'otros').reduce((sum, e) => sum + e.amount, 0) || 0
+                    };
+                    
+                    document.getElementById('expenseProduction').textContent = formatMoney(stats.produccion);
+                    document.getElementById('expenseCustomerService').textContent = formatMoney(stats.atencion);
+                    document.getElementById('expenseAdmin').textContent = formatMoney(stats.administrativo);
+                    document.getElementById('expenseOthers').textContent = formatMoney(stats.otros);
+                } else {
+                    const cashierTotal = data?.reduce((sum, e) => sum + e.amount, 0) || 0;
+                    document.getElementById('cashierTotalExpenses').textContent = formatMoney(cashierTotal);
+                }
+                
+                // Tabla
+                const tbody = document.getElementById('expensesTableBody');
+                tbody.innerHTML = (data || []).map(exp => `
+                    <tr class="hover:bg-gray-50 transition-colors">
+                        <td class="px-4 py-3 text-gray-600">${new Date(exp.created_at).toLocaleDateString()}</td>
+                        ${currentProfile?.role === 'admin' ? `<td class="px-4 py-3"><span class="px-2 py-1 rounded-full text-xs ${getAreaColor(exp.area)}">${exp.area}</span></td>` : ''}
+                        <td class="px-4 py-3 text-sm text-gray-700">${exp.registered_by || 'Sistema'}</td>
+                        <td class="px-4 py-3 font-medium">${exp.concept}</td>
+                        <td class="px-4 py-3 text-gray-600 capitalize">${exp.method}</td>
+                        <td class="px-4 py-3 text-center">
+                            ${exp.has_iva ? '<span class="text-blue-600"><i class="fas fa-check"></i> 16%</span>' : '<span class="text-gray-400">-</span>'}
+                        </td>
+                        <td class="px-4 py-3 text-right font-bold text-red-600">-${formatMoney(exp.amount)}</td>
+                        <td class="px-4 py-3 text-center">
+                            ${exp.user_id === currentUser.id ? `
+                                <button onclick="deleteExpense('${exp.id}')" class="text-gray-400 hover:text-red-500 transition-colors btn-action">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            ` : '<span class="text-gray-300">-</span>'}
+                        </td>
+                    </tr>
+                `).join('');
+                
+            } catch (error) {
+                console.error('Error loading expenses:', error);
+            }
+        }
+
+        function calculateExpenseIVA() {
+            const amount = parseFloat(document.getElementById('expenseAmount').value) || 0;
+            const hasIVA = document.getElementById('expenseHasIVA').checked;
+            
+            if (hasIVA && amount > 0) {
+                const total = amount * 1.16;
+                const iva = total - amount;
+                document.getElementById('expenseTotalDisplay').textContent = formatMoney(total);
+                document.getElementById('expenseSubtotalDisplay').textContent = formatMoney(amount);
+                document.getElementById('expenseIVADisplay').textContent = formatMoney(iva);
+                document.getElementById('expenseIVABreakdown').classList.remove('hidden');
+            } else {
+                document.getElementById('expenseTotalDisplay').textContent = formatMoney(amount);
+                document.getElementById('expenseIVABreakdown').classList.add('hidden');
+            }
+        }
+
+        async function saveExpense() {
+            const area = document.getElementById('expenseArea').value;
+            const concept = document.getElementById('expenseConcept').value;
+            const amount = parseFloat(document.getElementById('expenseAmount').value);
+            const method = document.getElementById('expenseMethod').value;
+            const hasIVA = document.getElementById('expenseHasIVA').checked;
+            
+            if (!concept || !amount) {
+                alert('Complete todos los campos');
+                return;
+            }
+            
+            let finalAmount = amount;
+            let ivaAmount = 0;
+            if (hasIVA) {
+                finalAmount = amount * 1.16;
+                ivaAmount = finalAmount - amount;
+            }
+            
+            try {
+                const { error } = await supabaseClient.from('expenses').insert([{
+                    user_id: currentUser.id,
+                    registered_by: currentProfile.full_name,
+                    area,
+                    concept,
+                    amount: finalAmount,
+                    method,
+                    has_iva: hasIVA,
+                    iva_amount: ivaAmount
+                }]);
+                
+                if (error) throw error;
+                
+                closeModal('expenseModal');
+                await loadExpenses();
+                await updateDashboard();
+                
+                document.getElementById('expenseConcept').value = '';
+                document.getElementById('expenseAmount').value = '';
+                document.getElementById('expenseHasIVA').checked = false;
+                calculateExpenseIVA();
+                
+            } catch (error) {
+                alert('Error al guardar gasto: ' + error.message);
+            }
+        }
+
+        async function deleteExpense(id) {
+            if (!confirm('¿Eliminar este gasto?')) return;
+            
+            try {
+                await supabaseClient.from('expenses').delete().eq('id', id);
+                await loadExpenses();
+                await updateDashboard();
+            } catch (error) {
+                alert('Error al eliminar: ' + error.message);
+            }
+        }
+
+        function getAreaColor(area) {
+            const colors = {
+                'produccion': 'bg-orange-100 text-orange-700',
+                'atencion': 'bg-blue-100 text-blue-700',
+                'administrativo': 'bg-yellow-100 text-yellow-700',
+                'otros': 'bg-purple-100 text-purple-700'
+            };
+            return colors[area] || 'bg-gray-100 text-gray-700';
+        }
+
+        // ============================================
+        // PRODUCTOS (ADMIN) - CORREGIDO PARA CAJERO
+        // ============================================
+
+        async function loadProductsTable() {
+            try {
+                const { data, error } = await supabaseClient
+                    .from('products')
+                    .select('*')
+                    .order('name');
+                
+                if (error) throw error;
+                products = data || [];
+                
+                const tbody = document.getElementById('productsTableBody');
+                tbody.innerHTML = products.map(p => {
+                    // Determinar qué botones mostrar según el rol
+                    const canEdit = currentProfile?.role === 'admin';
+                    const editButton = canEdit ? `
+                        <button onclick="editProduct('${p.id}')" class="text-blue-500 hover:text-blue-700 mr-3 btn-action">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                    ` : '';
+                    
+                    const deleteButton = canEdit ? `
+                        <button onclick="deleteProduct('${p.id}')" class="text-red-500 hover:text-red-700 btn-action">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    ` : '';
+                    
+                    return `
+                    <tr class="hover:bg-gray-50 transition-colors">
+                        <td class="px-4 py-3 font-medium">${p.name}</td>
+                        <td class="px-4 py-3 capitalize">${p.category}</td>
+                        <td class="px-4 py-3 text-center">
+                            <span class="${p.stock < 5 ? 'text-red-600 font-bold' : 'text-gray-700'}">${p.stock}</span>
+                        </td>
+                        <td class="px-4 py-3 text-center">
+                            ${p.has_iva ? '<span class="text-blue-600 font-medium">Sí (16%)</span>' : '<span class="text-gray-400">No</span>'}
+                        </td>
+                        <td class="px-4 py-3 text-right font-bold">${formatMoney(p.price)}</td>
+                        <td class="px-4 py-3 text-center">
+                            <span class="px-2 py-1 rounded-full text-xs ${p.stock > 0 ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}">
+                                ${p.stock > 0 ? 'Activo' : 'Agotado'}
+                            </span>
+                        </td>
+                        <td class="px-4 py-3 text-center">
+                            ${editButton}${deleteButton}
+                        </td>
+                    </tr>
+                `}).join('');
+                
+                // Mostrar/ocultar botón de nuevo producto según rol
+                const btnNewProduct = document.getElementById('btnNewProduct');
+                if (btnNewProduct) {
+                    btnNewProduct.style.display = currentProfile?.role === 'admin' ? 'inline-flex' : 'none';
+                }
+                
+            } catch (error) {
+                console.error('Error loading products table:', error);
+            }
+        }
+
+        function openProductModal() {
+            // Verificar permisos
+            if (currentProfile?.role !== 'admin') {
+                alert('No tienes permisos para crear productos');
+                return;
+            }
+            
+            document.getElementById('productModalTitle').textContent = 'Nuevo Producto';
+            document.getElementById('prodId').value = '';
+            document.getElementById('prodName').value = '';
+            document.getElementById('prodCategory').value = 'pasteles';
+            document.getElementById('prodPrice').value = '';
+            document.getElementById('prodStock').value = '0';
+            document.getElementById('prodIVA').checked = false;
+            openModal('productModal');
+        }
+
+        function editProduct(id) {
+            // Verificar permisos
+            if (currentProfile?.role !== 'admin') {
+                alert('No tienes permisos para editar productos');
+                return;
+            }
+            
+            const product = products.find(p => p.id === id);
+            if (!product) return;
+            
+            document.getElementById('productModalTitle').textContent = 'Editar Producto';
+            document.getElementById('prodId').value = product.id;
+            document.getElementById('prodName').value = product.name;
+            document.getElementById('prodCategory').value = product.category;
+            document.getElementById('prodPrice').value = product.price;
+            document.getElementById('prodStock').value = product.stock;
+            document.getElementById('prodIVA').checked = product.has_iva;
+            openModal('productModal');
+        }
+
+        async function saveProduct() {
+            // Verificar permisos
+            if (currentProfile?.role !== 'admin') {
+                alert('No tienes permisos para guardar productos');
+                return;
+            }
+            
+            const id = document.getElementById('prodId').value;
+            const name = document.getElementById('prodName').value;
+            const category = document.getElementById('prodCategory').value;
+            const price = parseFloat(document.getElementById('prodPrice').value);
+            const stock = parseInt(document.getElementById('prodStock').value) || 0;
+            const hasIVA = document.getElementById('prodIVA').checked;
+            
+            if (!name || !price) {
+                alert('Complete los campos obligatorios');
+                return;
+            }
+            
+            const productData = {
+                name,
+                category,
+                price,
+                stock,
+                has_iva: hasIVA,
+                image: category === 'pasteles' ? '🎂' : 
+                       category === 'postres' ? '🧁' : 
+                       category === 'decoracion' ? '🎨' : '👨‍🍳'
+            };
+            
+            try {
+                if (id) {
+                    await supabaseClient.from('products').update(productData).eq('id', id);
+                } else {
+                    await supabaseClient.from('products').insert([productData]);
+                }
+                
+                closeModal('productModal');
+                await loadProductsTable();
+                await loadProducts();
+                
+            } catch (error) {
+                alert('Error al guardar producto: ' + error.message);
+            }
+        }
+
+        async function deleteProduct(id) {
+            // Verificar permisos
+            if (currentProfile?.role !== 'admin') {
+                alert('No tienes permisos para eliminar productos');
+                return;
+            }
+            
             if (!confirm('¿Eliminar este producto?')) return;
             
             try {
