@@ -4,6 +4,17 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dulce Bocado - ERP (Supabase)</title>
+    
+    <!-- PWA Meta Tags -->
+    <meta name="theme-color" content="#6d453c">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Dulce Bocado">
+    <meta name="description" content="Sistema ERP para Dulce Bocado - Gestión de ventas, inventario y nómina">
+    
+    <!-- PWA Manifest -->
+    <link rel="manifest" href="data:application/json;base64,eyJuYW1lIjoiRHVsY2UgQm9jYWRvIC0gRVJQIiwic2hvcnRfbmFtZSI6IkR1bGNlIEJvY2FkbyIsInN0YXJ0X3VybCI6Ii4iLCJkaXNwbGF5Ijoic3RhbmRhbG9uZSIsImJhY2tncm91bmRfY29sb3IiOiIjZmRmOGY2IiwidGhlbWVfY29sb3IiOiIjNmQ0NTNjIiwiaWNvbnMiOlt7InNyYyI6Imh0dHBzOi8vY2RuLmpzZGVsaXZyLm5ldC9naC9kZXZlbG9wZXJzL2dpdGh1Yi9mbGFncy9lNDc0MjQucG5nIiwic2l6ZXMiOiIxOTJ4MTkyIiwidHlwZSI6ImltYWdlL3BuZyJ9XX0=">
+    
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
@@ -97,9 +108,86 @@
         }
         .hamburger-btn:hover { background: #f3f4f6; transform: scale(1.05); }
         .nomina-card { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
+        
+        /* PWA Install Button */
+        #installPWA {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            z-index: 1000;
+            background: linear-gradient(135deg, #6d453c, #8a5a4d);
+            color: white;
+            padding: 12px 24px;
+            border-radius: 50px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+            cursor: pointer;
+            display: none;
+            animation: slideUp 0.3s ease-out;
+        }
+        @keyframes slideUp {
+            from { transform: translateY(100px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+        
+        /* Search Box Styles */
+        .search-container {
+            position: relative;
+            margin-bottom: 1rem;
+        }
+        .search-input {
+            width: 100%;
+            padding: 12px 20px 12px 45px;
+            border: 2px solid #e5e7eb;
+            border-radius: 25px;
+            font-size: 14px;
+            transition: all 0.3s;
+            background: white;
+        }
+        .search-input:focus {
+            outline: none;
+            border-color: #a77f70;
+            box-shadow: 0 0 0 3px rgba(167, 127, 112, 0.1);
+        }
+        .search-icon {
+            position: absolute;
+            left: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #9ca3af;
+        }
+        
+        /* Stock indicator styles */
+        .product-card {
+            transition: all 0.3s ease;
+        }
+        .product-card.no-stock {
+            opacity: 0.6;
+            order: 2;
+            background: #f3f4f6;
+        }
+        .product-card.has-stock {
+            order: 1;
+        }
+        .stock-badge {
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 10px;
+            font-weight: bold;
+        }
+        .stock-badge.high { background: #10b981; color: white; }
+        .stock-badge.low { background: #f59e0b; color: white; }
+        .stock-badge.none { background: #ef4444; color: white; }
     </style>
 </head>
 <body class="text-gray-800 h-screen overflow-hidden">
+
+    <!-- PWA Install Button -->
+    <button id="installPWA" onclick="installApp()">
+        <i class="fas fa-download mr-2"></i>Instalar App
+    </button>
 
     <!-- Login Screen -->
     <div id="loginScreen" class="fixed inset-0 z-50 flex items-center justify-center bg-gradient-to-br from-brand-100 to-sweet-100">
@@ -372,6 +460,12 @@
 
                 <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 h-[calc(100vh-200px)]">
                     <div class="lg:col-span-2 glass-panel rounded-2xl p-6 overflow-y-auto custom-scrollbar">
+                        <!-- Search Box -->
+                        <div class="search-container">
+                            <i class="fas fa-search search-icon"></i>
+                            <input type="text" id="productSearch" class="search-input" placeholder="Buscar productos por nombre..." oninput="filterProductsBySearch(this.value)">
+                        </div>
+                        
                         <div class="flex gap-2 mb-4 overflow-x-auto pb-2">
                             <button onclick="filterProducts('all')" class="px-4 py-2 bg-brand-600 text-white rounded-full text-sm whitespace-nowrap hover:bg-brand-700 transition-colors">Todos</button>
                             <button onclick="filterProducts('pasteles')" class="px-4 py-2 bg-white text-gray-700 border border-gray-300 rounded-full text-sm whitespace-nowrap hover:bg-gray-50 transition-colors">Pasteles</button>
@@ -457,7 +551,7 @@
                         <h1 class="text-3xl font-serif font-bold text-brand-900 mb-2">Historial de Ventas</h1>
                         <p class="text-gray-600">Corte del día y ventas anteriores</p>
                     </div>
-                    <button onclick="generateDailyCut()" class="bg-brand-600 hover:bg-brand-700 text-white px-6 py-2 rounded-lg transition-colors shadow-lg admin-only-inline">
+                    <button onclick="generateDailyCut()" class="bg-brand-600 hover:bg-brand-700 text-white px-6 py-2 rounded-lg transition-colors shadow-lg">
                         <i class="fas fa-cut mr-2"></i>Generar Corte del Día
                     </button>
                 </div>
@@ -1402,6 +1496,66 @@
         let employees = [];
         let salesChartInstance = null;
         let expensesChartInstance = null;
+        let currentProductFilter = 'all';
+        let deferredPrompt = null;
+
+        // ============================================
+        // PWA - SERVICE WORKER & INSTALL
+        // ============================================
+        
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('data:text/javascript;base64,' + btoa(`
+                const CACHE_NAME = 'dulce-bocado-v1';
+                const urlsToCache = [
+                    '/',
+                    'https://cdn.tailwindcss.com',
+                    'https://unpkg.com/@supabase/supabase-js@2',
+                    'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css',
+                    'https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&family=Playfair+Display:wght@600;700&display=swap',
+                    'https://cdn.jsdelivr.net/npm/chart.js'
+                ];
+
+                self.addEventListener('install', event => {
+                    event.waitUntil(
+                        caches.open(CACHE_NAME)
+                            .then(cache => cache.addAll(urlsToCache))
+                    );
+                });
+
+                self.addEventListener('fetch', event => {
+                    event.respondWith(
+                        caches.match(event.request)
+                            .then(response => {
+                                if (response) return response;
+                                return fetch(event.request);
+                            })
+                    );
+                });
+            `)).then(registration => {
+                console.log('Service Worker registrado:', registration);
+            }).catch(error => {
+                console.log('Error al registrar Service Worker:', error);
+            });
+        }
+
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            deferredPrompt = e;
+            document.getElementById('installPWA').style.display = 'block';
+        });
+
+        function installApp() {
+            if (deferredPrompt) {
+                deferredPrompt.prompt();
+                deferredPrompt.userChoice.then((choiceResult) => {
+                    if (choiceResult.outcome === 'accepted') {
+                        console.log('Usuario aceptó instalar la PWA');
+                        document.getElementById('installPWA').style.display = 'none';
+                    }
+                    deferredPrompt = null;
+                });
+            }
+        }
 
         // ============================================
         // AUTENTICACIÓN
@@ -1831,11 +1985,12 @@
         }
 
         // ============================================
-        // PRODUCTOS (POS)
+        // PRODUCTOS (POS) - CON BÚSQUEDA Y ORDENAMIENTO
         // ============================================
 
         async function loadProducts(filter = 'all') {
             try {
+                currentProductFilter = filter;
                 const { data, error } = await supabaseClient
                     .from('products')
                     .select('*')
@@ -1845,14 +2000,38 @@
                 if (error) throw error;
                 products = data || [];
 
-                const grid = document.getElementById('productsGrid');
-                let filtered = products;
-                if (filter !== 'all') {
-                    filtered = products.filter(p => p.category === filter);
-                }
+                renderProductsGrid(products, filter);
+            } catch (error) {
+                console.error('Error loading products:', error);
+            }
+        }
+
+        function renderProductsGrid(productsToRender, filter = 'all') {
+            const grid = document.getElementById('productsGrid');
+            let filtered = productsToRender;
+            
+            if (filter !== 'all') {
+                filtered = productsToRender.filter(p => p.category === filter);
+            }
+            
+            // Ordenar: primero con stock, luego sin stock
+            filtered.sort((a, b) => {
+                if (a.stock > 0 && b.stock <= 0) return -1;
+                if (a.stock <= 0 && b.stock > 0) return 1;
+                return a.name.localeCompare(b.name);
+            });
+            
+            grid.innerHTML = filtered.map(p => {
+                const hasStock = p.stock > 0;
+                const stockClass = p.stock > 10 ? 'high' : p.stock > 0 ? 'low' : 'none';
+                const stockText = p.stock > 0 ? `Stock: ${p.stock}` : 'Agotado';
                 
-                grid.innerHTML = filtered.map(p => `
-                    <div onclick="addToCart('${p.id}')" class="bg-white p-4 rounded-xl shadow-md hover:shadow-xl transition-all cursor-pointer transform hover:scale-105 border-2 border-transparent hover:border-brand-300 ${p.stock <= 0 ? 'opacity-50' : ''}">
+                return `
+                    <div onclick="${hasStock ? `addToCart('${p.id}')` : ''}" 
+                         class="product-card ${hasStock ? 'has-stock' : 'no-stock'} bg-white p-4 rounded-xl shadow-md hover:shadow-xl transition-all cursor-pointer transform hover:scale-105 border-2 border-transparent hover:border-brand-300 relative">
+                        
+                        ${hasStock ? `<span class="stock-badge ${stockClass}">${stockText}</span>` : '<span class="stock-badge none">AGOTADO</span>'}
+                        
                         <div class="text-4xl mb-2 text-center">${p.image || '📦'}</div>
                         <h4 class="font-bold text-gray-800 text-sm mb-1">${p.name}</h4>
                         <p class="text-xs ${p.has_iva ? 'text-blue-600 font-medium' : 'text-gray-500'} mb-2">
@@ -1860,17 +2039,37 @@
                         </p>
                         <div class="flex justify-between items-center">
                             <span class="font-bold text-brand-700">${formatMoney(p.price)}</span>
-                            <span class="text-xs ${p.stock > 0 ? 'text-green-600' : 'text-red-600'}">${p.stock > 0 ? 'Stock: ' + p.stock : 'Agotado'}</span>
                         </div>
                     </div>
-                `).join('');
-            } catch (error) {
-                console.error('Error loading products:', error);
-            }
+                `;
+            }).join('');
         }
 
         function filterProducts(category) {
-            loadProducts(category);
+            // Actualizar botones activos
+            document.querySelectorAll('#pos button[onclick^="filterProducts"]').forEach(btn => {
+                btn.classList.remove('bg-brand-600', 'text-white');
+                btn.classList.add('bg-white', 'text-gray-700', 'border', 'border-gray-300');
+            });
+            
+            event.target.classList.remove('bg-white', 'text-gray-700', 'border', 'border-gray-300');
+            event.target.classList.add('bg-brand-600', 'text-white');
+            
+            const searchValue = document.getElementById('productSearch').value.toLowerCase();
+            if (searchValue) {
+                filterProductsBySearch(searchValue);
+            } else {
+                renderProductsGrid(products, category);
+            }
+        }
+
+        function filterProductsBySearch(searchTerm) {
+            const term = searchTerm.toLowerCase();
+            const filtered = products.filter(p => 
+                p.name.toLowerCase().includes(term) || 
+                p.category.toLowerCase().includes(term)
+            );
+            renderProductsGrid(filtered, currentProductFilter);
         }
 
         function addToCart(productId) {
@@ -2283,7 +2482,7 @@
         }
 
         // ============================================
-        // HISTORIAL DE VENTAS
+        // HISTORIAL DE VENTAS - CORTE PARA CAJERO
         // ============================================
 
         async function loadTodaySales() {
@@ -2466,6 +2665,54 @@
             loadTodaySales();
             const today = new Date();
             document.getElementById('cutDate').textContent = today.toLocaleDateString('es-MX', {weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'});
+            
+            // Calcular datos para el corte
+            const todayStr = new Date().toISOString().split('T')[0];
+            supabaseClient
+                .from('sales')
+                .select('*')
+                .gte('created_at', todayStr)
+                .eq('cancelled', false)
+                .then(({ data: todaySales }) => {
+                    const total = todaySales?.reduce((sum, s) => sum + s.total, 0) || 0;
+                    const iva = todaySales?.reduce((sum, s) => sum + s.iva, 0) || 0;
+                    
+                    let cash = 0, transfer = 0, card = 0;
+                    todaySales?.forEach(s => {
+                        if (s.payment_method === 'mixto' && s.payment_details) {
+                            cash += s.payment_details.efectivo || 0;
+                            transfer += s.payment_details.transferencia || 0;
+                            card += s.payment_details.tarjeta || 0;
+                        } else {
+                            if (s.payment_method === 'efectivo') cash += s.total;
+                            if (s.payment_method === 'transferencia') transfer += s.total;
+                            if (s.payment_method === 'tarjeta') card += s.total;
+                        }
+                    });
+                    
+                    document.getElementById('cutTotal').textContent = formatMoney(total);
+                    document.getElementById('cutCash').textContent = formatMoney(cash);
+                    document.getElementById('cutTransfer').textContent = formatMoney(transfer);
+                    document.getElementById('cutCard').textContent = formatMoney(card);
+                    document.getElementById('cutIVA').textContent = formatMoney(iva);
+                    document.getElementById('cutTransactions').textContent = todaySales?.length || 0;
+                    
+                    // Ventas canceladas
+                    return supabaseClient
+                        .from('sales')
+                        .select('*')
+                        .gte('created_at', todayStr)
+                        .eq('cancelled', true);
+                })
+                .then(({ data: cancelledSales }) => {
+                    if (cancelledSales?.length > 0) {
+                        document.getElementById('cutCancelledSection').classList.remove('hidden');
+                        document.getElementById('cutCancelledAmount').textContent = formatMoney(cancelledSales.reduce((sum, s) => sum + s.total, 0));
+                    } else {
+                        document.getElementById('cutCancelledSection').classList.add('hidden');
+                    }
+                });
+            
             openModal('cutModal');
         }
 
