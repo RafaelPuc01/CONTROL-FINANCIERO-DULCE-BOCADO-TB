@@ -1914,7 +1914,7 @@
                 
                 const { data: monthSales } = await supabaseClient
                     .from('sales')
-                    .select('iva')
+                    .select('total, iva')
                     .gte('created_at', firstDayOfMonth.toISOString())
                     .eq('cancelled', false);
 
@@ -1922,9 +1922,10 @@
                 document.getElementById('dashboardIVA').textContent = formatMoney(ivaTotal);
                 
                 // ISR
-                const totalIncome = monthSales?.reduce((sum, s) => sum + (s.total - s.iva), 0) || 0;
+                const totalIncome = monthSales?.reduce((sum, s) => sum + s.total, 0) || 0;  // ← CORREGIDO: usar s.total
                 const isr = totalIncome * 0.025;
                 document.getElementById('dashboardISR').textContent = formatMoney(isr);
+
                 
                 // Gastos del mes
                 const { data: monthExpenses } = await supabaseClient
