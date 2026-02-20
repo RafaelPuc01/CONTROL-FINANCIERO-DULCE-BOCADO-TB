@@ -865,7 +865,7 @@
                 </div>
             </div>
 
-            <!-- Taxes Module -->
+            <!-- Taxes Module - CORREGIDO -->
             <div id="taxes" class="module hidden fade-in admin-only-content">
                 <div class="mb-6">
                     <h1 class="text-3xl font-serif font-bold text-brand-900 mb-2">Impuestos</h1>
@@ -903,7 +903,7 @@
                             <i class="fas fa-file-invoice mr-2"></i>Resumen del Período: 
                             <span id="taxPeriodLabel" class="text-brand-600"></span>
                         </h4>
-                        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+                        <div class="grid grid-cols-2 md:grid-cols-5 gap-4 text-sm">
                             <div>
                                 <span class="text-gray-600">Total Ventas:</span>
                                 <span class="font-bold text-brand-800 ml-2" id="taxPeriodTotalSales">$0.00</span>
@@ -920,11 +920,18 @@
                                 <span class="text-gray-600">Ventas IVA 16%:</span>
                                 <span class="font-bold text-blue-600 ml-2" id="taxPeriodCount16">0</span>
                             </div>
+                            <!-- NUEVO: Contador de ventas mixtas -->
+                            <div>
+                                <span class="text-gray-600">Ventas Mixtas:</span>
+                                <span class="font-bold text-purple-600 ml-2" id="taxPeriodCountMixta">0</span>
+                            </div>
                         </div>
                     </div>
                 </div>
 
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+                <!-- CORREGIDO: Grid de 3 columnas para mostrar IVA 0%, MIXTAS y IVA 16% -->
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                    <!-- IVA 0% -->
                     <div class="glass-panel p-6 rounded-2xl relative overflow-hidden border-t-4 border-pink-400">
                         <div class="absolute top-0 right-0 w-32 h-32 bg-pink-100 rounded-full -mr-16 -mt-16 opacity-50"></div>
                         <div class="relative z-10">
@@ -944,6 +951,37 @@
                         </div>
                     </div>
 
+                    <!-- NUEVO: Ventas Mixtas -->
+                    <div class="glass-panel p-6 rounded-2xl relative overflow-hidden border-t-4 border-purple-400">
+                        <div class="absolute top-0 right-0 w-32 h-32 bg-purple-100 rounded-full -mr-16 -mt-16 opacity-50"></div>
+                        <div class="relative z-10">
+                            <div class="flex items-center gap-3 mb-4">
+                                <div class="w-12 h-12 bg-purple-500 rounded-full flex items-center justify-center text-white text-xl">
+                                    <i class="fas fa-layer-group"></i>
+                                </div>
+                                <div>
+                                    <h3 class="text-lg font-bold text-gray-800">Ventas Mixtas</h3>
+                                    <p class="text-sm text-gray-500">IVA 0% + IVA 16%</p>
+                                </div>
+                            </div>
+                            <div class="text-3xl font-bold text-purple-700 mb-2" id="salesMixtas">$0.00</div>
+                            <div class="text-sm text-gray-600 mb-4">
+                                <span id="transactionsMixtas">0</span> transacciones
+                            </div>
+                            <div class="text-xs text-purple-600 bg-purple-50 p-2 rounded">
+                                <div class="flex justify-between">
+                                    <span>Monto IVA 0%:</span>
+                                    <span id="mixtasIVA0Amount">$0.00</span>
+                                </div>
+                                <div class="flex justify-between">
+                                    <span>Monto IVA 16%:</span>
+                                    <span id="mixtasIVA16Amount">$0.00</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- IVA 16% -->
                     <div class="glass-panel p-6 rounded-2xl relative overflow-hidden border-t-4 border-blue-400">
                         <div class="absolute top-0 right-0 w-32 h-32 bg-blue-100 rounded-full -mr-16 -mt-16 opacity-50"></div>
                         <div class="relative z-10">
@@ -2676,6 +2714,754 @@
                     <td class="px-4 py-3 text-sm">${sale.cashier_name || 'N/A'}</td>
                     <td class="px-4 py-3 text-sm">${sale.items.length} productos</td>
                     <td class="px-4 py-3">${paymentDisplay}</td>
+                    <td class="px-4 py-3 text-right font.getElementById('historyGrossSales').textContent = formatMoney(grossTotal);
+                } else {
+                    cancelledSection.classList.add('hidden');
+                }
+                
+                renderSalesTable(todaySales || []);
+                
+            } catch (error) {
+                console.error('Error loading sales:', error);
+            }
+        }
+
+        function renderSalesTable(salesList) {
+            const tbody = document.getElementById('salesTableBody');
+            tbody.innerHTML = salesList.map(sale => {
+                let paymentDisplay = '';
+                if (sale.payment_method === 'mixto' && sale.payment_details) {
+                    const parts = [];
+                    if (sale.payment_details.efectivo > 0) parts.push(`Ef: ${formatMoney(sale.payment_details.efectivo)}`);
+                    if (sale.payment_details.transferencia > 0) parts.push(`Tr: ${formatMoney(sale.payment_details.transferencia)}`);
+                    if (sale.payment_details.tarjeta > 0) parts.push(`Ta: ${formatMoney(sale.payment_details.tarjeta)}`);
+                    paymentDisplay = `<span class="px-2 py-1 rounded-full text-xs bg-purple-100 text-purple-700" title="${parts.join(' | ')}">Mixto</span>`;
+                } else {
+                    paymentDisplay = `<span class="px-2 py-1 rounded-full text-xs ${getPaymentMethodColor(sale.payment_method)}">${sale.payment_method}</span>`;
+                }
+                
+                return `
+                <tr class="hover:bg-gray-50 transition-colors ${sale.cancelled ? 'bg-red-50' : ''}">
+                    <td class="px-4 py-3 font-medium ${sale.cancelled ? 'text-red-600 line-through' : 'text-brand-700'}">${sale.id.slice(0, 8)}...</td>
+                    <td class="px-4 py-3 text-gray-600">${new Date(sale.created_at).toLocaleString()}</td>
+                    <td class="px-4 py-3 text-sm">${sale.cashier_name || 'N/A'}</td>
+                    <td class="px-4 py-3 text-sm">${sale.items.length} productos</td>
+                    <td class="px-4 py-3">${paymentDisplay}</td>
+                    <td class="px-4 py-3 text-right font-bold ${sale.cancelled ? 'text-red-600 line-through' : ''}">${formatMoney(sale.total)}</td>
+                    <td class="px-4 py-3 text-center">
+                        ${sale.cancelled ? 
+                            '<span class="px-2 py-1 rounded-full text-xs bg-red-100 text-red-700">Cancelada</span>' : 
+                            '<span class="px-2 py-1 rounded-full text-xs bg-green-100 text-green-700">Activa</span>'
+                        }
+                    </td>
+                    <td class="px-4 py-3 text-center">
+                        ${!sale.cancelled && currentProfile?.role === 'admin' ? `
+                            <button onclick="cancelSale('${sale.id}')" class="text-red-500 hover:text-red-700 text-xs bg-red-50 px-2 py-1 rounded transition-colors">
+                                <i class="fas fa-times mr-1"></i>Cancelar
+                            </button>
+                        ` : '<span class="text-xs text-gray-400">-</span>'}
+                    </td>
+                </tr>
+            `}).join('');
+        }
+
+        function getPaymentMethodColor(method) {
+            const colors = {
+                'efectivo': 'bg-green-100 text-green-700',
+                'transferencia': 'bg-blue-100 text-blue-700',
+                'tarjeta': 'bg-purple-100 text-purple-700'
+            };
+            return colors[method] || 'bg-gray-100 text-gray-700';
+        }
+
+        async function cancelSale(saleId) {
+            if (!confirm('¿Cancelar esta venta? Se restaurará el stock.')) return;
+            
+            try {
+                const { data: sale } = await supabaseClient
+                    .from('sales')
+                    .select('*')
+                    .eq('id', saleId)
+                    .single();
+
+                if (!sale) return;
+
+                // Restaurar stock
+                for (const item of sale.items) {
+                    if (!item.isCustom) {
+                        const { data: product } = await supabaseClient
+                            .from('products')
+                            .select('stock')
+                            .eq('id', item.id)
+                            .single();
+                        
+                        if (product) {
+                            await supabaseClient
+                                .from('products')
+                                .update({ stock: product.stock + item.quantity })
+                                .eq('id', item.id);
+                        }
+                    }
+                }
+
+                // Marcar como cancelada
+                await supabaseClient
+                    .from('sales')
+                    .update({ 
+                        cancelled: true, 
+                        cancelled_at: new Date().toISOString(),
+                        cancelled_by: currentProfile.full_name 
+                    })
+                    .eq('id', saleId);
+
+                await loadTodaySales();
+                await updateDashboard();
+                alert('Venta cancelada correctamente');
+                
+            } catch (error) {
+                alert('Error al cancelar: ' + error.message);
+            }
+        }
+
+        async function filterSales() {
+            const from = document.getElementById('filterDateFrom').value;
+            const to = document.getElementById('filterDateTo').value;
+            
+            if (!from || !to) return;
+            
+            try {
+                const { data } = await supabaseClient
+                    .from('sales.getElementById('historyGrossSales').textContent = formatMoney(grossTotal);
+                } else {
+                    cancelledSection.classList.add('hidden');
+                }
+                
+                renderSalesTable(todaySales || []);
+                
+            } catch (error) {
+                console.error('Error loading sales:', error);
+            }
+        }
+
+        function renderSalesTable(salesList) {
+            const tbody = document.getElementById('salesTableBody');
+            tbody.innerHTML = salesList.map(sale => {
+                let paymentDisplay = '';
+                if (sale.payment_method === 'mixto' && sale.payment_details) {
+                    const parts = [];
+                    if (sale.payment_details.efectivo > 0) parts.push(`Ef: ${formatMoney(sale.payment_details.efectivo)}`);
+                    if (sale.payment_details.transferencia > 0) parts.push(`Tr: ${formatMoney(sale.payment_details.transferencia)}`);
+                    if (sale.payment_details.tarjeta > 0) parts.push(`Ta: ${formatMoney(sale.payment_details.tarjeta)}`);
+                    paymentDisplay = `<span class="px-2 py-1 rounded-full text-xs bg-purple-100 text-purple-700" title="${parts.join(' | ')}">Mixto</span>`;
+                } else {
+                    paymentDisplay = `<span class="px-2 py-1 rounded-full text-xs ${getPaymentMethodColor(sale.payment_method)}">${sale.payment_method}</span>`;
+                }
+                
+                return `
+                <tr class="hover:bg-gray-50 transition-colors ${sale.cancelled ? 'bg-red-50' : ''}">
+                    <td class="px-4 py-3 font-medium ${sale.cancelled ? 'text-red-600 line-through' : 'text-brand-700'}">${sale.id.slice(0, 8)}...</td>
+                    <td class="px-4 py-3 text-gray-600">${new Date(sale.created_at).toLocaleString()}</td>
+                    <td class="px-4 py-3 text-sm">${sale.cashier_name || 'N/A'}</td>
+                    <td class="px-4 py-3 text-sm">${sale.items.length} productos</td>
+                    <td class="px-4 py-3">${paymentDisplay}</td>
+                    <td class="px-4 py-3 text-right font-bold ${sale.cancelled ? 'text-red-600 line-through' : ''}">${formatMoney(sale.total)}</td>
+                    <td class="px-4 py-3 text-center">
+                        ${sale.cancelled ? 
+                            '<span class="px-2 py-1 rounded-full text-xs bg-red-100 text-red-700">Cancelada</span>' : 
+                            '<span class="px-2 py-1 rounded-full text-xs bg-green-100 text-green-700">Activa</span>'
+                        }
+                    </td>
+                    <td class="px-4 py-3 text-center">
+                        ${!sale.cancelled && currentProfile?.role === 'admin' ? `
+                            <button onclick="cancelSale('${sale.id}')" class="text-red-500 hover:text-red-700 text-xs bg-red-50 px-2 py-1 rounded transition-colors">
+                                <i class="fas fa-times mr-1"></i>Cancelar
+                            </button>
+                        ` : '<span class="text-xs text-gray-400">-</span>'}
+                    </td>
+                </tr>
+            `}).join('');
+        }
+
+        function getPaymentMethodColor(method) {
+            const colors = {
+                'efectivo': 'bg-green-100 text-green-700',
+                'transferencia': 'bg-blue-100 text-blue-700',
+                'tarjeta': 'bg-purple-100 text-purple-700'
+            };
+            return colors[method] || 'bg-gray-100 text-gray-700';
+        }
+
+        async function cancelSale(saleId) {
+            if (!confirm('¿Cancelar esta venta? Se restaurará el stock.')) return;
+            
+            try {
+                const { data: sale } = await supabaseClient
+                    .from('sales')
+                    .select('*')
+                    .eq('id', saleId)
+                    .single();
+
+                if (!sale) return;
+
+                // Restaurar stock
+                for (const item of sale.items) {
+                    if (!item.isCustom) {
+                        const { data: product } = await supabaseClient
+                            .from('products')
+                            .select('stock')
+                            .eq('id', item.id)
+                            .single();
+                        
+                        if (product) {
+                            await supabaseClient
+                                .from('products')
+                                .update({ stock: product.stock + item.quantity })
+                                .eq('id', item.id);
+                        }
+                    }
+                }
+
+                // Marcar como cancelada
+                await supabaseClient
+                    .from('sales')
+                    .update({ 
+                        cancelled: true, 
+                        cancelled_at: new Date().toISOString(),
+                        cancelled_by: currentProfile.full_name 
+                    })
+                    .eq('id', saleId);
+
+                await loadTodaySales();
+                await updateDashboard();
+                alert('Venta cancelada correctamente');
+                
+            } catch (error) {
+                alert('Error al cancelar: ' + error.message);
+            }
+        }
+
+        async function filterSales() {
+            const from = document.getElementById('filterDateFrom').value;
+            const to = document.getElementById('filterDateTo').value;
+            
+            if (!from || !to) return;
+            
+            try {
+                const { data } = await supabaseClient
+                    .from('sales')
+                    .select('*')
+                    .gte('created_at', from)
+                    .lte('created_at', to + 'T23:59:59')
+                    .order('created_at', { ascending: false });
+                
+                renderSalesTable(data || []);
+            } catch (error) {
+                console.error('Error filtering sales:', error);
+            }
+        }
+
+        function generateDailyCut() {
+            loadTodaySales();
+            const today = new Date();
+            document.getElementById('cutDate').textContent = today.toLocaleDateString('es-MX', {weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'});
+            
+            // Calcular datos para el corte
+            const todayStr = new Date().toISOString().split('T')[0];
+            supabaseClient
+                .from('sales')
+                .select('*')
+                .gte('created_at', todayStr)
+                .eq('cancelled', false)
+                .then(({ data: todaySales }) => {
+                    const total = todaySales?.reduce((sum, s) => sum + s.total, 0) || 0;
+                    const iva = todaySales?.reduce((sum, s) => sum + s.iva, 0) || 0;
+                    
+                    let cash = 0, transfer = 0, card = 0;
+                    todaySales?.forEach(s => {
+                        if (s.payment_method === 'mixto' && s.payment_details) {
+                            cash += s.payment_details.efectivo || 0;
+                            transfer += s.payment_details.transferencia || 0;
+                            card += s.payment_details.tarjeta || 0;
+                        } else {
+                            if (s.payment_method === 'efectivo') cash += s.total;
+                            if (s.payment_method === 'transferencia') transfer += s.total;
+                            if (s.payment_method === 'tarjeta') card += s.total;
+                        }
+                    });
+                    
+                    document.getElementById('cutTotal').textContent = formatMoney(total);
+                    document.getElementById('cutCash').textContent = formatMoney(cash);
+                    document.getElementById('cutTransfer').textContent = formatMoney(transfer);
+                    document.getElementById('cutCard').textContent = formatMoney(card);
+                    document.getElementById('cutIVA').textContent = formatMoney(iva);
+                    document.getElementById('cutTransactions').textContent = todaySales?.length || 0;
+                    
+                    // Ventas canceladas
+                    return supabaseClient
+                        .from('sales')
+                        .select('*')
+                        .gte('created_at', todayStr)
+                        .eq('cancelled', true);
+                })
+                .then(({ data: cancelledSales }) => {
+                    if (cancelledSales?.length > 0) {
+                        document.getElementById('cutCancelledSection').classList.remove('hidden');
+                        document.getElementById('cutCancelledAmount').textContent = formatMoney(cancelledSales.reduce((sum, s) => sum + s.total, 0));
+                    } else {
+                        document.getElementById('cutCancelledSection').classList.add('hidden');
+                    }
+                });
+            
+            openModal('cutModal');
+        }
+
+        // ============================================
+        // GASTOS
+        // ============================================
+
+        async function loadExpenses() {
+            try {
+                const filter = document.getElementById('expenseFilterArea').value;
+                
+                let query = supabaseClient.from('expenses').select('*').order('created_at', { ascending: false });
+                
+                if (currentProfile?.role === 'cashier') {
+                    query = query.eq('user_id', currentUser.id);
+                } else if (filter !== 'all') {
+                    query = query.eq('area', filter);
+                }
+                
+                const { data, error } = await query;
+                if (error) throw error;
+                
+                // Estadísticas
+                if (currentProfile?.role === 'admin') {
+                    const { data: allExpenses } = await supabaseClient.from('expenses').select('area, amount');
+                    
+                    const stats = {
+                        produccion: allExpenses?.filter(e => e.area === 'produccion').reduce((sum, e) => sum + e.amount, 0) || 0,
+                        atencion: allExpenses?.filter(e => e.area === 'atencion').reduce((sum, e) => sum + e.amount, 0) || 0,
+                        administrativo: allExpenses?.filter(e => e.area === 'administrativo').reduce((sum, e) => sum + e.amount, 0) || 0,
+                        otros: allExpenses?.filter(e => e.area === 'otros').reduce((sum, e) => sum + e.amount, 0) || 0
+                    };
+                    
+                    document.getElementById('expenseProduction').textContent = formatMoney(stats.produccion);
+                    document.getElementById('expenseCustomerService').textContent = formatMoney(stats.atencion);
+                    document.getElementById('expenseAdmin').textContent = formatMoney(stats.administrativo);
+                    document.getElementById('expenseOthers').textContent = formatMoney(stats.otros);
+                } else {
+                    const cashierTotal = data?.reduce((sum, e) => sum + e.amount, 0) || 0;
+                    document.getElementById('cashierTotalExpenses').textContent = formatMoney(cashierTotal);
+                }
+                
+                // Tabla
+                const tbody = document.getElementById('expensesTableBody');
+                tbody.innerHTML = (data || []).map(exp => `
+                    <tr class="hover:bg-gray-50 transition-colors">
+                        <td class="px-4 py-3 text-gray-600">${new Date(exp.created_at).toLocaleDateString()}</td>
+                        ${currentProfile?.role === 'admin' ? `<td class="px-4 py-3"><span class="px-2 py-1 rounded-full text-xs ${getAreaColor(exp.area)}">${exp.area}</span></td>` : ''}
+                        <td class="px-4 py-3 text-sm text-gray-700">${exp.registered_by || 'Sistema'}</td>
+                        <td class="px-4 py-3 font-medium">${exp.concept}</td>
+                        <td class="px-4 py-3 text-gray-600 capitalize">${exp.method}</td>
+                        <td class="px-4 py-3 text-center">
+                            ${exp.has_iva ? '<span class="text-blue-600"><i class="fas fa-check"></i> 16%</span>' : '<span class="text-gray-400">-</span>'}
+                        </td>
+                        <td class="px-4 py-3 text-right font-bold text-red-600">-${formatMoney(exp.amount)}</td>
+                        <td class="px-4 py-3 text-center">
+                            ${exp.user_id === currentUser.id ? `
+                                <button onclick="deleteExpense('${exp.id}')" class="text-gray-400 hover:text-red-500 transition-colors btn-action">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            ` : '<span class="text-gray-300">-</span>'}
+                        </td>
+                    </tr>
+                `).join('');
+                
+            } catch (error) {
+                console.error('Error loading expenses:', error);
+            }
+        }
+
+        function calculateExpenseIVA() {
+            const amount = parseFloat(document.getElementById('expenseAmount').value) || 0;
+            const hasIVA = document.getElementById('expenseHasIVA').checked;
+            
+            if (hasIVA && amount > 0) {
+                const total = amount * 1.16;
+                const iva = total - amount;
+                document.getElementById('expenseTotalDisplay').textContent = formatMoney(total);
+                document.getElementById('expenseSubtotalDisplay').textContent = formatMoney(amount);
+                document.getElementById('expenseIVADisplay').textContent = formatMoney(iva);
+                document.getElementById('expenseIVABreakdown').classList.remove('hidden');
+            } else {
+                document.getElementById('expenseTotalDisplay').textContent = formatMoney(amount);
+                document.getElementById('expenseIVABreakdown').classList.add('hidden');
+            }
+        }
+
+        async function saveExpense() {
+            const area = document.getElementById('expenseArea').value;
+            const concept = document.getElementById('expenseConcept').value;
+            const amount = parseFloat(document.getElementById('expenseAmount').value);
+            const method = document.getElementById('expenseMethod').value;
+            const hasIVA = document.getElementById('expenseHasIVA').checked;
+            
+            if (!concept || !amount) {
+                alert('Complete todos los campos');
+                return;
+            }
+            
+            let finalAmount = amount;
+            let ivaAmount = 0;
+            if (hasIVA) {
+                finalAmount = amount * 1.16;
+                ivaAmount = finalAmount - amount;
+            }
+            
+            try {
+                const { error } = await supabaseClient.from('expenses').insert([{
+                    user_id: currentUser.id,
+                    registered_by: currentProfile.full_name,
+                    area,
+                    concept,
+                    amount: finalAmount,
+                    method,
+                    has_iva: hasIVA,
+                    iva_amount: ivaAmount
+                }]);
+                
+                if (error) throw error;
+                
+                closeModal('expenseModal');
+                await loadExpenses();
+                await updateDashboard();
+                
+                document.getElementById('expenseConcept').value = '';
+                document.getElementById('expenseAmount').value = '';
+                document.getElementById('expenseHasIVA').checked = false;
+                calculateExpenseIVA();
+                
+            } catch (error) {
+                alert('Error al guardar gasto: ' + error.message);
+            }
+        }
+
+        async function deleteExpense(id) {
+            if (!confirm('¿Eliminar este gasto?')) return;
+            
+            try {
+                await supabaseClient.from('expenses').delete().eq('id', id);
+                await loadExpenses();
+                await updateDashboard();
+            } catch (error) {
+                alert('Error al eliminar: ' + error.message);
+            }
+        }
+
+        function getAreaColor(area) {
+            const colors = {
+                'produccion': 'bg-orange-100 text-orange-700',
+                'atencion': 'bg-blue-100 text-blue-700',
+                'administrativo': 'bg-yellow-100 text-yellow-700',
+                'otros': 'bg-purple-100 text-purple-700'
+            };
+            return colors[area] || 'bg-gray-100 text-gray-700';
+        }
+
+        // ============================================
+        // PRODUCTOS (ADMIN Y CAJERO) - CORREGIDO
+        // ============================================
+
+        async function loadProductsTable() {
+            try {
+                const { data, error } = await supabaseClient
+                    .from('products')
+                    .select('*')
+                    .order('name');
+                
+                if (error) throw error;
+                products = data || [];
+                
+                const tbody = document.getElementById('productsTableBody');
+                tbody.innerHTML = products.map(p => {
+                    // Determinar qué botones mostrar según el rol
+                    const isAdmin = currentProfile?.role === 'admin';
+                    
+                    // Admin puede editar todo
+                    const editButton = isAdmin ? `
+                        <button onclick="editProduct('${p.id}')" class="text-blue-500 hover:text-blue-700 mr-3 btn-action" title="Editar producto">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                    ` : '';
+                    
+                    // Cajero solo puede ajustar stock
+                    const stockButton = !isAdmin ? `
+                        <button onclick="openStockModal('${p.id}')" class="text-green-500 hover:text-green-700 mr-3 btn-action" title="Ajustar stock">
+                            <i class="fas fa-boxes"></i>
+                        </button>
+                    ` : '';
+                    
+                    const deleteButton = isAdmin ? `
+                        <button onclick="deleteProduct('${p.id}')" class="text-red-500 hover:text-red-700 btn-action" title="Eliminar producto">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    ` : '';
+                    
+                    return `
+                    <tr class="hover:bg-gray-50 transition-colors">
+                        <td class="px-4 py-3 font-medium">${p.name}</td>
+                        <td class="px-4 py-3 capitalize">${p.category}</td>
+                        <td class="px-4 py-3 text-center">
+                            <span class="${p.stock < 5 ? 'text-red-600 font-bold' : 'text-gray-700'}">${p.stock}</span>
+                        </td>
+                        <td class="px-4 py-3 text-center">
+                            ${p.has_iva ? '<span class="text-blue-600 font-medium">Sí (16%)</span>' : '<span class="text-gray-400">No</span>'}
+                        </td>
+                        <td class="px-4 py-3 text-right font-bold">${formatMoney(p.price)}</td>
+                        <td class="px-4 py-3 text-center">
+                            <span class="px-2 py-1 rounded-full text-xs ${p.stock > 0 ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}">
+                                ${p.stock > 0 ? 'Activo' : 'Agotado'}
+                            </span>
+                        </td>
+                        <td class="px-4 py-3 text-center">
+                            ${editButton}${stockButton}${deleteButton}
+                        </td>
+                    </tr>
+                `}).join('');
+                
+                // Mostrar/ocultar botón de nuevo producto según rol
+                const btnNewProduct = document.getElementById('btnNewProduct');
+                if (btnNewProduct) {
+                    btnNewProduct.style.display = currentProfile?.role === 'admin' ? 'inline-flex' : 'none';
+                }
+                
+            } catch (error) {
+                console.error('Error loading products table:', error);
+            }
+        }
+
+        // NUEVO: Funciones para modal de stock (cajero)
+        function openStockModal(productId) {
+            const product = products.find(p => p.id === productId);
+            if (!product) return;
+            
+            document.getElementById('stockProdId').value = product.id;
+            document.getElementById('stockProdName').textContent = product.name;
+            document.getElementById('stockProdImage').textContent = product.image || '📦';
+            document.getElementById('stockProdCurrent').textContent = `Stock actual: ${product.stock}`;
+            document.getElementById('stockNewValue').value = product.stock;
+            document.getElementById('stockPreview').textContent = product.stock;
+            
+            openModal('stockModal');
+        }
+
+        function adjustStockPreview(change) {
+            const input = document.getElementById('stockNewValue');
+            let value = parseInt(input.value) || 0;
+            value += change;
+            if (value < 0) value = 0;
+            input.value = value;
+            document.getElementById('stockPreview').textContent = value;
+        }
+
+        // Actualizar preview cuando se escribe directamente
+        document.addEventListener('DOMContentLoaded', () => {
+            const stockInput = document.getElementById('stockNewValue');
+            if (stockInput) {
+                stockInput.addEventListener('input', (e) => {
+                    let value = parseInt(e.target.value) || 0;
+                    if (value < 0) value = 0;
+                    document.getElementById('stockPreview').textContent = value;
+                });
+            }
+        });
+
+        async function saveStockAdjustment() {
+            const productId = document.getElementById('stockProdId').value;
+            const newStock = parseInt(document.getElementById('stockNewValue').value) || 0;
+            
+            if (newStock < 0) {
+                alert('El stock no puede ser negativo');
+                return;
+            }
+            
+            try {
+                const { error } = await supabaseClient
+                    .from('products')
+                    .update({ stock: newStock })
+                    .eq('id', productId);
+                
+                if (error) throw error;
+                
+                closeModal('stockModal');
+                await loadProductsTable();
+                await loadProducts(); // Actualizar también el grid del POS
+                
+                alert('Stock actualizado correctamente');
+                
+            } catch (error) {
+                alert('Error al actualizar stock: ' + error.message);
+            }
+        }
+
+        function openProductModal() {
+            // Verificar permisos
+            if (currentProfile?.role !== 'admin') {
+                alert('No tienes permisos para crear productos');
+                return;
+            }
+            
+            document.getElementById('productModalTitle').textContent = 'Nuevo Producto';
+            document.getElementById('prodId').value = '';
+            document.getElementById('prodName').value = '';
+            document.getElementById('prodCategory').value = 'pasteles';
+            document.getElementById('prodPrice').value = '';
+            document.getElementById('prodStock').value = '0';
+            document.getElementById('prodIVA').checked = false;
+            openModal('productModal');
+        }
+
+        function editProduct(id) {
+            // Verificar permisos
+            if (currentProfile?.role !== 'admin') {
+                alert('No tienes permisos para editar productos');
+                return;
+            }
+            
+            const product = products.find(p => p.id === id);
+            if (!product) return;
+            
+            document.getElementById('productModalTitle').textContent = 'Editar Producto';
+            document.getElementById('prodId').value = product.id;
+            document.getElementById('prodName').value = product.name;
+            document.getElementById('prodCategory').value = product.category;
+            document.getElementById('prodPrice').value = product.price;
+            document.getElementById('prodStock').value = product.stock;
+            document.getElementById('prodIVA').checked = product.has_iva;
+            openModal('productModal');
+        }
+
+        async function saveProduct() {
+            // Verificar permisos
+            if (currentProfile?.role !== 'admin') {
+                alert('No tienes permisos para guardar productos');
+                return;
+            }
+            
+            const id = document.getElementById('prodId').value;
+            const name = document.getElementById('prodName').value;
+            const category = document.getElementById('prodCategory').value;
+            const price = parseFloat(document.getElementById('prodPrice').value);
+            const stock = parseInt(document.getElementById('prodStock').value) || 0;
+            const hasIVA = document.getElementById('prodIVA').checked;
+            
+            if (!name || !price) {
+                alert('Complete los campos obligatorios');
+                return;
+            }
+            
+            const productData = {
+                name,
+                category,
+                price,
+                stock,
+                has_iva: hasIVA,
+                image: category === 'pasteles' ? '🎂' : 
+                       category === 'postres' ? '🧁' : 
+                       category === 'decoracion' ? '🎨' : '👨‍🍳'
+            };
+            
+            try {
+                if (id) {
+                    await supabaseClient.from('products').update(productData).eq('id', id);
+                } else {
+                    await supabaseClient.from('products').insert([productData]);
+                }
+                
+                closeModal('productModal');
+                await loadProductsTable();
+                await loadProducts();
+                
+            } catch (error) {
+                alert('Error al guardar producto: ' + error.message);
+            }
+        }
+
+        async function deleteProduct(id) {
+            // Verificar permisos
+            if (currentProfile?.role !== 'admin') {
+                alert('No tienes permisos para eliminar productos');
+                return;
+            }
+            
+            if (!confirm('¿Eliminar este producto?')) return;
+            
+            try {
+                await supabaseClient.from('products').update({ is_active: false }).eq('id', id);
+                await loadProductsTable();
+                await loadProducts();
+            } catch (error) {
+                alert('Error al eliminar: ' + error.message);
+            }
+        }
+
+        // ============================================
+        // BANCOS
+        // ============================================
+
+        async function updateBankModule() {
+            try {
+                const { data: salesData } = await supabaseClient
+                    .from('sales')
+                    .select('payment_method, payment_details, total')
+                    .eq('cancelled', false);
+
+                let cashIn = 0, bankIn = 0;
+                
+                salesData?.forEach(s => {
+                    if (s.payment_method === 'mixto' && s.payment_details) {
+                        cashIn += s.payment_details.efectivo || 0;
+                        bankIn += (s.payment_details.transferencia || 0) + (s.payment_details.tarjeta || 0);
+                    } else {
+                        if (s.payment_method === 'efectivo') cashIn += s.total;
+                        if (s.payment_method === 'transferencia' || s.payment_method === 'tarjeta') bankIn += s.total;
+                    }
+                });
+                
+                const { data: expensesData } = await supabaseClient
+                    ..getElementById('historyGrossSales').textContent = formatMoney(grossTotal);
+                } else {
+                    cancelledSection.classList.add('hidden');
+                }
+                
+                renderSalesTable(todaySales || []);
+                
+            } catch (error) {
+                console.error('Error loading sales:', error);
+            }
+        }
+
+        function renderSalesTable(salesList) {
+            const tbody = document.getElementById('salesTableBody');
+            tbody.innerHTML = salesList.map(sale => {
+                let paymentDisplay = '';
+                if (sale.payment_method === 'mixto' && sale.payment_details) {
+                    const parts = [];
+                    if (sale.payment_details.efectivo > 0) parts.push(`Ef: ${formatMoney(sale.payment_details.efectivo)}`);
+                    if (sale.payment_details.transferencia > 0) parts.push(`Tr: ${formatMoney(sale.payment_details.transferencia)}`);
+                    if (sale.payment_details.tarjeta > 0) parts.push(`Ta: ${formatMoney(sale.payment_details.tarjeta)}`);
+                    paymentDisplay = `<span class="px-2 py-1 rounded-full text-xs bg-purple-100 text-purple-700" title="${parts.join(' | ')}">Mixto</span>`;
+                } else {
+                    paymentDisplay = `<span class="px-2 py-1 rounded-full text-xs ${getPaymentMethodColor(sale.payment_method)}">${sale.payment_method}</span>`;
+                }
+                
+                return `
+                <tr class="hover:bg-gray-50 transition-colors ${sale.cancelled ? 'bg-red-50' : ''}">
+                    <td class="px-4 py-3 font-medium ${sale.cancelled ? 'text-red-600 line-through' : 'text-brand-700'}">${sale.id.slice(0, 8)}...</td>
+                    <td class="px-4 py-3 text-gray-600">${new Date(sale.created_at).toLocaleString()}</td>
+                    <td class="px-4 py-3 text-sm">${sale.cashier_name || 'N/A'}</td>
+                    <td class="px-4 py-3 text-sm">${sale.items.length} productos</td>
+                    <td class="px-4 py-3">${paymentDisplay}</td>
                     <td class="px-4 py-3 text-right font-bold ${sale.cancelled ? 'text-red-600 line-through' : ''}">${formatMoney(sale.total)}</td>
                     <td class="px-4 py-3 text-center">
                         ${sale.cancelled ? 
@@ -3256,7 +4042,7 @@
         }
 
         // ============================================
-        // IMPUESTOS
+        // IMPUESTOS - CORREGIDO PARA SEPARAR VENTAS MIXTAS
         // ============================================
 
         function setTaxPeriodThisMonth() {
@@ -3281,6 +4067,7 @@
             calculateTaxesByPeriod();
         }
 
+        // CORREGIDO: Función principal de cálculo de impuestos
         async function calculateTaxesByPeriod() {
             const fromDate = document.getElementById('taxDateFrom').value;
             const toDate = document.getElementById('taxDateTo').value;
@@ -3301,38 +4088,90 @@
                     .gte('created_at', fromDate)
                     .lte('created_at', toDate + 'T23:59:59');
 
-                // Procesar datos - CORREGIDO: calcular IVA correctamente por venta
+                // CORREGIDO: Procesar datos separando correctamente IVA 0%, IVA 16% y MIXTAS
                 const totalSales = salesData?.reduce((sum, s) => sum + s.total, 0) || 0;
                 
-                let salesIVA0 = [], salesIVA16 = [];
+                let salesIVA0 = [], salesIVA16 = [], salesMixtas = [];
                 let totalIVA0 = 0, totalIVA16 = 0, totalIVAFrom16 = 0;
+                let totalBaseIVA0 = 0, totalBaseIVA16 = 0;
+                let mixtasIVA0Amount = 0, mixtasIVA16Amount = 0; // NUEVO: Montos separados de ventas mixtas
                 
                 salesData?.forEach(sale => {
-                    // Una venta es IVA 16% si ALGÚN item tiene IVA
-                    const hasIVAItems = sale.items.some(item => item.hasIVA);
+                    // Calcular montos separados para esta venta
+                    let saleIVA0 = 0, saleIVA16 = 0, saleIVAAmount = 0;
                     
-                    if (hasIVAItems) {
+                    sale.items.forEach(item => {
+                        const itemTotal = item.price * item.quantity;
+                        if (item.hasIVA) {
+                            // Desglosar el IVA incluido
+                            const baseItem = itemTotal / 1.16;
+                            const ivaItem = itemTotal - baseItem;
+                            saleIVA16 += itemTotal;      // Total con IVA incluido
+                            saleIVAAmount += ivaItem;    // Monto del IVA
+                            totalBaseIVA16 += baseItem;  // Base gravable
+                        } else {
+                            saleIVA0 += itemTotal;       // Total sin IVA
+                            totalBaseIVA0 += itemTotal;  // Base gravable
+                        }
+                    });
+                    
+                    // Determinar tipo de venta
+                    const hasIVA0 = saleIVA0 > 0;
+                    const hasIVA16 = saleIVA16 > 0;
+                    
+                    if (hasIVA0 && hasIVA16) {
+                        // VENTA MIXTA - CORREGIDO
+                        salesMixtas.push({
+                            ...sale,
+                            amountIVA0: saleIVA0,
+                            amountIVA16: saleIVA16,
+                            ivaAmount: saleIVAAmount
+                        });
+                        // Sumar a los totales generales
+                        totalIVA0 += saleIVA0;           // Parte de la venta sin IVA
+                        totalIVA16 += saleIVA16;         // Parte de la venta con IVA
+                        totalIVAFrom16 += saleIVAAmount; // IVA de la parte con IVA
+                        // Guardar montos separados para mostrar en tarjeta
+                        mixtasIVA0Amount += saleIVA0;
+                        mixtasIVA16Amount += saleIVA16;
+                    } else if (hasIVA16) {
+                        // Solo IVA 16%
                         salesIVA16.push(sale);
-                        totalIVA16 += sale.total;
-                        totalIVAFrom16 += sale.iva; // El IVA ya está calculado y guardado en la venta
+                        totalIVA16 += saleIVA16;
+                        totalIVAFrom16 += saleIVAAmount;
                     } else {
+                        // Solo IVA 0%
                         salesIVA0.push(sale);
-                        totalIVA0 += sale.total;
+                        totalIVA0 += saleIVA0;
                     }
                 });
                 
-                // Actualizar UI
+                // Actualizar UI - Resumen del período
                 document.getElementById('taxPeriodSummary').classList.remove('hidden');
                 document.getElementById('taxPeriodLabel').textContent = `${new Date(fromDate).toLocaleDateString('es-MX')} - ${new Date(toDate).toLocaleDateString('es-MX')}`;
                 document.getElementById('taxPeriodTotalSales').textContent = formatMoney(totalSales);
                 document.getElementById('taxPeriodTransactions').textContent = salesData?.length || 0;
                 document.getElementById('taxPeriodCount0').textContent = salesIVA0.length;
                 document.getElementById('taxPeriodCount16').textContent = salesIVA16.length;
+                // NUEVO: Mostrar contador de ventas mixtas
+                document.getElementById('taxPeriodCountMixta').textContent = salesMixtas.length;
                 
-                document.getElementById('salesIVA0').textContent = formatMoney(totalIVA0);
+                // CORREGIDO: Actualizar tarjetas de resumen
+                // IVA 0% - Solo ventas puras de IVA 0%
+                document.getElementById('salesIVA0').textContent = formatMoney(totalIVA0 - mixtasIVA0Amount); // Solo las puras, no las mixtas
                 document.getElementById('transactionsIVA0').textContent = salesIVA0.length;
-                document.getElementById('salesIVA16').textContent = formatMoney(totalIVA16);
+                
+                // NUEVO: Ventas Mixtas - Mostrar desglose
+                const totalMixtas = mixtasIVA0Amount + mixtasIVA16Amount;
+                document.getElementById('salesMixtas').textContent = formatMoney(totalMixtas);
+                document.getElementById('transactionsMixtas').textContent = salesMixtas.length;
+                document.getElementById('mixtasIVA0Amount').textContent = formatMoney(mixtasIVA0Amount);
+                document.getElementById('mixtasIVA16Amount').textContent = formatMoney(mixtasIVA16Amount);
+                
+                // IVA 16% - Solo ventas puras de IVA 16% (sin incluir mixtas en el conteo, pero sí en el IVA)
+                document.getElementById('salesIVA16').textContent = formatMoney(totalIVA16 - mixtasIVA16Amount); // Solo las puras
                 document.getElementById('transactionsIVA16').textContent = salesIVA16.length;
+                // El IVA incluido incluye el de ventas puras 16% + el de la parte con IVA de las mixtas
                 document.getElementById('ivaIncluded16').textContent = formatMoney(totalIVAFrom16);
                 
                 // IVA en gastos
@@ -3347,12 +4186,34 @@
                 document.getElementById('isrIncome').textContent = formatMoney(totalSales);
                 document.getElementById('isrAmount').textContent = formatMoney(isr);
                 
-                // Tabla detalle
+                // CORREGIDO: Tabla detalle con clasificación correcta
                 const tbody = document.getElementById('taxSalesDetailTable');
                 tbody.innerHTML = (salesData || []).sort((a, b) => new Date(b.created_at) - new Date(a.created_at)).map(sale => {
-                    const hasIVAItems = sale.items.some(item => item.hasIVA);
-                    const ivaType = hasIVAItems ? '16%' : '0%';
-                    const ivaClass = hasIVAItems ? 'bg-blue-100 text-blue-700' : 'bg-pink-100 text-pink-700';
+                    // Recalcular para determinar tipo
+                    let saleIVA0 = 0, saleIVA16 = 0;
+                    sale.items.forEach(item => {
+                        const itemTotal = item.price * item.quantity;
+                        if (item.hasIVA) {
+                            saleIVA16 += itemTotal;
+                        } else {
+                            saleIVA0 += itemTotal;
+                        }
+                    });
+                    
+                    const hasIVA0 = saleIVA0 > 0;
+                    const hasIVA16 = saleIVA16 > 0;
+                    
+                    let ivaType, ivaClass;
+                    if (hasIVA0 && hasIVA16) {
+                        ivaType = 'MIXTA';
+                        ivaClass = 'bg-purple-100 text-purple-700 font-bold'; // Color diferente para mixta
+                    } else if (hasIVA16) {
+                        ivaType = '16%';
+                        ivaClass = 'bg-blue-100 text-blue-700';
+                    } else {
+                        ivaType = '0%';
+                        ivaClass = 'bg-pink-100 text-pink-700';
+                    }
                     
                     return `
                     <tr class="hover:bg-gray-50 transition-colors">
@@ -3360,10 +4221,10 @@
                         <td class="px-4 py-3 text-gray-600">${new Date(sale.created_at).toLocaleDateString('es-MX')}</td>
                         <td class="px-4 py-3 text-sm text-gray-700">${sale.items.map(i => i.name).join(', ').substring(0, 50)}...</td>
                         <td class="px-4 py-3 text-center">
-                            <span class="px-2 py-1 rounded-full text-xs ${ivaClass} font-bold">${ivaType}</span>
+                            <span class="px-2 py-1 rounded-full text-xs ${ivaClass}">${ivaType}</span>
                         </td>
                         <td class="px-4 py-3 text-right">${formatMoney(sale.subtotal)}</td>
-                        <td class="px-4 py-3 text-right ${hasIVAItems ? 'text-blue-600' : 'text-gray-400'}">${formatMoney(sale.iva)}</td>
+                        <td class="px-4 py-3 text-right ${hasIVA16 ? 'text-blue-600' : 'text-gray-400'}">${formatMoney(sale.iva)}</td>
                         <td class="px-4 py-3 text-right font-bold">${formatMoney(sale.total)}</td>
                     </tr>
                 `}).join('');
