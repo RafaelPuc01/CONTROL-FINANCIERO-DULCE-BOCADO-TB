@@ -214,6 +214,20 @@
             margin-left: 8px;
             z-index: 100;
         }
+        
+        /* NUEVO: Estilos para modal de stock de cajero */
+        .stock-input-cashier {
+            width: 80px;
+            text-align: center;
+            border: 2px solid #e5e7eb;
+            border-radius: 8px;
+            padding: 4px;
+            font-weight: bold;
+        }
+        .stock-input-cashier:focus {
+            outline: none;
+            border-color: #a77f70;
+        }
     </style>
 </head>
 <body class="text-gray-800 h-screen overflow-hidden">
@@ -1354,6 +1368,34 @@
         </div>
     </div>
 
+    <!-- NUEVO: Modal para editar stock (cajero) -->
+    <div id="stockModal" class="modal">
+        <div class="bg-white rounded-2xl p-6 w-full max-w-sm mx-4 shadow-2xl">
+            <h3 class="text-xl font-bold text-brand-800 mb-4">Ajustar Stock</h3>
+            <input type="hidden" id="stockProdId">
+            <div class="text-center mb-6">
+                <div class="text-4xl mb-2" id="stockProdImage">📦</div>
+                <h4 class="font-bold text-lg text-gray-800" id="stockProdName">Producto</h4>
+                <p class="text-sm text-gray-500" id="stockProdCurrent">Stock actual: 0</p>
+            </div>
+            
+            <div class="flex items-center justify-center gap-4 mb-6">
+                <button onclick="adjustStockPreview(-1)" class="w-10 h-10 rounded-full bg-gray-200 hover:bg-gray-300 flex items-center justify-center text-gray-700 font-bold text-lg">-</button>
+                <input type="number" id="stockNewValue" class="stock-input-cashier text-xl" value="0" min="0">
+                <button onclick="adjustStockPreview(1)" class="w-10 h-10 rounded-full bg-gray-200 hover:bg-gray-300 flex items-center justify-center text-gray-700 font-bold text-lg">+</button>
+            </div>
+            
+            <div class="bg-blue-50 p-3 rounded-lg mb-4 text-center">
+                <p class="text-xs text-blue-600">Nuevo stock: <span id="stockPreview" class="font-bold text-lg">0</span></p>
+            </div>
+            
+            <div class="flex gap-3">
+                <button onclick="closeModal('stockModal')" class="flex-1 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">Cancelar</button>
+                <button onclick="saveStockAdjustment()" class="flex-1 py-2 bg-brand-600 text-white rounded-lg hover:bg-brand-700 transition-colors">Guardar Cambio</button>
+            </div>
+        </div>
+    </div>
+
     <div id="employeeModal" class="modal">
         <div class="bg-white rounded-2xl p-6 w-full max-w-md mx-4 shadow-2xl">
             <h3 class="text-xl font-bold text-brand-800 mb-4">Agregar Empleado</h3>
@@ -2227,6 +2269,7 @@
             updateCart();
         }
 
+        // CORREGIDO: Cálculo de totales separando correctamente IVA 0% y 16%
         function calculateTotals() {
             let subtotalSinIVA = 0;
             let totalIVA = 0;
@@ -2234,11 +2277,16 @@
             cart.forEach(item => {
                 const itemTotal = item.price * item.quantity;
                 if (item.hasIVA) {
-                    const subtotalSinIVAItem = itemTotal / 1.16;
-                    const ivaItem = itemTotal - subtotalSinIVAItem;
-                    subtotalSinIVA += subtotalSinIVAItem;
+                    // Si tiene IVA, el precio ya incluye el 16%
+                    // Precio = Subtotal + IVA = Subtotal * 1.16
+                    // Subtotal = Precio / 1.16
+                    // IVA = Precio - Subtotal
+                    const subtotalItem = itemTotal / 1.16;
+                    const ivaItem = itemTotal - subtotalItem;
+                    subtotalSinIVA += subtotalItem;
                     totalIVA += ivaItem;
                 } else {
+                    // Sin IVA, todo es subtotal
                     subtotalSinIVA += itemTotal;
                 }
             });
@@ -2281,15 +2329,17 @@
                 return;
             }
             
+            // Calcular total correctamente
             let subtotalSinIVA = 0;
             let totalIVA = 0;
             
             cart.forEach(item => {
                 const itemTotal = item.price * item.quantity;
                 if (item.hasIVA) {
-                    const sinIVA = itemTotal / 1.16;
-                    subtotalSinIVA += sinIVA;
-                    totalIVA += (itemTotal - sinIVA);
+                    const subtotalItem = itemTotal / 1.16;
+                    const ivaItem = itemTotal - subtotalItem;
+                    subtotalSinIVA += subtotalItem;
+                    totalIVA += ivaItem;
                 } else {
                     subtotalSinIVA += itemTotal;
                 }
@@ -2321,14 +2371,16 @@
             
             const distributed = cash + transfer + card;
             
+            // Calcular total correctamente
             let subtotalSinIVA = 0;
             let totalIVA = 0;
             cart.forEach(item => {
                 const itemTotal = item.price * item.quantity;
                 if (item.hasIVA) {
-                    const sinIVA = itemTotal / 1.16;
-                    subtotalSinIVA += sinIVA;
-                    totalIVA += (itemTotal - sinIVA);
+                    const subtotalItem = itemTotal / 1.16;
+                    const ivaItem = itemTotal - subtotalItem;
+                    subtotalSinIVA += subtotalItem;
+                    totalIVA += ivaItem;
                 } else {
                     subtotalSinIVA += itemTotal;
                 }
@@ -2374,14 +2426,16 @@
         }
 
         function autoDistribute(type) {
+            // Calcular total correctamente
             let subtotalSinIVA = 0;
             let totalIVA = 0;
             cart.forEach(item => {
                 const itemTotal = item.price * item.quantity;
                 if (item.hasIVA) {
-                    const sinIVA = itemTotal / 1.16;
-                    subtotalSinIVA += sinIVA;
-                    totalIVA += (itemTotal - sinIVA);
+                    const subtotalItem = itemTotal / 1.16;
+                    const ivaItem = itemTotal - subtotalItem;
+                    subtotalSinIVA += subtotalItem;
+                    totalIVA += ivaItem;
                 } else {
                     subtotalSinIVA += itemTotal;
                 }
@@ -2434,7 +2488,7 @@
         }
 
         // ============================================
-        // PROCESAR VENTA
+        // PROCESAR VENTA - CORREGIDO PARA IVA MIXTO
         // ============================================
 
         async function processSale() {
@@ -2445,15 +2499,18 @@
             
             if (isMixedPayment) {
                 const totalMixed = mixedPaymentData.efectivo + mixedPaymentData.transferencia + mixedPaymentData.tarjeta;
+                
+                // Calcular total correctamente
                 let subtotalSinIVA = 0;
                 let iva = 0;
                 
                 cart.forEach(item => {
                     const itemTotal = item.price * item.quantity;
                     if (item.hasIVA) {
-                        const sinIVA = itemTotal / 1.16;
-                        subtotalSinIVA += sinIVA;
-                        iva += (itemTotal - sinIVA);
+                        const subtotalItem = itemTotal / 1.16;
+                        const ivaItem = itemTotal - subtotalItem;
+                        subtotalSinIVA += subtotalItem;
+                        iva += ivaItem;
                     } else {
                         subtotalSinIVA += itemTotal;
                     }
@@ -2467,15 +2524,17 @@
                 }
             }
             
+            // Calcular totales correctamente separando IVA 0% y 16%
             let subtotalSinIVA = 0;
             let iva = 0;
             
             cart.forEach(item => {
                 const itemTotal = item.price * item.quantity;
                 if (item.hasIVA) {
-                    const sinIVA = itemTotal / 1.16;
-                    subtotalSinIVA += sinIVA;
-                    iva += (itemTotal - sinIVA);
+                    const subtotalItem = itemTotal / 1.16;
+                    const ivaItem = itemTotal - subtotalItem;
+                    subtotalSinIVA += subtotalItem;
+                    iva += ivaItem;
                 } else {
                     subtotalSinIVA += itemTotal;
                 }
@@ -2921,7 +2980,7 @@
         }
 
         // ============================================
-        // PRODUCTOS (ADMIN) - CORREGIDO PARA CAJERO
+        // PRODUCTOS (ADMIN Y CAJERO) - CORREGIDO
         // ============================================
 
         async function loadProductsTable() {
@@ -2937,15 +2996,24 @@
                 const tbody = document.getElementById('productsTableBody');
                 tbody.innerHTML = products.map(p => {
                     // Determinar qué botones mostrar según el rol
-                    const canEdit = currentProfile?.role === 'admin';
-                    const editButton = canEdit ? `
-                        <button onclick="editProduct('${p.id}')" class="text-blue-500 hover:text-blue-700 mr-3 btn-action">
+                    const isAdmin = currentProfile?.role === 'admin';
+                    
+                    // Admin puede editar todo
+                    const editButton = isAdmin ? `
+                        <button onclick="editProduct('${p.id}')" class="text-blue-500 hover:text-blue-700 mr-3 btn-action" title="Editar producto">
                             <i class="fas fa-edit"></i>
                         </button>
                     ` : '';
                     
-                    const deleteButton = canEdit ? `
-                        <button onclick="deleteProduct('${p.id}')" class="text-red-500 hover:text-red-700 btn-action">
+                    // Cajero solo puede ajustar stock
+                    const stockButton = !isAdmin ? `
+                        <button onclick="openStockModal('${p.id}')" class="text-green-500 hover:text-green-700 mr-3 btn-action" title="Ajustar stock">
+                            <i class="fas fa-boxes"></i>
+                        </button>
+                    ` : '';
+                    
+                    const deleteButton = isAdmin ? `
+                        <button onclick="deleteProduct('${p.id}')" class="text-red-500 hover:text-red-700 btn-action" title="Eliminar producto">
                             <i class="fas fa-trash"></i>
                         </button>
                     ` : '';
@@ -2967,7 +3035,7 @@
                             </span>
                         </td>
                         <td class="px-4 py-3 text-center">
-                            ${editButton}${deleteButton}
+                            ${editButton}${stockButton}${deleteButton}
                         </td>
                     </tr>
                 `}).join('');
@@ -2980,6 +3048,70 @@
                 
             } catch (error) {
                 console.error('Error loading products table:', error);
+            }
+        }
+
+        // NUEVO: Funciones para modal de stock (cajero)
+        function openStockModal(productId) {
+            const product = products.find(p => p.id === productId);
+            if (!product) return;
+            
+            document.getElementById('stockProdId').value = product.id;
+            document.getElementById('stockProdName').textContent = product.name;
+            document.getElementById('stockProdImage').textContent = product.image || '📦';
+            document.getElementById('stockProdCurrent').textContent = `Stock actual: ${product.stock}`;
+            document.getElementById('stockNewValue').value = product.stock;
+            document.getElementById('stockPreview').textContent = product.stock;
+            
+            openModal('stockModal');
+        }
+
+        function adjustStockPreview(change) {
+            const input = document.getElementById('stockNewValue');
+            let value = parseInt(input.value) || 0;
+            value += change;
+            if (value < 0) value = 0;
+            input.value = value;
+            document.getElementById('stockPreview').textContent = value;
+        }
+
+        // Actualizar preview cuando se escribe directamente
+        document.addEventListener('DOMContentLoaded', () => {
+            const stockInput = document.getElementById('stockNewValue');
+            if (stockInput) {
+                stockInput.addEventListener('input', (e) => {
+                    let value = parseInt(e.target.value) || 0;
+                    if (value < 0) value = 0;
+                    document.getElementById('stockPreview').textContent = value;
+                });
+            }
+        });
+
+        async function saveStockAdjustment() {
+            const productId = document.getElementById('stockProdId').value;
+            const newStock = parseInt(document.getElementById('stockNewValue').value) || 0;
+            
+            if (newStock < 0) {
+                alert('El stock no puede ser negativo');
+                return;
+            }
+            
+            try {
+                const { error } = await supabaseClient
+                    .from('products')
+                    .update({ stock: newStock })
+                    .eq('id', productId);
+                
+                if (error) throw error;
+                
+                closeModal('stockModal');
+                await loadProductsTable();
+                await loadProducts(); // Actualizar también el grid del POS
+                
+                alert('Stock actualizado correctamente');
+                
+            } catch (error) {
+                alert('Error al actualizar stock: ' + error.message);
             }
         }
 
@@ -3168,19 +3300,25 @@
                     .gte('created_at', fromDate)
                     .lte('created_at', toDate + 'T23:59:59');
 
-                // Procesar datos
+                // Procesar datos - CORREGIDO: calcular IVA correctamente por venta
                 const totalSales = salesData?.reduce((sum, s) => sum + s.total, 0) || 0;
                 
                 let salesIVA0 = [], salesIVA16 = [];
+                let totalIVA0 = 0, totalIVA16 = 0, totalIVAFrom16 = 0;
+                
                 salesData?.forEach(sale => {
+                    // Una venta es IVA 16% si ALGÚN item tiene IVA
                     const hasIVAItems = sale.items.some(item => item.hasIVA);
-                    if (hasIVAItems) salesIVA16.push(sale);
-                    else salesIVA0.push(sale);
+                    
+                    if (hasIVAItems) {
+                        salesIVA16.push(sale);
+                        totalIVA16 += sale.total;
+                        totalIVAFrom16 += sale.iva; // El IVA ya está calculado y guardado en la venta
+                    } else {
+                        salesIVA0.push(sale);
+                        totalIVA0 += sale.total;
+                    }
                 });
-
-                const totalIVA0 = salesIVA0.reduce((sum, s) => sum + s.total, 0);
-                const totalIVA16 = salesIVA16.reduce((sum, s) => sum + s.total, 0);
-                const ivaFrom16 = salesIVA16.reduce((sum, s) => sum + s.iva, 0);
                 
                 // Actualizar UI
                 document.getElementById('taxPeriodSummary').classList.remove('hidden');
@@ -3194,14 +3332,14 @@
                 document.getElementById('transactionsIVA0').textContent = salesIVA0.length;
                 document.getElementById('salesIVA16').textContent = formatMoney(totalIVA16);
                 document.getElementById('transactionsIVA16').textContent = salesIVA16.length;
-                document.getElementById('ivaIncluded16').textContent = formatMoney(ivaFrom16);
+                document.getElementById('ivaIncluded16').textContent = formatMoney(totalIVAFrom16);
                 
                 // IVA en gastos
                 const ivaInExpenses = expensesData?.filter(e => e.has_iva).reduce((sum, e) => sum + (e.iva_amount || 0), 0) || 0;
                 
-                document.getElementById('ivaCharged').textContent = formatMoney(ivaFrom16);
+                document.getElementById('ivaCharged').textContent = formatMoney(totalIVAFrom16);
                 document.getElementById('ivaExpenses').textContent = formatMoney(ivaInExpenses);
-                document.getElementById('ivaToPay').textContent = formatMoney(ivaFrom16 - ivaInExpenses);
+                document.getElementById('ivaToPay').textContent = formatMoney(totalIVAFrom16 - ivaInExpenses);
                 
                 // ISR
                 const isr = totalSales * 0.025;
