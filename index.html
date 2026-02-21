@@ -1,228 +1,251 @@
 <!DOCTYPE html>
-<!-- PWA Meta Tags -->
-<meta name="theme-color" content="#6d453c">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="Dulce Bocado">
-<meta name="description" content="Sistema ERP para Dulce Bocado - Gestión de ventas, inventario y nómina">
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dulce Bocado - ERP</title>
+    
+    <!-- PWA Meta Tags -->
+    <meta name="theme-color" content="#6d453c">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Dulce Bocado">
+    <meta name="description" content="Sistema ERP para Dulce Bocado - Gestión de ventas, inventario y nómina">
 
-<!-- PWA Manifest -->
-<link rel="manifest" href="data:application/json;base64,eyJuYW1lIjoiRHVsY2UgQm9jYWRvIC0gRVJQIiwic2hvcnRfbmFtZSI6IkR1bGNlIEJvY2FkbyIsInN0YXJ0X3VybCI6Ii4iLCJkaXNwbGF5Ijoic3RhbmRhbG9uZSIsImJhY2tncm91bmRfY29sb3IiOiIjZmRmOGY2IiwidGhlbWVfY29sb3IiOiIjNmQ0NTNjIiwiaWNvbnMiOlt7InNyYyI6Imh0dHBzOi8vY2RuLmpzZGVsaXZyLm5ldC9naC9kZXZlbG9wZXJzL2dpdGh1Yi9mbGFncy9lNDc0MjQucG5nIiwic2l6ZXMiOiIxOTJ4MTkyIiwidHlwZSI6ImltYWdlL3BuZyJ9XX0=">
+    <!-- PWA Manifest -->
+    <link rel="manifest" href="data:application/json;base64,eyJuYW1lIjoiRHVsY2UgQm9jYWRvIC0gRVJQIiwic2hvcnRfbmFtZSI6IkR1bGNlIEJvY2FkbyIsInN0YXJ0X3VybCI6Ii4iLCJkaXNwbGF5Ijoic3RhbmRhbG9uZSIsImJhY2tncm91bmRfY29sb3IiOiIjZmRmOGY2IiwidGhlbWVfY29sb3IiOiIjNmQ0NTNjIiwiaWNvbnMiOlt7InNyYyI6Imh0dHBzOi8vY2RuLmpzZGVsaXZyLm5ldC9naC9kZXZlbG9wZXJzL2dpdGh1Yi9mbGFncy9lNDc0MjQucG5nIiwic2l6ZXMiOiIxOTJ4MTkyIiwidHlwZSI6ImltYWdlL3BuZyJ9XX0=">
 
-<script src="https://cdn.tailwindcss.com"></script>
-<script src="https://unpkg.com/@supabase/supabase-js@2"></script>
-<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
-<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
-<script>
-    tailwind.config = {
-        theme: {
-            extend: {
-                fontFamily: {
-                    sans: ['Poppins', 'sans-serif'],
-                    serif: ['Playfair Display', 'serif'],
-                },
-                colors: {
-                    brand: {
-                        50: '#fdf8f6',
-                        100: '#f2e8e5',
-                        200: '#eaddd7',
-                        300: '#e0cec7',
-                        400: '#d2bab0',
-                        500: '#a77f70',
-                        600: '#8a5a4d',
-                        700: '#6d453c',
-                        800: '#4a2e28',
-                        900: '#2d1b17',
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Poppins', 'sans-serif'],
+                        serif: ['Playfair Display', 'serif'],
                     },
-                    sweet: {
-                        100: '#fff0f3',
-                        200: '#ffc1cc',
-                        300: '#ff8fa3',
-                        400: '#ff5c7a',
-                        500: '#e83e5f',
+                    colors: {
+                        brand: {
+                            50: '#fdf8f6',
+                            100: '#f2e8e5',
+                            200: '#eaddd7',
+                            300: '#e0cec7',
+                            400: '#d2bab0',
+                            500: '#a77f70',
+                            600: '#8a5a4d',
+                            700: '#6d453c',
+                            800: '#4a2e28',
+                            900: '#2d1b17',
+                        },
+                        sweet: {
+                            100: '#fff0f3',
+                            200: '#ffc1cc',
+                            300: '#ff8fa3',
+                            400: '#ff5c7a',
+                            500: '#e83e5f',
+                        }
                     }
                 }
             }
         }
-    }
-</script>
-<style>
-    body {
-        background: linear-gradient(135deg, #fdf8f6 0%, #fff0f3 100%);
-    }
-    .glass-panel {
-        background: rgba(255, 255, 255, 0.95);
-        backdrop-filter: blur(10px);
-        border: 1px solid rgba(255, 255, 255, 0.2);
-    }
-    .sidebar-item { transition: all 0.3s ease; }
-    .sidebar-item:hover { transform: translateX(5px); }
-    .card-hover { transition: all 0.3s ease; }
-    .card-hover:hover {
-        transform: translateY(-5px);
-        box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
-    }
-    .fade-in { animation: fadeIn 0.5s ease-in; }
-    @keyframes fadeIn {
-        from { opacity: 0; transform: translateY(10px); }
-        to { opacity: 1; transform: translateY(0); }
-    }
-    .custom-scrollbar::-webkit-scrollbar { width: 6px; }
-    .custom-scrollbar::-webkit-scrollbar-track { background: #f1f1f1; }
-    .custom-scrollbar::-webkit-scrollbar-thumb { background: #a77f70; border-radius: 3px; }
-    .modal {
-        display: none;
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        background: rgba(0,0,0,0.5);
-        z-index: 1000;
-        justify-content: center;
-        align-items: center;
-    }
-    .modal.active { display: flex; }
-    .btn-action { transition: all 0.2s; }
-    .btn-action:hover { transform: scale(1.1); }
+    </script>
     
-    /* NUEVO: Sidebar mini-mode en lugar de colapsar */
-    .sidebar { 
-        transition: width 0.3s ease-in-out; 
-        width: 16rem; /* w-64 */
-    }
-    .sidebar.mini { 
-        width: 4.5rem; /* w-[4.5rem] - solo iconos */
-    }
-    .sidebar.mini .sidebar-text,
-    .sidebar.mini .sidebar-header-text,
-    .sidebar.mini .user-info {
-        display: none;
-    }
-    .sidebar.mini .sidebar-item {
-        justify-content: center;
-        padding-left: 0;
-        padding-right: 0;
-    }
-    .sidebar.mini .sidebar-item i {
-        margin: 0;
-        font-size: 1.25rem;
-    }
-    .sidebar.mini .sidebar-section-title {
-        display: none;
-    }
-    
-    /* Botón hamburguesa eliminado - ahora usamos el botón de toggle en el sidebar */
-    .main-content { transition: margin-left 0.3s ease-in-out; }
-    
-    .nomina-card { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
-    
-    /* PWA Install Button */
-    #installPWA {
-        position: fixed;
-        bottom: 20px;
-        right: 20px;
-        z-index: 1000;
-        background: linear-gradient(135deg, #6d453c, #8a5a4d);
-        color: white;
-        padding: 12px 24px;
-        border-radius: 50px;
-        box-shadow: 0 4px 15px rgba(0,0,0,0.3);
-        cursor: pointer;
-        display: none;
-        animation: slideUp 0.3s ease-out;
-    }
-    @keyframes slideUp {
-        from { transform: translateY(100px); opacity: 0; }
-        to { transform: translateY(0); opacity: 1; }
-    }
-    
-    /* Search Box Styles */
-    .search-container {
-        position: relative;
-        margin-bottom: 1rem;
-    }
-    .search-input {
-        width: 100%;
-        padding: 12px 20px 12px 45px;
-        border: 2px solid #e5e7eb;
-        border-radius: 25px;
-        font-size: 14px;
-        transition: all 0.3s;
-        background: white;
-    }
-    .search-input:focus {
-        outline: none;
-        border-color: #a77f70;
-        box-shadow: 0 0 0 3px rgba(167, 127, 112, 0.1);
-    }
-    .search-icon {
-        position: absolute;
-        left: 15px;
-        top: 50%;
-        transform: translateY(-50%);
-        color: #9ca3af;
-    }
-    
-    /* Stock indicator styles */
-    .product-card {
-        transition: all 0.3s ease;
-    }
-    .product-card.no-stock {
-        opacity: 0.6;
-        order: 2;
-        background: #f3f4f6;
-    }
-    .product-card.has-stock {
-        order: 1;
-    }
-    .stock-badge {
-        position: absolute;
-        top: 8px;
-        right: 8px;
-        padding: 2px 8px;
-        border-radius: 12px;
-        font-size: 10px;
-        font-weight: bold;
-    }
-    .stock-badge.high { background: #10b981; color: white; }
-    .stock-badge.low { background: #f59e0b; color: white; }
-    .stock-badge.none { background: #ef4444; color: white; }
-    
-    /* Tooltip para mini-sidebar */
-    .sidebar.mini .sidebar-item {
-        position: relative;
-    }
-    .sidebar.mini .sidebar-item:hover::after {
-        content: attr(data-title);
-        position: absolute;
-        left: 100%;
-        top: 50%;
-        transform: translateY(-50%);
-        background: #2d1b17;
-        color: white;
-        padding: 4px 8px;
-        border-radius: 4px;
-        font-size: 12px;
-        white-space: nowrap;
-        margin-left: 8px;
-        z-index: 100;
-    }
-    
-    /* NUEVO: Estilos para modal de stock de cajero */
-    .stock-input-cashier {
-        width: 80px;
-        text-align: center;
-        border: 2px solid #e5e7eb;
-        border-radius: 8px;
-        padding: 4px;
-        font-weight: bold;
-    }
-    .stock-input-cashier:focus {
-        outline: none;
-        border-color: #a77f70;
-    }
-</style>
+    <style>
+        body {
+            background: linear-gradient(135deg, #fdf8f6 0%, #fff0f3 100%);
+        }
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        .sidebar-item { transition: all 0.3s ease; }
+        .sidebar-item:hover { transform: translateX(5px); }
+        .card-hover { transition: all 0.3s ease; }
+        .card-hover:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+        }
+        .fade-in { animation: fadeIn 0.5s ease-in; }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .custom-scrollbar::-webkit-scrollbar { width: 6px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: #f1f1f1; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #a77f70; border-radius: 3px; }
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+        .modal.active { display: flex; }
+        .btn-action { transition: all 0.2s; }
+        .btn-action:hover { transform: scale(1.1); }
+        
+        .sidebar { 
+            transition: width 0.3s ease-in-out; 
+            width: 16rem;
+        }
+        .sidebar.mini { 
+            width: 4.5rem;
+        }
+        .sidebar.mini .sidebar-text,
+        .sidebar.mini .sidebar-header-text,
+        .sidebar.mini .user-info {
+            display: none;
+        }
+        .sidebar.mini .sidebar-item {
+            justify-content: center;
+            padding-left: 0;
+            padding-right: 0;
+        }
+        .sidebar.mini .sidebar-item i {
+            margin: 0;
+            font-size: 1.25rem;
+        }
+        .sidebar.mini .sidebar-section-title {
+            display: none;
+        }
+        
+        .main-content { transition: margin-left 0.3s ease-in-out; }
+        
+        .nomina-card { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
+        
+        #installPWA {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            z-index: 1000;
+            background: linear-gradient(135deg, #6d453c, #8a5a4d);
+            color: white;
+            padding: 12px 24px;
+            border-radius: 50px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+            cursor: pointer;
+            display: none;
+            animation: slideUp 0.3s ease-out;
+        }
+        @keyframes slideUp {
+            from { transform: translateY(100px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+        
+        .search-container {
+            position: relative;
+            margin-bottom: 1rem;
+        }
+        .search-input {
+            width: 100%;
+            padding: 12px 20px 12px 45px;
+            border: 2px solid #e5e7eb;
+            border-radius: 25px;
+            font-size: 14px;
+            transition: all 0.3s;
+            background: white;
+        }
+        .search-input:focus {
+            outline: none;
+            border-color: #a77f70;
+            box-shadow: 0 0 0 3px rgba(167, 127, 112, 0.1);
+        }
+        .search-icon {
+            position: absolute;
+            left: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #9ca3af;
+        }
+        
+        .product-card {
+            transition: all 0.3s ease;
+        }
+        .product-card.no-stock {
+            opacity: 0.6;
+            order: 2;
+            background: #f3f4f6;
+        }
+        .product-card.has-stock {
+            order: 1;
+        }
+        .stock-badge {
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 10px;
+            font-weight: bold;
+        }
+        .stock-badge.high { background: #10b981; color: white; }
+        .stock-badge.low { background: #f59e0b; color: white; }
+        .stock-badge.none { background: #ef4444; color: white; }
+        
+        .sidebar.mini .sidebar-item {
+            position: relative;
+        }
+        .sidebar.mini .sidebar-item:hover::after {
+            content: attr(data-title);
+            position: absolute;
+            left: 100%;
+            top: 50%;
+            transform: translateY(-50%);
+            background: #2d1b17;
+            color: white;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            white-space: nowrap;
+            margin-left: 8px;
+            z-index: 100;
+        }
+        
+        .stock-input-cashier {
+            width: 80px;
+            text-align: center;
+            border: 2px solid #e5e7eb;
+            border-radius: 8px;
+            padding: 4px;
+            font-weight: bold;
+        }
+        .stock-input-cashier:focus {
+            outline: none;
+            border-color: #a77f70;
+        }
+
+        /* NUEVO: Estilos para expansión de ventas mixtas */
+        .sale-row {
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        .sale-row:hover {
+            background-color: #f9fafb;
+        }
+        .sale-details {
+            display: none;
+            background-color: #f9fafb;
+            border-top: 1px dashed #e5e7eb;
+        }
+        .sale-details.active {
+            display: table-row;
+        }
+        .iva-badge-0 { background: #fce7f3; color: #be185d; }
+        .iva-badge-16 { background: #dbeafe; color: #1e40af; }
+        .iva-badge-mix { background: #f3e8ff; color: #7c3aed; }
+    </style>
+</head>
+<body class="h-screen overflow-hidden">
 
 <!-- PWA Install Button -->
 <button id="installPWA" onclick="installApp()">
@@ -297,7 +320,7 @@
 
 <!-- Main App -->
 <div id="mainApp" class="hidden h-full flex">
-    <!-- Sidebar - AHORA CON MODO MINI -->
+    <!-- Sidebar -->
     <aside id="sidebar" class="sidebar bg-gradient-to-b from-brand-900 to-brand-800 text-white flex flex-col shadow-2xl z-50">
         <div class="p-4 border-b border-brand-700 flex justify-between items-center">
             <div class="flex items-center gap-3 sidebar-header-text">
@@ -309,7 +332,6 @@
                     <p class="text-xs text-brand-300">ERP Supabase</p>
                 </div>
             </div>
-            <!-- Botón de toggle reemplaza al hamburguesa externo -->
             <button onclick="toggleSidebar()" class="text-white hover:text-brand-200 transition-colors p-2 rounded-lg hover:bg-brand-700" title="Contraer/Expandir menú">
                 <i class="fas fa-chevron-left text-lg" id="toggleIcon"></i>
             </button>
@@ -376,7 +398,6 @@
                     <p class="text-xs text-brand-400" id="currentUserRole">Rol</p>
                 </div>
             </div>
-            <!-- Cerrar sesión - Solo icono de power en modo mini -->
             <button onclick="logout()" data-title="Cerrar Sesión" class="w-full flex items-center justify-center gap-2 px-4 py-2 bg-red-600 hover:bg-red-700 rounded-lg transition-colors text-sm group">
                 <i class="fas fa-power-off text-lg"></i>
                 <span class="sidebar-text">Cerrar Sesión</span>
@@ -502,7 +523,6 @@
 
             <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 h-[calc(100vh-200px)]">
                 <div class="lg:col-span-2 glass-panel rounded-2xl p-6 overflow-y-auto custom-scrollbar">
-                    <!-- Search Box -->
                     <div class="search-container">
                         <i class="fas fa-search search-icon"></i>
                         <input type="text" id="productSearch" class="search-input" placeholder="Buscar productos por nombre..." oninput="filterProductsBySearch(this.value)">
@@ -687,6 +707,7 @@
                                 <th class="px-4 py-3 text-left">Fecha/Hora</th>
                                 <th class="px-4 py-3 text-left">Cajero</th>
                                 <th class="px-4 py-3 text-left">Productos</th>
+                                <th class="px-4 py-3 text-center">Tipo IVA</th>
                                 <th class="px-4 py-3 text-left">Método</th>
                                 <th class="px-4 py-3 text-right">Total</th>
                                 <th class="px-4 py-3 text-center">Estado</th>
@@ -788,7 +809,6 @@
                     <h1 class="text-3xl font-serif font-bold text-brand-900 mb-2">Catálogo de Productos</h1>
                     <p class="text-gray-600">Precios con IVA ya incluyen el 16%</p>
                 </div>
-                <!-- Botón Nuevo Producto solo visible para admin -->
                 <button onclick="openProductModal()" class="bg-brand-600 hover:bg-brand-700 text-white px-6 py-2 rounded-lg transition-colors shadow-lg admin-only-inline" id="btnNewProduct">
                     <i class="fas fa-plus mr-2"></i>Nuevo Producto
                 </button>
@@ -999,6 +1019,7 @@
             <div class="glass-panel rounded-2xl overflow-hidden">
                 <div class="p-4 border-b border-gray-200">
                     <h3 class="font-bold text-brand-800">Detalle de Ventas del Período Analizado</h3>
+                    <p class="text-sm text-gray-500 mt-1">Haz clic en una venta "Mixta" para ver el desglose por tipo de IVA</p>
                 </div>
                 <div class="overflow-x-auto max-h-96 overflow-y-auto">
                     <table class="w-full text-sm">
@@ -1360,7 +1381,6 @@
     </div>
 </div>
 
-<!-- NUEVO: Modal para editar stock (cajero) -->
 <div id="stockModal" class="modal">
     <div class="bg-white rounded-2xl p-6 w-full max-w-sm mx-4 shadow-2xl">
         <h3 class="text-xl font-bold text-brand-800 mb-4">Ajustar Stock</h3>
@@ -1548,12 +1568,11 @@
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
     // ============================================
-    // CONFIGURACIÓN SUPABASE - REEMPLAZA ESTOS VALORES
+    // CONFIGURACIÓN SUPABASE
     // ============================================
     const SUPABASE_URL = 'https://qvisoofgwuuhfnbzytnb.supabase.co';
     const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InF2aXNvb2Znd3V1aGZuYnp5dG5iIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzEzODE4MDAsImV4cCI6MjA4Njk1NzgwMH0.816vyiAx3RBlGWyyjC-4AU_-4yMHv0wW1g0CXqhahjs';
 
-    // Inicializar cliente Supabase (window.supabase es la librería, supabaseClient es tu conexión)
     const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
     // Variables globales
@@ -1570,6 +1589,7 @@
     let currentProductFilter = 'all';
     let deferredPrompt = null;
     let isSidebarMini = false;
+    let expandedSales = new Set(); // NUEVO: Para trackear ventas expandidas
 
     // ============================================
     // PWA - SERVICE WORKER & INSTALL
@@ -1662,7 +1682,6 @@
 
             if (authError) throw authError;
 
-            // Crear perfil
             const { error: profileError } = await supabaseClient
                 .from('profiles')
                 .insert([{
@@ -1717,11 +1736,9 @@
 
     async function initializeApp() {
         try {
-            // Obtener usuario actual
             const { data: { user } } = await supabaseClient.auth.getUser();
             if (!user) return;
 
-            // Obtener perfil
             const { data: profile, error } = await supabaseClient
                 .from('profiles')
                 .select('*')
@@ -1733,40 +1750,30 @@
             currentUser = user;
             currentProfile = profile;
 
-            // Configurar UI
             document.getElementById('loginScreen').classList.add('hidden');
             document.getElementById('mainApp').classList.remove('hidden');
             document.getElementById('currentUserName').textContent = profile.full_name || profile.username;
             document.getElementById('currentUserRole').textContent = profile.role === 'admin' ? 'Administrador' : 'Cajero';
 
-            // Configurar según rol
             if (profile.role === 'cashier') {
-                // Ocultar elementos del menú lateral
                 document.querySelectorAll('.admin-only').forEach(el => {
                     el.style.display = 'none';
                 });
-                
-                // Ocultar botones inline de admin
                 document.querySelectorAll('.admin-only-inline').forEach(el => {
                     el.style.display = 'none';
                 });
-                
-                // Ocultar secciones de contenido admin completamente
                 document.querySelectorAll('.admin-only-content').forEach(el => {
                     el.classList.add('hidden');
                 });
                 
-                // Configurar textos específicos para cajero
                 document.getElementById('expensesMenuText').textContent = 'Mis Gastos';
                 document.getElementById('adminExpenseStats').classList.add('hidden');
                 document.getElementById('cashierExpenseStats').classList.remove('hidden');
                 document.getElementById('expenseFilterLabel').classList.remove('hidden');
                 document.getElementById('expensesTableTitle').textContent = 'Mis Gastos Registrados';
                 
-                // Mostrar POS por defecto
                 showModule('pos');
             } else {
-                // Admin: asegurar que todo esté visible
                 document.querySelectorAll('.admin-only').forEach(el => {
                     el.style.display = '';
                 });
@@ -1781,13 +1788,11 @@
                 showModule('dashboard');
             }
 
-            // Cargar datos iniciales
             await loadProducts();
             await loadEmployees();
             await updateDashboard();
             await loadTodaySales();
             
-            // Configurar realtime subscriptions
             setupRealtimeSubscriptions();
             
         } catch (error) {
@@ -1797,7 +1802,6 @@
     }
 
     function setupRealtimeSubscriptions() {
-        // Suscripción a cambios en ventas
         supabaseClient
             .channel('sales_changes')
             .on('postgres_changes', { event: '*', schema: 'public', table: 'sales' }, payload => {
@@ -1810,7 +1814,7 @@
     }
 
     // ============================================
-    // NAVEGACIÓN - SIDEBAR MINI MODE
+    // NAVEGACIÓN
     // ============================================
 
     function toggleSidebar() {
@@ -1831,7 +1835,6 @@
     }
 
     async function showModule(moduleName) {
-        // Validación de permisos
         if (currentProfile?.role === 'cashier') {
             const allowedModules = ['pos', 'salesHistory', 'expenses', 'products'];
             if (!allowedModules.includes(moduleName)) {
@@ -1855,7 +1858,6 @@
             case 'dashboard': await updateDashboard(); break;
         }
         
-        // En móvil, si está expandido, contraer al cambiar de módulo
         if (window.innerWidth < 768 && !isSidebarMini) {
             toggleSidebar();
         }
@@ -1869,7 +1871,6 @@
         try {
             const today = new Date().toISOString().split('T')[0];
             
-            // Ventas de hoy
             const { data: todaySales } = await supabaseClient
                 .from('sales')
                 .select('*')
@@ -1900,7 +1901,6 @@
                 document.getElementById('salesStatus').className = 'text-xs text-green-600 mt-2';
             }
             
-            // IVA del mes
             const firstDayOfMonth = new Date();
             firstDayOfMonth.setDate(1);
             
@@ -1913,13 +1913,10 @@
             const ivaTotal = monthSales?.reduce((sum, s) => sum + s.iva, 0) || 0;
             document.getElementById('dashboardIVA').textContent = formatMoney(ivaTotal);
             
-            // ISR
-            const totalIncome = monthSales?.reduce((sum, s) => sum + s.total, 0) || 0;  // ← CORREGIDO: usar s.total
+            const totalIncome = monthSales?.reduce((sum, s) => sum + s.total, 0) || 0;
             const isr = totalIncome * 0.025;
             document.getElementById('dashboardISR').textContent = formatMoney(isr);
 
-            
-            // Gastos del mes
             const { data: monthExpenses } = await supabaseClient
                 .from('expenses')
                 .select('amount')
@@ -1928,7 +1925,6 @@
             const totalExpenses = monthExpenses?.reduce((sum, e) => sum + e.amount, 0) || 0;
             document.getElementById('dashboardExpenses').textContent = formatMoney(totalExpenses);
             
-            // Actividad reciente
             const { data: recentSales } = await supabaseClient
                 .from('sales')
                 .select('*')
@@ -1963,7 +1959,6 @@
                 </tr>
             `).join('');
 
-            // Actualizar gráficos si es admin
             if (currentProfile?.role === 'admin') {
                 await initCharts();
             }
@@ -1975,7 +1970,6 @@
 
     async function initCharts() {
         try {
-            // Datos de últimos 7 días
             const last7Days = Array.from({length: 7}, (_, i) => {
                 const d = new Date();
                 d.setDate(d.getDate() - (6 - i));
@@ -2005,7 +1999,6 @@
                     .reduce((sum, e) => sum + e.amount, 0) || 0;
             });
 
-            // Gráfico de ventas
             const ctx1 = document.getElementById('salesChart');
             if (ctx1) {
                 if (salesChartInstance) salesChartInstance.destroy();
@@ -2035,7 +2028,6 @@
                 });
             }
 
-            // Gráfico de gastos por área
             const { data: allExpenses } = await supabaseClient
                 .from('expenses')
                 .select('area, amount');
@@ -2071,7 +2063,7 @@
     }
 
     // ============================================
-    // PRODUCTOS (POS) - CON BÚSQUEDA Y ORDENAMIENTO
+    // PRODUCTOS (POS)
     // ============================================
 
     async function loadProducts(filter = 'all') {
@@ -2100,7 +2092,6 @@
             filtered = productsToRender.filter(p => p.category === filter);
         }
         
-        // Ordenar: primero con stock, luego sin stock
         filtered.sort((a, b) => {
             if (a.stock > 0 && b.stock <= 0) return -1;
             if (a.stock <= 0 && b.stock > 0) return 1;
@@ -2132,7 +2123,6 @@
     }
 
     function filterProducts(category) {
-        // Actualizar botones activos
         document.querySelectorAll('#pos button[onclick^="filterProducts"]').forEach(btn => {
             btn.classList.remove('bg-brand-600', 'text-white');
             btn.classList.add('bg-white', 'text-gray-700', 'border', 'border-gray-300');
@@ -2262,7 +2252,6 @@
         updateCart();
     }
 
-    // CORREGIDO: Cálculo de totales separando correctamente IVA 0% y 16%
     function calculateTotals() {
         let subtotalSinIVA = 0;
         let totalIVA = 0;
@@ -2270,16 +2259,11 @@
         cart.forEach(item => {
             const itemTotal = item.price * item.quantity;
             if (item.hasIVA) {
-                // Si tiene IVA, el precio ya incluye el 16%
-                // Precio = Subtotal + IVA = Subtotal * 1.16
-                // Subtotal = Precio / 1.16
-                // IVA = Precio - Subtotal
                 const subtotalItem = itemTotal / 1.16;
                 const ivaItem = itemTotal - subtotalItem;
                 subtotalSinIVA += subtotalItem;
                 totalIVA += ivaItem;
             } else {
-                // Sin IVA, todo es subtotal
                 subtotalSinIVA += itemTotal;
             }
         });
@@ -2322,7 +2306,6 @@
             return;
         }
         
-        // Calcular total correctamente
         let subtotalSinIVA = 0;
         let totalIVA = 0;
         
@@ -2364,7 +2347,6 @@
         
         const distributed = cash + transfer + card;
         
-        // Calcular total correctamente
         let subtotalSinIVA = 0;
         let totalIVA = 0;
         cart.forEach(item => {
@@ -2419,7 +2401,6 @@
     }
 
     function autoDistribute(type) {
-        // Calcular total correctamente
         let subtotalSinIVA = 0;
         let totalIVA = 0;
         cart.forEach(item => {
@@ -2493,7 +2474,6 @@
         if (isMixedPayment) {
             const totalMixed = mixedPaymentData.efectivo + mixedPaymentData.transferencia + mixedPaymentData.tarjeta;
             
-            // Calcular total correctamente
             let subtotalSinIVA = 0;
             let iva = 0;
             
@@ -2517,9 +2497,11 @@
             }
         }
         
-        // Calcular totales correctamente separando IVA 0% y 16%
+        // CORREGIDO: Calcular totales por tipo de IVA separadamente
         let subtotalSinIVA = 0;
         let iva = 0;
+        let totalIVA0 = 0;      // NUEVO: Total de items sin IVA
+        let totalIVA16 = 0;     // NUEVO: Total de items con IVA (precio con IVA incluido)
         
         cart.forEach(item => {
             const itemTotal = item.price * item.quantity;
@@ -2528,8 +2510,10 @@
                 const ivaItem = itemTotal - subtotalItem;
                 subtotalSinIVA += subtotalItem;
                 iva += ivaItem;
+                totalIVA16 += itemTotal;  // Acumular precio con IVA incluido
             } else {
                 subtotalSinIVA += itemTotal;
+                totalIVA0 += itemTotal;   // Acumular precio sin IVA
             }
         });
         
@@ -2548,6 +2532,8 @@
             subtotal: subtotalSinIVA,
             iva: iva,
             total: total,
+            total_iva_0: totalIVA0,      // NUEVO
+            total_iva_16: totalIVA16,    // NUEVO
             payment_method: isMixedPayment ? 'mixto' : currentPaymentMethod,
             payment_details: isMixedPayment ? mixedPaymentData : null,
             cancelled: false
@@ -2557,7 +2543,6 @@
             const { error } = await supabaseClient.from('sales').insert([sale]);
             if (error) throw error;
             
-            // Actualizar stock
             for (const item of cart) {
                 if (!item.isCustom) {
                     const product = products.find(p => p.id === item.id);
@@ -2585,7 +2570,7 @@
     }
 
     // ============================================
-    // HISTORIAL DE VENTAS - CORTE PARA CAJERO
+    // HISTORIAL DE VENTAS - CON TIPO IVA
     // ============================================
 
     async function loadTodaySales() {
@@ -2647,9 +2632,27 @@
         }
     }
 
+    // NUEVO: Función para determinar tipo de IVA de una venta
+    function getSaleIVAType(sale) {
+        const hasIVA0 = (sale.total_iva_0 || 0) > 0;
+        const hasIVA16 = (sale.total_iva_16 || 0) > 0;
+        
+        if (hasIVA0 && hasIVA16) {
+            return { type: 'MIXTA', class: 'iva-badge-mix', icon: 'fa-layer-group' };
+        } else if (hasIVA16) {
+            return { type: '16%', class: 'iva-badge-16', icon: 'fa-percentage' };
+        } else {
+            return { type: '0%', class: 'iva-badge-0', icon: 'fa-circle' };
+        }
+    }
+
     function renderSalesTable(salesList) {
         const tbody = document.getElementById('salesTableBody');
-        tbody.innerHTML = salesList.map(sale => {
+        tbody.innerHTML = '';
+        
+        salesList.forEach(sale => {
+            const ivaType = getSaleIVAType(sale);
+            
             let paymentDisplay = '';
             if (sale.payment_method === 'mixto' && sale.payment_details) {
                 const parts = [];
@@ -2661,12 +2664,23 @@
                 paymentDisplay = `<span class="px-2 py-1 rounded-full text-xs ${getPaymentMethodColor(sale.payment_method)}">${sale.payment_method}</span>`;
             }
             
-            return `
-            <tr class="hover:bg-gray-50 transition-colors ${sale.cancelled ? 'bg-red-50' : ''}">
-                <td class="px-4 py-3 font-medium ${sale.cancelled ? 'text-red-600 line-through' : 'text-brand-700'}">${sale.id.slice(0, 8)}...</td>
+            // Fila principal
+            const mainRow = document.createElement('tr');
+            mainRow.className = `sale-row hover:bg-gray-50 transition-colors ${sale.cancelled ? 'bg-red-50' : ''}`;
+            mainRow.onclick = () => toggleSaleDetails(sale.id);
+            mainRow.innerHTML = `
+                <td class="px-4 py-3 font-medium ${sale.cancelled ? 'text-red-600 line-through' : 'text-brand-700'}">
+                    ${sale.id.slice(0, 8)}...
+                    ${ivaType.type === 'MIXTA' ? '<i class="fas fa-chevron-down text-xs ml-1 text-gray-400"></i>' : ''}
+                </td>
                 <td class="px-4 py-3 text-gray-600">${new Date(sale.created_at).toLocaleString()}</td>
                 <td class="px-4 py-3 text-sm">${sale.cashier_name || 'N/A'}</td>
                 <td class="px-4 py-3 text-sm">${sale.items.length} productos</td>
+                <td class="px-4 py-3 text-center">
+                    <span class="px-2 py-1 rounded-full text-xs font-bold ${ivaType.class}">
+                        <i class="fas ${ivaType.icon} mr-1"></i>${ivaType.type}
+                    </span>
+                </td>
                 <td class="px-4 py-3">${paymentDisplay}</td>
                 <td class="px-4 py-3 text-right font-bold ${sale.cancelled ? 'text-red-600 line-through' : ''}">${formatMoney(sale.total)}</td>
                 <td class="px-4 py-3 text-center">
@@ -2677,13 +2691,56 @@
                 </td>
                 <td class="px-4 py-3 text-center">
                     ${!sale.cancelled && currentProfile?.role === 'admin' ? `
-                        <button onclick="cancelSale('${sale.id}')" class="text-red-500 hover:text-red-700 text-xs bg-red-50 px-2 py-1 rounded transition-colors">
+                        <button onclick="event.stopPropagation(); cancelSale('${sale.id}')" class="text-red-500 hover:text-red-700 text-xs bg-red-50 px-2 py-1 rounded transition-colors">
                             <i class="fas fa-times mr-1"></i>Cancelar
                         </button>
                     ` : '<span class="text-xs text-gray-400">-</span>'}
                 </td>
-            </tr>
-        `}).join('');
+            `;
+            tbody.appendChild(mainRow);
+            
+            // Fila de detalle (solo para ventas mixtas)
+            if (ivaType.type === 'MIXTA') {
+                const detailRow = document.createElement('tr');
+                detailRow.id = `sale-detail-${sale.id}`;
+                detailRow.className = 'sale-details';
+                detailRow.innerHTML = `
+                    <td colspan="9" class="px-4 py-3">
+                        <div class="bg-purple-50 rounded-lg p-3 ml-4">
+                            <p class="text-xs font-bold text-purple-800 mb-2">Desglose por tipo de IVA:</p>
+                            <div class="grid grid-cols-2 gap-4 text-sm">
+                                <div class="flex justify-between items-center p-2 bg-white rounded">
+                                    <span class="text-gray-600"><i class="fas fa-circle text-pink-500 mr-2"></i>IVA 0%:</span>
+                                    <span class="font-bold text-pink-700">${formatMoney(sale.total_iva_0 || 0)}</span>
+                                </div>
+                                <div class="flex justify-between items-center p-2 bg-white rounded">
+                                    <span class="text-gray-600"><i class="fas fa-percentage text-blue-500 mr-2"></i>IVA 16%:</span>
+                                    <span class="font-bold text-blue-700">${formatMoney(sale.total_iva_16 || 0)}</span>
+                                </div>
+                            </div>
+                            <div class="mt-2 text-xs text-gray-500">
+                                <p>Subtotal IVA 0%: ${formatMoney(sale.total_iva_0 || 0)}</p>
+                                <p>Subtotal IVA 16%: ${formatMoney((sale.total_iva_16 || 0) / 1.16)} | IVA: ${formatMoney((sale.total_iva_16 || 0) - ((sale.total_iva_16 || 0) / 1.16))}</p>
+                            </div>
+                        </div>
+                    </td>
+                `;
+                tbody.appendChild(detailRow);
+            }
+        });
+    }
+
+    // NUEVO: Toggle para expandir detalles de venta mixta
+    function toggleSaleDetails(saleId) {
+        const detailRow = document.getElementById(`sale-detail-${saleId}`);
+        if (detailRow) {
+            detailRow.classList.toggle('active');
+            const icon = detailRow.previousElementSibling.querySelector('.fa-chevron-down');
+            if (icon) {
+                icon.classList.toggle('fa-chevron-up');
+                icon.classList.toggle('fa-chevron-down');
+            }
+        }
     }
 
     function getPaymentMethodColor(method) {
@@ -2707,7 +2764,6 @@
 
             if (!sale) return;
 
-            // Restaurar stock
             for (const item of sale.items) {
                 if (!item.isCustom) {
                     const { data: product } = await supabaseClient
@@ -2725,7 +2781,6 @@
                 }
             }
 
-            // Marcar como cancelada
             await supabaseClient
                 .from('sales')
                 .update({ 
@@ -2769,7 +2824,6 @@
         const today = new Date();
         document.getElementById('cutDate').textContent = today.toLocaleDateString('es-MX', {weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'});
         
-        // Calcular datos para el corte
         const todayStr = new Date().toISOString().split('T')[0];
         supabaseClient
             .from('sales')
@@ -2800,7 +2854,6 @@
                 document.getElementById('cutIVA').textContent = formatMoney(iva);
                 document.getElementById('cutTransactions').textContent = todaySales?.length || 0;
                 
-                // Ventas canceladas
                 return supabaseClient
                     .from('sales')
                     .select('*')
@@ -2838,7 +2891,6 @@
             const { data, error } = await query;
             if (error) throw error;
             
-            // Estadísticas
             if (currentProfile?.role === 'admin') {
                 const { data: allExpenses } = await supabaseClient.from('expenses').select('area, amount');
                 
@@ -2858,7 +2910,6 @@
                 document.getElementById('cashierTotalExpenses').textContent = formatMoney(cashierTotal);
             }
             
-            // Tabla
             const tbody = document.getElementById('expensesTableBody');
             tbody.innerHTML = (data || []).map(exp => `
                 <tr class="hover:bg-gray-50 transition-colors">
@@ -2973,7 +3024,7 @@
     }
 
     // ============================================
-    // PRODUCTOS (ADMIN Y CAJERO) - CORREGIDO
+    // PRODUCTOS
     // ============================================
 
     async function loadProductsTable() {
@@ -2988,17 +3039,14 @@
             
             const tbody = document.getElementById('productsTableBody');
             tbody.innerHTML = products.map(p => {
-                // Determinar qué botones mostrar según el rol
                 const isAdmin = currentProfile?.role === 'admin';
                 
-                // Admin puede editar todo
                 const editButton = isAdmin ? `
                     <button onclick="editProduct('${p.id}')" class="text-blue-500 hover:text-blue-700 mr-3 btn-action" title="Editar producto">
                         <i class="fas fa-edit"></i>
                     </button>
                 ` : '';
                 
-                // Cajero solo puede ajustar stock
                 const stockButton = !isAdmin ? `
                     <button onclick="openStockModal('${p.id}')" class="text-green-500 hover:text-green-700 mr-3 btn-action" title="Ajustar stock">
                         <i class="fas fa-boxes"></i>
@@ -3033,7 +3081,6 @@
                 </tr>
             `}).join('');
             
-            // Mostrar/ocultar botón de nuevo producto según rol
             const btnNewProduct = document.getElementById('btnNewProduct');
             if (btnNewProduct) {
                 btnNewProduct.style.display = currentProfile?.role === 'admin' ? 'inline-flex' : 'none';
@@ -3044,7 +3091,6 @@
         }
     }
 
-    // NUEVO: Funciones para modal de stock (cajero)
     function openStockModal(productId) {
         const product = products.find(p => p.id === productId);
         if (!product) return;
@@ -3068,18 +3114,6 @@
         document.getElementById('stockPreview').textContent = value;
     }
 
-    // Actualizar preview cuando se escribe directamente
-    document.addEventListener('DOMContentLoaded', () => {
-        const stockInput = document.getElementById('stockNewValue');
-        if (stockInput) {
-            stockInput.addEventListener('input', (e) => {
-                let value = parseInt(e.target.value) || 0;
-                if (value < 0) value = 0;
-                document.getElementById('stockPreview').textContent = value;
-            });
-        }
-    });
-
     async function saveStockAdjustment() {
         const productId = document.getElementById('stockProdId').value;
         const newStock = parseInt(document.getElementById('stockNewValue').value) || 0;
@@ -3099,7 +3133,7 @@
             
             closeModal('stockModal');
             await loadProductsTable();
-            await loadProducts(); // Actualizar también el grid del POS
+            await loadProducts();
             
             alert('Stock actualizado correctamente');
             
@@ -3109,7 +3143,6 @@
     }
 
     function openProductModal() {
-        // Verificar permisos
         if (currentProfile?.role !== 'admin') {
             alert('No tienes permisos para crear productos');
             return;
@@ -3126,7 +3159,6 @@
     }
 
     function editProduct(id) {
-        // Verificar permisos
         if (currentProfile?.role !== 'admin') {
             alert('No tienes permisos para editar productos');
             return;
@@ -3146,7 +3178,6 @@
     }
 
     async function saveProduct() {
-        // Verificar permisos
         if (currentProfile?.role !== 'admin') {
             alert('No tienes permisos para guardar productos');
             return;
@@ -3192,7 +3223,6 @@
     }
 
     async function deleteProduct(id) {
-        // Verificar permisos
         if (currentProfile?.role !== 'admin') {
             alert('No tienes permisos para eliminar productos');
             return;
@@ -3248,7 +3278,7 @@
     }
 
     // ============================================
-    // IMPUESTOS - CORREGIDO PARA SEPARAR IVA 0% Y 16%
+    // IMPUESTOS - CORREGIDO PARA IVA MIXTO
     // ============================================
 
     function setTaxPeriodThisMonth() {
@@ -3293,95 +3323,73 @@
                 .gte('created_at', fromDate)
                 .lte('created_at', toDate + 'T23:59:59');
 
-            // Procesar datos - CORREGIDO: separar montos por tipo de IVA dentro de cada venta
+            // CORREGIDO: Usar las nuevas columnas total_iva_0 y total_iva_16
             let totalSales = 0;
-            let totalIVA0Sales = 0;
-            let totalIVA16Sales = 0;
-            let totalIVAFrom16 = 0;
+            let totalIVA0 = 0;
+            let totalIVA16 = 0;
             let countIVA0 = 0;
             let countIVA16 = 0;
             let countMixed = 0;
             
-            // Procesar cada venta separando por tipo de IVA
             salesData?.forEach(sale => {
-                let saleTotalIVA0 = 0;
-                let saleTotalIVA16 = 0;
-                let saleIVA16Amount = 0;
-                let hasIVA0Items = false;
-                let hasIVA16Items = false;
+                const saleIVA0 = sale.total_iva_0 || 0;
+                const saleIVA16 = sale.total_iva_16 || 0;
                 
-                // Separar items por tipo de IVA
-                sale.items.forEach(item => {
-                    const itemTotal = item.price * item.quantity;
-                    if (item.hasIVA) {
-                        // Calcular subtotal e IVA para items con IVA 16%
-                        const subtotalItem = itemTotal / 1.16;
-                        const ivaItem = itemTotal - subtotalItem;
-                        saleTotalIVA16 += itemTotal; // Total con IVA incluido
-                        saleIVA16Amount += ivaItem; // Solo el IVA
-                        hasIVA16Items = true;
-                    } else {
-                        // Items sin IVA
-                        saleTotalIVA0 += itemTotal;
-                        hasIVA0Items = true;
-                    }
-                });
-                
-                // Acumular totales generales
-                totalIVA0Sales += saleTotalIVA0;
-                totalIVA16Sales += saleTotalIVA16;
-                totalIVAFrom16 += saleIVA16Amount;
+                totalIVA0 += saleIVA0;
+                totalIVA16 += saleIVA16;
                 totalSales += sale.total;
                 
-                // Contar por tipo
-                if (hasIVA0Items && hasIVA16Items) {
+                // Clasificar venta
+                if (saleIVA0 > 0 && saleIVA16 > 0) {
                     countMixed++;
-                } else if (hasIVA16Items) {
+                } else if (saleIVA16 > 0) {
                     countIVA16++;
                 } else {
                     countIVA0++;
                 }
             });
             
+            // Calcular IVA incluido en el 16%
+            const ivaFrom16 = totalIVA16 - (totalIVA16 / 1.16);
+            
             // Actualizar UI
             document.getElementById('taxPeriodSummary').classList.remove('hidden');
             document.getElementById('taxPeriodLabel').textContent = `${new Date(fromDate).toLocaleDateString('es-MX')} - ${new Date(toDate).toLocaleDateString('es-MX')}`;
             document.getElementById('taxPeriodTotalSales').textContent = formatMoney(totalSales);
             document.getElementById('taxPeriodTransactions').textContent = salesData?.length || 0;
-            document.getElementById('taxPeriodCount0').textContent = countIVA0;
-            document.getElementById('taxPeriodCount16').textContent = countIVA16 + countMixed; // IVA 16% incluye mixtas
+            document.getElementById('taxPeriodCount0').textContent = countIVA0 + countMixed; // IVA 0 incluye mixtas
+            document.getElementById('taxPeriodCount16').textContent = countIVA16 + countMixed; // IVA 16 incluye mixtas
             
-            // Cards de IVA - AHORA SEPARADAS CORRECTAMENTE
-            document.getElementById('salesIVA0').textContent = formatMoney(totalIVA0Sales);
-            document.getElementById('transactionsIVA0').textContent = countIVA0 + countMixed; // IVA 0% incluye mixtas (tienen parte sin IVA)
-            document.getElementById('salesIVA16').textContent = formatMoney(totalIVA16Sales);
-            document.getElementById('transactionsIVA16').textContent = countIVA16 + countMixed; // Transacciones con IVA 16%
-            document.getElementById('ivaIncluded16').textContent = formatMoney(totalIVAFrom16);
+            // Cards de IVA
+            document.getElementById('salesIVA0').textContent = formatMoney(totalIVA0);
+            document.getElementById('transactionsIVA0').textContent = countIVA0 + countMixed;
+            document.getElementById('salesIVA16').textContent = formatMoney(totalIVA16);
+            document.getElementById('transactionsIVA16').textContent = countIVA16 + countMixed;
+            document.getElementById('ivaIncluded16').textContent = formatMoney(ivaFrom16);
             
             // IVA en gastos
             const ivaInExpenses = expensesData?.filter(e => e.has_iva).reduce((sum, e) => sum + (e.iva_amount || 0), 0) || 0;
             
-            document.getElementById('ivaCharged').textContent = formatMoney(totalIVAFrom16);
+            document.getElementById('ivaCharged').textContent = formatMoney(ivaFrom16);
             document.getElementById('ivaExpenses').textContent = formatMoney(ivaInExpenses);
-            document.getElementById('ivaToPay').textContent = formatMoney(totalIVAFrom16 - ivaInExpenses);
+            document.getElementById('ivaToPay').textContent = formatMoney(ivaFrom16 - ivaInExpenses);
             
             // ISR
             const isr = totalSales * 0.025;
             document.getElementById('isrIncome').textContent = formatMoney(totalSales);
             document.getElementById('isrAmount').textContent = formatMoney(isr);
             
-            // Tabla detalle - CORREGIDO: mostrar tipo correcto
+            // Tabla detalle con tipo de IVA
             const tbody = document.getElementById('taxSalesDetailTable');
             tbody.innerHTML = (salesData || []).sort((a, b) => new Date(b.created_at) - new Date(a.created_at)).map(sale => {
-                // Determinar tipo de IVA para esta venta
-                const hasIVAItems = sale.items.some(item => item.hasIVA);
-                const hasNoIVAItems = sale.items.some(item => !item.hasIVA);
+                const hasIVA0 = (sale.total_iva_0 || 0) > 0;
+                const hasIVA16 = (sale.total_iva_16 || 0) > 0;
                 
                 let ivaType, ivaClass;
-                if (hasIVAItems && hasNoIVAItems) {
+                if (hasIVA0 && hasIVA16) {
                     ivaType = 'MIXTA';
                     ivaClass = 'bg-purple-100 text-purple-700';
-                } else if (hasIVAItems) {
+                } else if (hasIVA16) {
                     ivaType = '16%';
                     ivaClass = 'bg-blue-100 text-blue-700';
                 } else {
@@ -3398,7 +3406,7 @@
                         <span class="px-2 py-1 rounded-full text-xs ${ivaClass} font-bold">${ivaType}</span>
                     </td>
                     <td class="px-4 py-3 text-right">${formatMoney(sale.subtotal)}</td>
-                    <td class="px-4 py-3 text-right ${hasIVAItems ? 'text-blue-600' : 'text-gray-400'}">${formatMoney(sale.iva)}</td>
+                    <td class="px-4 py-3 text-right ${hasIVA16 ? 'text-blue-600' : 'text-gray-400'}">${formatMoney(sale.iva)}</td>
                     <td class="px-4 py-3 text-right font-bold">${formatMoney(sale.total)}</td>
                 </tr>
             `}).join('');
@@ -3457,7 +3465,6 @@
                     </div>
                 `).join('');
 
-            // Actualizar selects de nómina
             const nominaSelect = document.getElementById('nominaEmployee');
             const filterSelect = document.getElementById('nominaFilterEmployee');
             
@@ -3512,7 +3519,7 @@
     }
 
     // ============================================
-    // NÓMINA
+    // NÓMINA - CORREGIDO CON employee_name
     // ============================================
 
     async function loadNomina() {
@@ -3552,7 +3559,7 @@
             tbody.innerHTML = (data || []).map(rec => `
                 <tr class="hover:bg-gray-50 transition-colors">
                     <td class="px-4 py-3 text-gray-600">${new Date(rec.created_at).toLocaleDateString()}</td>
-                    <td class="px-4 py-3 font-medium">${rec.employee_name}</td>
+                    <td class="px-4 py-3 font-medium">${rec.employee_name || 'N/A'}</td>
                     <td class="px-4 py-3 text-right">${formatMoney(rec.sueldo)}</td>
                     <td class="px-4 py-3 text-center">${rec.horas_extras}</td>
                     <td class="px-4 py-3 text-right">${formatMoney(rec.total_horas_extras)}</td>
@@ -3570,9 +3577,10 @@
             // Resumen por empleado
             const employeeTotals = {};
             currentMonthRecords.forEach(rec => {
+                const empName = rec.employee_name || 'N/A';
                 if (!employeeTotals[rec.employee_id]) {
                     employeeTotals[rec.employee_id] = {
-                        name: rec.employee_name,
+                        name: empName,
                         total: 0,
                         sueldo: 0,
                         horasExtras: 0,
@@ -3636,13 +3644,18 @@
         }
         
         const employee = employees.find(e => e.id === empId);
+        if (!employee) {
+            alert('Empleado no encontrado');
+            return;
+        }
+        
         const totalHorasExtras = horasExtras * pagoHoraExtra;
         const total = sueldo + totalHorasExtras + bono + bonoPuntualidad;
         
         try {
             const { error } = await supabaseClient.from('nomina').insert([{
                 employee_id: empId,
-                employee_name: employee.name,
+                employee_name: employee.name,  // AHORA FUNCIONA CON LA NUEVA COLUMNA
                 user_id: currentUser.id,
                 month,
                 year,
@@ -3661,8 +3674,18 @@
             closeModal('nominaModal');
             await loadNomina();
             
+            // Limpiar formulario
+            document.getElementById('nominaEmployee').value = '';
+            document.getElementById('nominaSueldo').value = '';
+            document.getElementById('nominaHorasExtras').value = '';
+            document.getElementById('nominaPagoHoraExtra').value = '';
+            document.getElementById('nominaBono').value = '';
+            document.getElementById('nominaBonoPuntualidad').value = '';
+            calculateNominaTotal();
+            
         } catch (error) {
             alert('Error al guardar nómina: ' + error.message);
+            console.error(error);
         }
     }
 
@@ -3675,6 +3698,10 @@
         } catch (error) {
             alert('Error al eliminar: ' + error.message);
         }
+    }
+
+    function generateNominaReport() {
+        alert('Función de reporte en desarrollo');
     }
 
     // ============================================
@@ -3719,5 +3746,18 @@
         const dateTo = document.getElementById('filterDateTo');
         if (dateFrom) dateFrom.value = today;
         if (dateTo) dateTo.value = today;
+        
+        // Event listener para input de stock
+        const stockInput = document.getElementById('stockNewValue');
+        if (stockInput) {
+            stockInput.addEventListener('input', (e) => {
+                let value = parseInt(e.target.value) || 0;
+                if (value < 0) value = 0;
+                document.getElementById('stockPreview').textContent = value;
+            });
+        }
     });
 </script>
+
+</body>
+</html>
