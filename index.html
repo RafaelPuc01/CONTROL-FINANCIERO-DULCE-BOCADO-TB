@@ -10,13 +10,15 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="Dulce Bocado">
-    <meta name="description" content="Sistema ERP para Dulce Bocado - Gestión de ventas, inventario y nómina">
+    <meta name="description" content="Sistema ERP para Dulce Bocado - Gestión de ventas, inventario, nómina y gastos con OCR">
 
     <!-- PWA Manifest -->
     <link rel="manifest" href="data:application/json;base64,eyJuYW1lIjoiRHVsY2UgQm9jYWRvIC0gRVJQIiwic2hvcnRfbmFtZSI6IkR1bGNlIEJvY2FkbyIsInN0YXJ0X3VybCI6Ii4iLCJkaXNwbGF5Ijoic3RhbmRhbG9uZSIsImJhY2tncm91bmRfY29sb3IiOiIjZmRmOGY2IiwidGhlbWVfY29sb3IiOiIjNmQ0NTNjIiwiaWNvbnMiOlt7InNyYyI6Imh0dHBzOi8vY2RuLmpzZGVsaXZyLm5ldC9naC9kZXZlbG9wZXJzL2dpdGh1Yi9mbGFncy9lNDc0MjQucG5nIiwic2l6ZXMiOiIxOTJ4MTkyIiwidHlwZSI6ImltYWdlL3BuZyJ9XX0=">
 
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+    <!-- Tesseract.js para OCR -->
+    <script src="https://cdn.jsdelivr.net/npm/tesseract.js@4.1.1/dist/tesseract.min.js"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
     
@@ -243,6 +245,60 @@
         .iva-badge-0 { background: #fce7f3; color: #be185d; }
         .iva-badge-16 { background: #dbeafe; color: #1e40af; }
         .iva-badge-mix { background: #f3e8ff; color: #7c3aed; }
+
+        /* NUEVOS ESTILOS PARA MÓDULO DE GASTOS */
+        .expense-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: 600;
+        }
+        .badge-ocr { background: #e0f2fe; color: #0369a1; }
+        .badge-edited { background: #fef3c7; color: #92400e; }
+        .badge-suggestion { background: #f3e8ff; color: #7c3aed; }
+        
+        .ocr-preview-item {
+            transition: all 0.2s;
+            border-left: 3px solid transparent;
+        }
+        .ocr-preview-item:hover {
+            border-left-color: #a77f70;
+            background: #fafafa;
+        }
+        .ocr-confidence-low {
+            border-left-color: #ef4444 !important;
+            background: #fef2f2;
+        }
+        
+        .drop-zone {
+            border: 2px dashed #d1d5db;
+            border-radius: 12px;
+            padding: 2rem;
+            text-align: center;
+            transition: all 0.3s;
+            background: #f9fafb;
+        }
+        .drop-zone:hover, .drop-zone.dragover {
+            border-color: #a77f70;
+            background: #fdf2f8;
+        }
+        
+        .learning-indicator {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            font-size: 11px;
+            color: #7c3aed;
+            font-style: italic;
+        }
+        
+        .expense-report-card {
+            background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+            border: 1px solid #bae6fd;
+        }
     </style>
 </head>
 <body class="h-screen overflow-hidden">
@@ -721,18 +777,24 @@
             </div>
         </div>
 
-        <!-- Expenses Module -->
+        <!-- EXPENSES MODULE - NUEVO SISTEMA COMPLETO -->
         <div id="expenses" class="module hidden fade-in">
             <div class="mb-6 flex justify-between items-center">
                 <div>
                     <h1 class="text-3xl font-serif font-bold text-brand-900 mb-2" id="expensesTitle">Gastos y Egresos</h1>
-                    <p class="text-gray-600" id="expensesSubtitle">Control de egresos por área</p>
+                    <p class="text-gray-600" id="expensesSubtitle">Control de egresos con OCR y aprendizaje automático</p>
                 </div>
-                <button onclick="openExpenseModal()" class="bg-red-500 hover:bg-red-600 text-white px-6 py-2 rounded-lg transition-colors shadow-lg">
-                    <i class="fas fa-plus mr-2"></i>Registrar Gasto
-                </button>
+                <div class="flex gap-2">
+                    <button onclick="openExpenseTypeModal()" class="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white px-6 py-2 rounded-lg transition-colors shadow-lg">
+                        <i class="fas fa-camera mr-2"></i>Con Ticket (OCR)
+                    </button>
+                    <button onclick="openManualExpenseModal()" class="bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white px-6 py-2 rounded-lg transition-colors shadow-lg">
+                        <i class="fas fa-edit mr-2"></i>Manual
+                    </button>
+                </div>
             </div>
 
+            <!-- Estadísticas de Gastos -->
             <div id="adminExpenseStats" class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
                 <div class="glass-panel p-4 rounded-xl border-l-4 border-red-500">
                     <p class="text-xs text-gray-500 uppercase">Producción</p>
@@ -752,21 +814,7 @@
                 </div>
             </div>
 
-            <div id="cashierExpenseStats" class="hidden mb-6">
-                <div class="glass-panel p-6 rounded-2xl bg-gradient-to-br from-orange-50 to-orange-100 border border-orange-200">
-                    <div class="flex items-center justify-between">
-                        <div>
-                            <p class="text-orange-800 text-sm font-medium">Total de Tus Gastos Registrados</p>
-                            <h3 class="text-3xl font-bold text-orange-900" id="cashierTotalExpenses">$0.00</h3>
-                            <p class="text-xs text-orange-700 mt-1">Este mes</p>
-                        </div>
-                        <div class="w-16 h-16 bg-orange-500 rounded-full flex items-center justify-center text-white text-2xl">
-                            <i class="fas fa-wallet"></i>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
+            <!-- Filtros y Tabla -->
             <div class="glass-panel rounded-2xl overflow-hidden">
                 <div class="p-4 border-b border-gray-200 flex justify-between items-center flex-wrap gap-4">
                     <h3 class="font-bold text-brand-800" id="expensesTableTitle">Registro de Gastos</h3>
@@ -779,6 +827,9 @@
                             <option value="administrativo">Administrativo</option>
                             <option value="otros">Otros</option>
                         </select>
+                        <button onclick="openExpenseReports()" class="bg-brand-100 text-brand-700 px-3 py-1 rounded-lg text-sm hover:bg-brand-200 transition-colors">
+                            <i class="fas fa-chart-bar mr-1"></i>Reportes
+                        </button>
                     </div>
                 </div>
                 <div class="overflow-x-auto">
@@ -786,12 +837,12 @@
                         <thead class="bg-gray-50 text-gray-600">
                             <tr>
                                 <th class="px-4 py-3 text-left">Fecha</th>
+                                <th class="px-4 py-3 text-left">Ticket/Concepto</th>
                                 <th class="px-4 py-3 text-left admin-only-inline">Área</th>
-                                <th class="px-4 py-3 text-left">Registrado por</th>
-                                <th class="px-4 py-3 text-left">Concepto</th>
-                                <th class="px-4 py-3 text-left">Método</th>
+                                <th class="px-4 py-3 text-center">Items</th>
+                                <th class="px-4 py-3 text-right">Total</th>
                                 <th class="px-4 py-3 text-center">IVA</th>
-                                <th class="px-4 py-3 text-right">Monto</th>
+                                <th class="px-4 py-3 text-center">Badges</th>
                                 <th class="px-4 py-3 text-center">Acciones</th>
                             </tr>
                         </thead>
@@ -1173,7 +1224,355 @@
     </main>
 </div>
 
-<!-- Modals -->
+<!-- MODALES -->
+
+<!-- Modal para seleccionar tipo de gasto -->
+<div id="expenseTypeModal" class="modal">
+    <div class="bg-white rounded-2xl p-6 w-full max-w-md mx-4 shadow-2xl">
+        <h3 class="text-xl font-bold text-brand-800 mb-4">¿Cómo deseas registrar el gasto?</h3>
+        <div class="grid grid-cols-1 gap-4">
+            <button onclick="openOCRExpenseModal()" class="p-6 border-2 border-blue-200 rounded-xl hover:border-blue-500 hover:bg-blue-50 transition-all text-left group">
+                <div class="flex items-center gap-4">
+                    <div class="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center text-blue-600 group-hover:bg-blue-200">
+                        <i class="fas fa-camera text-xl"></i>
+                    </div>
+                    <div>
+                        <h4 class="font-bold text-gray-800">Con Ticket (OCR)</h4>
+                        <p class="text-sm text-gray-500">Toma foto o sube imagen del ticket. El sistema extraerá los datos automáticamente.</p>
+                    </div>
+                </div>
+            </button>
+            <button onclick="openManualExpenseModal()" class="p-6 border-2 border-red-200 rounded-xl hover:border-red-500 hover:bg-red-50 transition-all text-left group">
+                <div class="flex items-center gap-4">
+                    <div class="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center text-red-600 group-hover:bg-red-200">
+                        <i class="fas fa-edit text-xl"></i>
+                    </div>
+                    <div>
+                        <h4 class="font-bold text-gray-800">Manual</h4>
+                        <p class="text-sm text-gray-500">Registra el gasto manualmente sin subir imagen.</p>
+                    </div>
+                </div>
+            </button>
+        </div>
+        <button onclick="closeModal('expenseTypeModal')" class="w-full mt-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">Cancelar</button>
+    </div>
+</div>
+
+<!-- Modal para Gasto con OCR -->
+<div id="ocrExpenseModal" class="modal">
+    <div class="bg-white rounded-2xl p-6 w-full max-w-4xl mx-4 shadow-2xl max-h-[95vh] overflow-y-auto">
+        <div class="flex justify-between items-center mb-4">
+            <h3 class="text-xl font-bold text-brand-800">
+                <i class="fas fa-camera mr-2"></i>Nuevo Gasto con Ticket
+            </h3>
+            <button onclick="closeModal('ocrExpenseModal')" class="text-gray-400 hover:text-gray-600">
+                <i class="fas fa-times text-xl"></i>
+            </button>
+        </div>
+
+        <!-- Paso 1: Subir imagen -->
+        <div id="ocrStep1" class="space-y-4">
+            <div class="drop-zone" id="dropZone" ondrop="handleDrop(event)" ondragover="handleDragOver(event)" ondragleave="handleDragLeave(event)">
+                <input type="file" id="ticketImageInput" accept="image/*" class="hidden" onchange="handleImageSelect(event)">
+                <div class="text-center">
+                    <i class="fas fa-cloud-upload-alt text-4xl text-gray-400 mb-3"></i>
+                    <p class="text-gray-600 mb-2">Arrastra una imagen aquí o</p>
+                    <button onclick="document.getElementById('ticketImageInput').click()" class="bg-brand-600 text-white px-4 py-2 rounded-lg hover:bg-brand-700 transition-colors">
+                        Seleccionar archivo
+                    </button>
+                    <p class="text-xs text-gray-400 mt-2">Soporta: JPG, PNG, WEBP</p>
+                </div>
+            </div>
+            <div class="text-center">
+                <p class="text-sm text-gray-500 mb-2">O toma una foto directamente:</p>
+                <button onclick="startCamera()" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors">
+                    <i class="fas fa-camera mr-2"></i>Abrir Cámara
+                </button>
+            </div>
+        </div>
+
+        <!-- Paso 2: Vista previa y procesamiento -->
+        <div id="ocrStep2" class="hidden space-y-4">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                    <h4 class="font-bold text-gray-700 mb-2">Imagen del Ticket:</h4>
+                    <div class="relative">
+                        <img id="ticketPreview" class="w-full rounded-lg border border-gray-200 max-h-64 object-contain">
+                        <button onclick="retakePhoto()" class="absolute top-2 right-2 bg-red-500 text-white px-3 py-1 rounded-lg text-sm hover:bg-red-600">
+                            <i class="fas fa-redo mr-1"></i>Reintentar
+                        </button>
+                    </div>
+                </div>
+                <div>
+                    <h4 class="font-bold text-gray-700 mb-2">Progreso OCR:</h4>
+                    <div class="bg-gray-50 p-4 rounded-lg">
+                        <div class="flex items-center gap-2 mb-2">
+                            <div id="ocrStatusIcon" class="w-8 h-8 rounded-full bg-yellow-100 flex items-center justify-center">
+                                <i class="fas fa-spinner fa-spin text-yellow-600"></i>
+                            </div>
+                            <span id="ocrStatusText" class="text-sm font-medium">Procesando imagen...</span>
+                        </div>
+                        <div class="w-full bg-gray-200 rounded-full h-2">
+                            <div id="ocrProgressBar" class="bg-brand-600 h-2 rounded-full transition-all" style="width: 0%"></div>
+                        </div>
+                        <p id="ocrConfidence" class="text-xs text-gray-500 mt-2">Confianza: --%</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Paso 3: Edición de datos extraídos -->
+        <div id="ocrStep3" class="hidden space-y-4">
+            <div id="ocrWarning" class="hidden bg-yellow-50 border border-yellow-200 p-3 rounded-lg">
+                <div class="flex items-center gap-2 text-yellow-800">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    <span class="text-sm font-medium">Baja confianza en el OCR. Por favor verifica los datos.</span>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Número de Ticket</label>
+                    <input type="text" id="ocrTicketNumber" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-brand-500 outline-none">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Fecha</label>
+                    <input type="date" id="ocrTicketDate" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-brand-500 outline-none">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Hora</label>
+                    <input type="time" id="ocrTicketTime" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-brand-500 outline-none">
+                </div>
+            </div>
+
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Área</label>
+                <select id="ocrExpenseArea" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-brand-500 outline-none">
+                    <option value="produccion">Producción</option>
+                    <option value="atencion">Atención a Clientes</option>
+                    <option value="administrativo">Administrativo</option>
+                    <option value="otros">Otros</option>
+                </select>
+            </div>
+
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Método de Pago</label>
+                <select id="ocrExpenseMethod" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-brand-500 outline-none">
+                    <option value="efectivo">Efectivo</option>
+                    <option value="transferencia">Transferencia</option>
+                    <option value="tarjeta">Tarjeta</option>
+                </select>
+            </div>
+
+            <div>
+                <div class="flex justify-between items-center mb-2">
+                    <label class="block text-sm font-medium text-gray-700">Items detectados:</label>
+                    <span class="text-xs text-gray-500">Marca los que llevan IVA (16% incluido)</span>
+                </div>
+                <div id="ocrItemsList" class="space-y-2 max-h-64 overflow-y-auto">
+                    <!-- Items se insertan aquí dinámicamente -->
+                </div>
+            </div>
+
+            <div class="bg-gray-50 p-4 rounded-lg">
+                <div class="flex justify-between items-center mb-2">
+                    <span class="text-gray-600">Subtotal:</span>
+                    <span id="ocrSubtotal" class="font-medium">$0.00</span>
+                </div>
+                <div class="flex justify-between items-center mb-2 text-blue-600">
+                    <span class="text-gray-600">IVA (16%):</span>
+                    <span id="ocrIVA" class="font-medium">$0.00</span>
+                </div>
+                <div class="flex justify-between items-center pt-2 border-t border-gray-200">
+                    <span class="font-bold text-lg">Total:</span>
+                    <span id="ocrTotal" class="font-bold text-xl text-brand-800">$0.00</span>
+                </div>
+            </div>
+
+            <div class="flex gap-3">
+                <button onclick="closeModal('ocrExpenseModal')" class="flex-1 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">Cancelar</button>
+                <button onclick="saveOCRExpense()" class="flex-1 py-2 bg-brand-600 text-white rounded-lg hover:bg-brand-700 transition-colors">
+                    <i class="fas fa-save mr-2"></i>Guardar Gasto
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal para Gasto Manual -->
+<div id="manualExpenseModal" class="modal">
+    <div class="bg-white rounded-2xl p-6 w-full max-w-md mx-4 shadow-2xl">
+        <h3 class="text-xl font-bold text-brand-800 mb-4">
+            <i class="fas fa-edit mr-2"></i>Registro Manual de Gasto
+        </h3>
+        <div class="space-y-4">
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Área *</label>
+                <select id="manualExpenseArea" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-brand-500 outline-none">
+                    <option value="produccion">Producción</option>
+                    <option value="atencion">Atención a Clientes</option>
+                    <option value="administrativo">Administrativo</option>
+                    <option value="otros">Otros</option>
+                </select>
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Concepto/Descripción *</label>
+                <input type="text" id="manualExpenseConcept" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-brand-500 outline-none" placeholder="Ej: Pago de servicios">
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Monto Total ($) *</label>
+                <input type="number" id="manualExpenseAmount" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-brand-500 outline-none" placeholder="0.00" step="0.01">
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Método de Pago</label>
+                <select id="manualExpenseMethod" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-brand-500 outline-none">
+                    <option value="efectivo">Efectivo</option>
+                    <option value="transferencia">Transferencia</option>
+                    <option value="tarjeta">Tarjeta</option>
+                </select>
+            </div>
+            <div class="flex items-center gap-2 p-3 bg-gray-50 rounded-lg">
+                <input type="checkbox" id="manualExpenseHasIVA" class="w-4 h-4 text-brand-600 rounded" onchange="updateManualExpenseDisplay()">
+                <label for="manualExpenseHasIVA" class="text-sm text-gray-700">¿Incluye IVA (16%)?</label>
+            </div>
+            <div id="manualExpenseBreakdown" class="hidden text-sm bg-blue-50 p-3 rounded-lg">
+                <div class="flex justify-between text-gray-600">
+                    <span>Subtotal:</span>
+                    <span id="manualSubtotal">$0.00</span>
+                </div>
+                <div class="flex justify-between text-blue-600">
+                    <span>IVA (16%):</span>
+                    <span id="manualIVA">$0.00</span>
+                </div>
+                <div class="flex justify-between font-bold text-gray-800 pt-1 border-t border-blue-200 mt-1">
+                    <span>Total:</span>
+                    <span id="manualTotalDisplay">$0.00</span>
+                </div>
+            </div>
+        </div>
+        <div class="flex gap-3 mt-6">
+            <button onclick="closeModal('manualExpenseModal')" class="flex-1 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">Cancelar</button>
+            <button onclick="saveManualExpense()" class="flex-1 py-2 bg-brand-600 text-white rounded-lg hover:bg-brand-700 transition-colors">Guardar</button>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de Edición de Gasto -->
+<div id="editExpenseModal" class="modal">
+    <div class="bg-white rounded-2xl p-6 w-full max-w-4xl mx-4 shadow-2xl max-h-[95vh] overflow-y-auto">
+        <h3 class="text-xl font-bold text-brand-800 mb-4">
+            <i class="fas fa-edit mr-2"></i>Editar Gasto
+        </h3>
+        <input type="hidden" id="editExpenseId">
+        
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Área</label>
+                <select id="editExpenseArea" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-brand-500 outline-none">
+                    <option value="produccion">Producción</option>
+                    <option value="atencion">Atención a Clientes</option>
+                    <option value="administrativo">Administrativo</option>
+                    <option value="otros">Otros</option>
+                </select>
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Método de Pago</label>
+                <select id="editExpenseMethod" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-brand-500 outline-none">
+                    <option value="efectivo">Efectivo</option>
+                    <option value="transferencia">Transferencia</option>
+                    <option value="tarjeta">Tarjeta</option>
+                </select>
+            </div>
+        </div>
+
+        <div id="editExpenseHasItems" class="hidden">
+            <div class="bg-yellow-50 border border-yellow-200 p-3 rounded-lg mb-4">
+                <p class="text-sm text-yellow-800">
+                    <i class="fas fa-info-circle mr-1"></i>
+                    Este gasto fue creado desde un ticket. Solo puedes modificar el área y el IVA de los items. El total no puede cambiar.
+                </p>
+            </div>
+            
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">Items (marca los que llevan IVA):</label>
+                <div id="editItemsList" class="space-y-2 max-h-64 overflow-y-auto">
+                    <!-- Items se insertan aquí -->
+                </div>
+            </div>
+        </div>
+
+        <div id="editExpenseNoItems">
+            <div class="bg-gray-50 p-4 rounded-lg mb-4">
+                <p class="text-sm text-gray-600">Concepto: <span id="editExpenseConcept" class="font-medium"></span></p>
+                <p class="text-sm text-gray-600">Total: <span id="editExpenseTotal" class="font-bold text-brand-800"></span></p>
+            </div>
+        </div>
+
+        <div class="flex gap-3 mt-6">
+            <button onclick="closeModal('editExpenseModal')" class="flex-1 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">Cancelar</button>
+            <button onclick="saveEditedExpense()" class="flex-1 py-2 bg-brand-600 text-white rounded-lg hover:bg-brand-700 transition-colors">
+                <i class="fas fa-save mr-2"></i>Guardar Cambios
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de Ver OCR -->
+<div id="viewOCRModal" class="modal">
+    <div class="bg-white rounded-2xl p-6 w-full max-w-2xl mx-4 shadow-2xl">
+        <h3 class="text-xl font-bold text-brand-800 mb-4">
+            <i class="fas fa-file-alt mr-2"></i>Texto OCR Original
+        </h3>
+        <div class="bg-gray-900 text-green-400 p-4 rounded-lg font-mono text-sm max-h-96 overflow-y-auto" id="ocrRawText">
+        </div>
+        <button onclick="closeModal('viewOCRModal')" class="w-full mt-4 py-2 bg-gray-200 rounded-lg hover:bg-gray-300 transition-colors">Cerrar</button>
+    </div>
+</div>
+
+<!-- Modal de Desglose -->
+<div id="expenseBreakdownModal" class="modal">
+    <div class="bg-white rounded-2xl p-6 w-full max-w-2xl mx-4 shadow-2xl">
+        <h3 class="text-xl font-bold text-brand-800 mb-4">
+            <i class="fas fa-list-alt mr-2"></i>Desglose del Gasto
+        </h3>
+        <div id="expenseBreakdownContent" class="space-y-2 max-h-96 overflow-y-auto">
+        </div>
+        <button onclick="closeModal('expenseBreakdownModal')" class="w-full mt-4 py-2 bg-gray-200 rounded-lg hover:bg-gray-300 transition-colors">Cerrar</button>
+    </div>
+</div>
+
+<!-- Modal de Reportes de Gastos -->
+<div id="expenseReportsModal" class="modal">
+    <div class="bg-white rounded-2xl p-6 w-full max-w-4xl mx-4 shadow-2xl max-h-[95vh] overflow-y-auto">
+        <h3 class="text-xl font-bold text-brand-800 mb-4">
+            <i class="fas fa-chart-bar mr-2"></i>Reportes de Gastos
+        </h3>
+        
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Desde</label>
+                <input type="date" id="reportDateFrom" class="w-full border border-gray-300 rounded-lg px-3 py-2">
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Hasta</label>
+                <input type="date" id="reportDateTo" class="w-full border border-gray-300 rounded-lg px-3 py-2">
+            </div>
+            <div class="flex items-end">
+                <button onclick="generateExpenseReport()" class="w-full bg-brand-600 text-white py-2 rounded-lg hover:bg-brand-700">
+                    <i class="fas fa-search mr-2"></i>Generar
+                </button>
+            </div>
+        </div>
+
+        <div id="expenseReportResults" class="space-y-6">
+            <!-- Resultados se insertan aquí -->
+        </div>
+
+        <button onclick="closeModal('expenseReportsModal')" class="w-full mt-6 py-2 border border-gray-300 rounded-lg hover:bg-gray-50">Cerrar</button>
+    </div>
+</div>
+
+<!-- Modales existentes (mantenidos del código original) -->
 <div id="customProductModal" class="modal">
     <div class="bg-white rounded-2xl p-6 w-full max-w-md mx-4 shadow-2xl">
         <h3 class="text-xl font-bold text-brand-800 mb-4">Pastel Personalizado</h3>
@@ -1285,60 +1684,6 @@
             <button onclick="confirmMixedPayment()" id="btnConfirmMixed" class="flex-1 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors opacity-50 cursor-not-allowed" disabled>
                 Confirmar
             </button>
-        </div>
-    </div>
-</div>
-
-<div id="expenseModal" class="modal">
-    <div class="bg-white rounded-2xl p-6 w-full max-w-md mx-4 shadow-2xl">
-        <h3 class="text-xl font-bold text-brand-800 mb-4">Registrar Gasto</h3>
-        <div class="space-y-4">
-            <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">Área</label>
-                <select id="expenseArea" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-brand-500 outline-none">
-                    <option value="produccion">Producción</option>
-                    <option value="atencion">Atención a Clientes</option>
-                    <option value="administrativo">Administrativo</option>
-                    <option value="otros">Otros</option>
-                </select>
-            </div>
-            <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">Concepto</label>
-                <input type="text" id="expenseConcept" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-brand-500 outline-none" placeholder="Ej: Compra de harina">
-            </div>
-            <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">Monto sin IVA ($)</label>
-                <input type="number" id="expenseAmount" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-brand-500 outline-none" placeholder="0.00" oninput="calculateExpenseIVA()">
-            </div>
-            <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                <div class="flex items-center gap-2">
-                    <input type="checkbox" id="expenseHasIVA" class="w-4 h-4 text-brand-600 rounded" onchange="calculateExpenseIVA()">
-                    <label for="expenseHasIVA" class="text-sm text-gray-700">Factura con IVA (16%)</label>
-                </div>
-                <span class="text-sm font-bold text-brand-700" id="expenseTotalDisplay">$0.00</span>
-            </div>
-            <div id="expenseIVABreakdown" class="hidden text-xs text-gray-500 space-y-1">
-                <div class="flex justify-between">
-                    <span>Subtotal:</span>
-                    <span id="expenseSubtotalDisplay">$0.00</span>
-                </div>
-                <div class="flex justify-between">
-                    <span>IVA (16%):</span>
-                    <span id="expenseIVADisplay">$0.00</span>
-                </div>
-            </div>
-            <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">Método de Pago</label>
-                <select id="expenseMethod" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-brand-500 outline-none">
-                    <option value="efectivo">Efectivo</option>
-                    <option value="transferencia">Transferencia</option>
-                    <option value="tarjeta">Tarjeta</option>
-                </select>
-            </div>
-        </div>
-        <div class="flex gap-3 mt-6">
-            <button onclick="closeModal('expenseModal')" class="flex-1 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">Cancelar</button>
-            <button onclick="saveExpense()" class="flex-1 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors">Guardar</button>
         </div>
     </div>
 </div>
@@ -1589,7 +1934,12 @@
     let currentProductFilter = 'all';
     let deferredPrompt = null;
     let isSidebarMini = false;
-    let expandedSales = new Set(); // NUEVO: Para trackear ventas expandidas
+    let expandedSales = new Set();
+
+    // Variables para el sistema de gastos
+    let currentOCRData = null;
+    let productLearningData = {};
+    let currentExpenseItems = [];
 
     // ============================================
     // PWA - SERVICE WORKER & INSTALL
@@ -1604,7 +1954,8 @@
                 'https://unpkg.com/@supabase/supabase-js@2',
                 'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css',
                 'https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&family=Playfair+Display:wght@600;700&display=swap',
-                'https://cdn.jsdelivr.net/npm/chart.js'
+                'https://cdn.jsdelivr.net/npm/chart.js',
+                'https://cdn.jsdelivr.net/npm/tesseract.js@4.1.1/dist/tesseract.min.js'
             ];
 
             self.addEventListener('install', event => {
@@ -1768,7 +2119,6 @@
                 
                 document.getElementById('expensesMenuText').textContent = 'Mis Gastos';
                 document.getElementById('adminExpenseStats').classList.add('hidden');
-                document.getElementById('cashierExpenseStats').classList.remove('hidden');
                 document.getElementById('expenseFilterLabel').classList.remove('hidden');
                 document.getElementById('expensesTableTitle').textContent = 'Mis Gastos Registrados';
                 
@@ -1784,7 +2134,6 @@
                     el.classList.remove('hidden');
                 });
                 
-                document.getElementById('cashierExpenseStats').classList.add('hidden');
                 showModule('dashboard');
             }
 
@@ -1792,6 +2141,7 @@
             await loadEmployees();
             await updateDashboard();
             await loadTodaySales();
+            await loadProductLearningData();
             
             setupRealtimeSubscriptions();
             
@@ -1947,7 +2297,7 @@
             tbody.innerHTML = recent.map(item => `
                 <tr class="hover:bg-gray-50 transition-colors">
                     <td class="px-4 py-3 text-gray-600">${new Date(item.created_at).toLocaleDateString()}</td>
-                    <td class="px-4 py-3 font-medium">${item.type === 'sale' ? 'Venta' : item.concept}</td>
+                    <td class="px-4 py-3 font-medium">${item.type === 'sale' ? 'Venta' : (item.concept || 'Gasto')}</td>
                     <td class="px-4 py-3">
                         <span class="px-2 py-1 rounded-full text-xs ${item.type === 'sale' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}">
                             ${item.type === 'sale' ? 'Ingreso' : 'Egreso'}
@@ -2462,7 +2812,7 @@
     }
 
     // ============================================
-    // PROCESAR VENTA - CORREGIDO PARA IVA MIXTO
+    // PROCESAR VENTA
     // ============================================
 
     async function processSale() {
@@ -2497,11 +2847,10 @@
             }
         }
         
-        // CORREGIDO: Calcular totales por tipo de IVA separadamente
         let subtotalSinIVA = 0;
         let iva = 0;
-        let totalIVA0 = 0;      // NUEVO: Total de items sin IVA
-        let totalIVA16 = 0;     // NUEVO: Total de items con IVA (precio con IVA incluido)
+        let totalIVA0 = 0;
+        let totalIVA16 = 0;
         
         cart.forEach(item => {
             const itemTotal = item.price * item.quantity;
@@ -2510,10 +2859,10 @@
                 const ivaItem = itemTotal - subtotalItem;
                 subtotalSinIVA += subtotalItem;
                 iva += ivaItem;
-                totalIVA16 += itemTotal;  // Acumular precio con IVA incluido
+                totalIVA16 += itemTotal;
             } else {
                 subtotalSinIVA += itemTotal;
-                totalIVA0 += itemTotal;   // Acumular precio sin IVA
+                totalIVA0 += itemTotal;
             }
         });
         
@@ -2532,8 +2881,8 @@
             subtotal: subtotalSinIVA,
             iva: iva,
             total: total,
-            total_iva_0: totalIVA0,      // NUEVO
-            total_iva_16: totalIVA16,    // NUEVO
+            total_iva_0: totalIVA0,
+            total_iva_16: totalIVA16,
             payment_method: isMixedPayment ? 'mixto' : currentPaymentMethod,
             payment_details: isMixedPayment ? mixedPaymentData : null,
             cancelled: false
@@ -2570,7 +2919,7 @@
     }
 
     // ============================================
-    // HISTORIAL DE VENTAS - CON TIPO IVA
+    // HISTORIAL DE VENTAS
     // ============================================
 
     async function loadTodaySales() {
@@ -2632,7 +2981,6 @@
         }
     }
 
-    // NUEVO: Función para determinar tipo de IVA de una venta
     function getSaleIVAType(sale) {
         const hasIVA0 = (sale.total_iva_0 || 0) > 0;
         const hasIVA16 = (sale.total_iva_16 || 0) > 0;
@@ -2664,7 +3012,6 @@
                 paymentDisplay = `<span class="px-2 py-1 rounded-full text-xs ${getPaymentMethodColor(sale.payment_method)}">${sale.payment_method}</span>`;
             }
             
-            // Fila principal
             const mainRow = document.createElement('tr');
             mainRow.className = `sale-row hover:bg-gray-50 transition-colors ${sale.cancelled ? 'bg-red-50' : ''}`;
             mainRow.onclick = () => toggleSaleDetails(sale.id);
@@ -2699,7 +3046,6 @@
             `;
             tbody.appendChild(mainRow);
             
-            // Fila de detalle (solo para ventas mixtas)
             if (ivaType.type === 'MIXTA') {
                 const detailRow = document.createElement('tr');
                 detailRow.id = `sale-detail-${sale.id}`;
@@ -2730,7 +3076,6 @@
         });
     }
 
-    // NUEVO: Toggle para expandir detalles de venta mixta
     function toggleSaleDetails(saleId) {
         const detailRow = document.getElementById(`sale-detail-${saleId}`);
         if (detailRow) {
@@ -2873,14 +3218,671 @@
     }
 
     // ============================================
-    // GASTOS
+    // SISTEMA DE GASTOS MEJORADO - OCR Y APRENDIZAJE
     // ============================================
 
+    // Cargar datos de aprendizaje de productos
+    async function loadProductLearningData() {
+        try {
+            const { data, error } = await supabaseClient
+                .from('product_iva_learning')
+                .select('*');
+            
+            if (error) throw error;
+            
+            productLearningData = {};
+            data?.forEach(item => {
+                productLearningData[item.product_fingerprint] = {
+                    iva: item.usually_has_iva,
+                    count: item.occurrence_count
+                };
+            });
+        } catch (error) {
+            console.error('Error loading learning data:', error);
+        }
+    }
+
+    // Normalizar nombre de producto para fingerprint
+    function normalizeProductName(name) {
+        return name
+            .toLowerCase()
+            .replace(/\d+/g, '') // Eliminar números
+            .replace(/[^\w\s]/g, '') // Eliminar puntuación
+            .replace(/\s+/g, ' ') // Espacios múltiples a uno
+            .trim()
+            .split(' ')
+            .filter(word => word.length > 2) // Solo palabras > 2 caracteres
+            .slice(0, 2) // Máximo 2 palabras
+            .join(' ');
+    }
+
+    // Obtener sugerencia de IVA basada en aprendizaje
+    function getIVASuggestion(productName) {
+        const fingerprint = normalizeProductName(productName);
+        const data = productLearningData[fingerprint];
+        
+        if (!data || data.count < 2) return null;
+        
+        return {
+            hasIVA: data.iva,
+            confidence: data.count,
+            text: data.iva ? 'Este producto suele llevar IVA' : 'Este producto usualmente no lleva IVA'
+        };
+    }
+
+    // Actualizar datos de aprendizaje
+    async function updateLearningData(productName, hasIVA) {
+        const fingerprint = normalizeProductName(productName);
+        
+        try {
+            const { data: existing } = await supabaseClient
+                .from('product_iva_learning')
+                .select('*')
+                .eq('product_fingerprint', fingerprint)
+                .single();
+
+            if (existing) {
+                const newCount = existing.occurrence_count + 1;
+                const newIVA = hasIVA; // Actualizar con el valor más reciente
+                await supabaseClient
+                    .from('product_iva_learning')
+                    .update({
+                        usually_has_iva: newIVA,
+                        occurrence_count: newCount
+                    })
+                    .eq('id', existing.id);
+            } else {
+                await supabaseClient
+                    .from('product_iva_learning')
+                    .insert([{
+                        product_fingerprint: fingerprint,
+                        usually_has_iva: hasIVA,
+                        occurrence_count: 1
+                    }]);
+            }
+            
+            // Recargar datos locales
+            await loadProductLearningData();
+        } catch (error) {
+            console.error('Error updating learning data:', error);
+        }
+    }
+
+    // Abrir modal de selección de tipo de gasto
+    function openExpenseTypeModal() {
+        openModal('expenseTypeModal');
+    }
+
+    // Abrir modal de gasto con OCR
+    function openOCRExpenseModal() {
+        closeModal('expenseTypeModal');
+        document.getElementById('ocrStep1').classList.remove('hidden');
+        document.getElementById('ocrStep2').classList.add('hidden');
+        document.getElementById('ocrStep3').classList.add('hidden');
+        document.getElementById('ticketImageInput').value = '';
+        openModal('ocrExpenseModal');
+    }
+
+    // Abrir modal de gasto manual
+    function openManualExpenseModal() {
+        closeModal('expenseTypeModal');
+        document.getElementById('manualExpenseArea').value = 'produccion';
+        document.getElementById('manualExpenseConcept').value = '';
+        document.getElementById('manualExpenseAmount').value = '';
+        document.getElementById('manualExpenseMethod').value = 'efectivo';
+        document.getElementById('manualExpenseHasIVA').checked = false;
+        document.getElementById('manualExpenseBreakdown').classList.add('hidden');
+        openModal('manualExpenseModal');
+    }
+
+    // Manejar drag and drop
+    function handleDragOver(e) {
+        e.preventDefault();
+        e.currentTarget.classList.add('dragover');
+    }
+
+    function handleDragLeave(e) {
+        e.currentTarget.classList.remove('dragover');
+    }
+
+    function handleDrop(e) {
+        e.preventDefault();
+        e.currentTarget.classList.remove('dragover');
+        
+        const files = e.dataTransfer.files;
+        if (files.length > 0) {
+            processImageFile(files[0]);
+        }
+    }
+
+    function handleImageSelect(e) {
+        const file = e.target.files[0];
+        if (file) {
+            processImageFile(file);
+        }
+    }
+
+    // Procesar archivo de imagen
+    function processImageFile(file) {
+        if (!file.type.startsWith('image/')) {
+            alert('Por favor selecciona un archivo de imagen válido');
+            return;
+        }
+
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            const img = new Image();
+            img.onload = function() {
+                document.getElementById('ticketPreview').src = img.src;
+                document.getElementById('ocrStep1').classList.add('hidden');
+                document.getElementById('ocrStep2').classList.remove('hidden');
+                processOCR(img);
+            };
+            img.src = e.target.result;
+        };
+        reader.readAsDataURL(file);
+    }
+
+    // Preprocesar imagen para mejor OCR
+    function preprocessImage(img) {
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d');
+        
+        // Escalar imagen si es muy grande
+        let width = img.width;
+        let height = img.height;
+        const maxSize = 2000;
+        
+        if (width > maxSize || height > maxSize) {
+            if (width > height) {
+                height = (height / width) * maxSize;
+                width = maxSize;
+            } else {
+                width = (width / height) * maxSize;
+                height = maxSize;
+            }
+        }
+        
+        canvas.width = width;
+        canvas.height = height;
+        
+        // Dibujar imagen
+        ctx.drawImage(img, 0, 0, width, height);
+        
+        // Convertir a escala de grises y aumentar contraste
+        const imageData = ctx.getImageData(0, 0, width, height);
+        const data = imageData.data;
+        
+        for (let i = 0; i < data.length; i += 4) {
+            // Escala de grises
+            const gray = data[i] * 0.299 + data[i + 1] * 0.587 + data[i + 2] * 0.114;
+            
+            // Aumentar contraste
+            const contrast = 1.5;
+            const adjusted = ((gray - 128) * contrast) + 128;
+            
+            data[i] = adjusted;     // R
+            data[i + 1] = adjusted; // G
+            data[i + 2] = adjusted; // B
+        }
+        
+        ctx.putImageData(imageData, 0, 0);
+        return canvas;
+    }
+
+    // Procesar OCR con Tesseract.js
+    async function processOCR(img) {
+        try {
+            const canvas = preprocessImage(img);
+            
+            // Actualizar UI
+            document.getElementById('ocrStatusIcon').innerHTML = '<i class="fas fa-spinner fa-spin text-yellow-600"></i>';
+            document.getElementById('ocrStatusText').textContent = 'Inicializando OCR...';
+            document.getElementById('ocrProgressBar').style.width = '10%';
+            
+            const result = await Tesseract.recognize(
+                canvas,
+                'spa',
+                {
+                    logger: m => {
+                        if (m.status === 'recognizing text') {
+                            const progress = Math.round(m.progress * 100);
+                            document.getElementById('ocrProgressBar').style.width = progress + '%';
+                            document.getElementById('ocrStatusText').textContent = `Procesando... ${progress}%`;
+                        }
+                    }
+                }
+            );
+            
+            // Procesar resultado
+            document.getElementById('ocrStatusIcon').innerHTML = '<i class="fas fa-check text-green-600"></i>';
+            document.getElementById('ocrStatusText').textContent = '¡Procesamiento completado!';
+            document.getElementById('ocrProgressBar').style.width = '100%';
+            
+            const confidence = result.data.confidence;
+            document.getElementById('ocrConfidence').textContent = `Confianza: ${confidence.toFixed(1)}%`;
+            
+            // Mostrar advertencia si confianza es baja
+            if (confidence < 70) {
+                document.getElementById('ocrWarning').classList.remove('hidden');
+            } else {
+                document.getElementById('ocrWarning').classList.add('hidden');
+            }
+            
+            // Parsear datos del ticket
+            parseTicketData(result.data.text);
+            
+            // Guardar datos OCR crudos
+            currentOCRData = {
+                raw_text: result.data.text,
+                confidence: confidence,
+                processed_at: new Date().toISOString()
+            };
+            
+            // Mostrar paso de edición
+            setTimeout(() => {
+                document.getElementById('ocrStep2').classList.add('hidden');
+                document.getElementById('ocrStep3').classList.remove('hidden');
+            }, 500);
+            
+        } catch (error) {
+            console.error('OCR Error:', error);
+            document.getElementById('ocrStatusIcon').innerHTML = '<i class="fas fa-exclamation-triangle text-red-600"></i>';
+            document.getElementById('ocrStatusText').textContent = 'Error en el procesamiento';
+            alert('Error al procesar la imagen: ' + error.message);
+        }
+    }
+
+    // Parsear datos del ticket
+    function parseTicketData(text) {
+        const lines = text.split('\n').filter(line => line.trim());
+        
+        // Buscar número de ticket (patrones comunes)
+        let ticketNumber = '';
+        const ticketPatterns = [
+            /ticket[:\s]*#?\s*(\d+)/i,
+            /folio[:\s]*#?\s*(\d+)/i,
+            /no[:\s]*#?\s*(\d+)/i,
+            /(\d{4,})/ // Número largo cualquiera
+        ];
+        
+        for (const pattern of ticketPatterns) {
+            const match = text.match(pattern);
+            if (match) {
+                ticketNumber = match[1];
+                break;
+            }
+        }
+        
+        // Buscar fecha
+        let ticketDate = new Date().toISOString().split('T')[0];
+        const datePatterns = [
+            /(\d{1,2})[\/\-\.](\d{1,2})[\/\-\.](\d{2,4})/,
+            /(\d{2,4})[\/\-\.](\d{1,2})[\/\-\.](\d{1,2})/
+        ];
+        
+        for (const pattern of datePatterns) {
+            const match = text.match(pattern);
+            if (match) {
+                try {
+                    const day = parseInt(match[1]);
+                    const month = parseInt(match[2]) - 1;
+                    const year = parseInt(match[3]) < 100 ? 2000 + parseInt(match[3]) : parseInt(match[3]);
+                    const date = new Date(year, month, day);
+                    if (!isNaN(date.getTime())) {
+                        ticketDate = date.toISOString().split('T')[0];
+                        break;
+                    }
+                } catch (e) {}
+            }
+        }
+        
+        // Buscar hora
+        let ticketTime = '';
+        const timeMatch = text.match(/(\d{1,2}):(\d{2})(?::(\d{2}))?\s*(AM|PM|am|pm)?/);
+        if (timeMatch) {
+            let hours = parseInt(timeMatch[1]);
+            const minutes = timeMatch[2];
+            const period = timeMatch[4];
+            
+            if (period && (period.toUpperCase() === 'PM') && hours !== 12) {
+                hours += 12;
+            } else if (period && (period.toUpperCase() === 'AM') && hours === 12) {
+                hours = 0;
+            }
+            
+            ticketTime = `${hours.toString().padStart(2, '0')}:${minutes}`;
+        }
+        
+        // Parsear items (líneas con cantidad, descripción y precio)
+        const items = [];
+        const itemPatterns = [
+            /(\d+(?:\.\d+)?)\s+([^\d]+?)\s+\$?(\d+(?:\.\d+)?)/i,
+            /([^\d]+?)\s+(\d+(?:\.\d+)?)\s+\$?(\d+(?:\.\d+)?)/i,
+            /(\d+)\s+x\s+\$?([\d.]+)\s+([^\d]+)/i
+        ];
+        
+        for (const line of lines) {
+            // Intentar diferentes patrones
+            let match = line.match(/(\d+(?:\.\d+)?)\s+([A-Za-z\s]+)\s+\$?(\d+(?:,\d{3})*(?:\.\d+)?)/);
+            
+            if (match) {
+                const quantity = parseFloat(match[1]) || 1;
+                const name = match[2].trim();
+                const total = parseFloat(match[3].replace(',', '')) || 0;
+                
+                if (name.length > 2 && total > 0) {
+                    // Buscar sugerencia de IVA
+                    const suggestion = getIVASuggestion(name);
+                    
+                    items.push({
+                        name: name,
+                        quantity: quantity,
+                        total: total,
+                        has_iva: suggestion ? suggestion.hasIVA : false,
+                        suggestion: suggestion
+                    });
+                }
+            }
+        }
+        
+        // Buscar total general
+        let totalGeneral = 0;
+        const totalPatterns = [
+            /total[:\s]*\$?(\d+(?:,\d{3})*(?:\.\d+)?)/i,
+            /importe[:\s]*\$?(\d+(?:,\d{3})*(?:\.\d+)?)/i,
+            /\$?\s*(\d+(?:,\d{3})*(?:\.\d{2}))\s*$/m
+        ];
+        
+        for (const pattern of totalPatterns) {
+            const match = text.match(pattern);
+            if (match) {
+                totalGeneral = parseFloat(match[1].replace(',', '')) || 0;
+                if (totalGeneral > 0) break;
+            }
+        }
+        
+        // Si no hay total, sumar items
+        if (totalGeneral === 0 && items.length > 0) {
+            totalGeneral = items.reduce((sum, item) => sum + item.total, 0);
+        }
+        
+        // Llenar campos del formulario
+        document.getElementById('ocrTicketNumber').value = ticketNumber;
+        document.getElementById('ocrTicketDate').value = ticketDate;
+        document.getElementById('ocrTicketTime').value = ticketTime;
+        
+        // Renderizar items
+        renderOCRItems(items, totalGeneral);
+    }
+
+    // Renderizar items del OCR
+    function renderOCRItems(items, totalGeneral) {
+        currentExpenseItems = items;
+        const container = document.getElementById('ocrItemsList');
+        
+        if (items.length === 0) {
+            container.innerHTML = `
+                <div class="p-4 bg-yellow-50 rounded-lg text-center">
+                    <i class="fas fa-exclamation-triangle text-yellow-500 mb-2"></i>
+                    <p class="text-sm text-yellow-700">No se detectaron items automáticamente.</p>
+                    <button onclick="addManualOCRItem()" class="mt-2 text-brand-600 hover:text-brand-800 text-sm font-medium">
+                        <i class="fas fa-plus mr-1"></i>Agregar item manualmente
+                    </button>
+                </div>
+            `;
+        } else {
+            container.innerHTML = items.map((item, index) => `
+                <div class="ocr-preview-item p-3 bg-gray-50 rounded-lg flex items-center justify-between gap-3">
+                    <div class="flex-1">
+                        <div class="flex items-center gap-2">
+                            <input type="text" value="${item.name}" 
+                                onchange="updateOCRItem(${index}, 'name', this.value)"
+                                class="flex-1 border border-gray-300 rounded px-2 py-1 text-sm">
+                            ${item.suggestion ? `
+                                <span class="learning-indicator" title="Basado en ${item.suggestion.confidence} compras anteriores">
+                                    <i class="fas fa-brain"></i>
+                                </span>
+                            ` : ''}
+                        </div>
+                        <div class="flex items-center gap-2 mt-1">
+                            <input type="number" value="${item.quantity}" step="0.01"
+                                onchange="updateOCRItem(${index}, 'quantity', this.value)"
+                                class="w-20 border border-gray-300 rounded px-2 py-1 text-xs">
+                            <span class="text-gray-400">x</span>
+                            <input type="number" value="${item.total.toFixed(2)}" step="0.01"
+                                onchange="updateOCRItem(${index}, 'total', this.value)"
+                                class="w-24 border border-gray-300 rounded px-2 py-1 text-xs">
+                        </div>
+                        ${item.suggestion ? `
+                            <p class="text-xs text-purple-600 mt-1">
+                                <i class="fas fa-lightbulb mr-1"></i>${item.suggestion.text}
+                            </p>
+                        ` : ''}
+                    </div>
+                    <div class="flex flex-col items-center gap-1">
+                        <label class="flex items-center gap-1 cursor-pointer">
+                            <input type="checkbox" ${item.has_iva ? 'checked' : ''} 
+                                onchange="updateOCRItem(${index}, 'has_iva', this.checked)"
+                                class="w-4 h-4 text-brand-600 rounded">
+                            <span class="text-xs text-gray-600">IVA</span>
+                        </label>
+                        <button onclick="removeOCRItem(${index})" class="text-red-400 hover:text-red-600">
+                            <i class="fas fa-trash text-xs"></i>
+                        </button>
+                    </div>
+                </div>
+            `).join('');
+        }
+        
+        updateOCRTotals();
+    }
+
+    function updateOCRItem(index, field, value) {
+        if (field === 'has_iva') {
+            currentExpenseItems[index][field] = value;
+        } else if (field === 'quantity' || field === 'total') {
+            currentExpenseItems[index][field] = parseFloat(value) || 0;
+        } else {
+            currentExpenseItems[index][field] = value;
+        }
+        updateOCRTotals();
+    }
+
+    function removeOCRItem(index) {
+        currentExpenseItems.splice(index, 1);
+        renderOCRItems(currentExpenseItems, 0);
+    }
+
+    function addManualOCRItem() {
+        currentExpenseItems.push({
+            name: 'Nuevo producto',
+            quantity: 1,
+            total: 0,
+            has_iva: false,
+            suggestion: null
+        });
+        renderOCRItems(currentExpenseItems, 0);
+    }
+
+    function updateOCRTotals() {
+        let subtotal = 0;
+        let iva = 0;
+        
+        currentExpenseItems.forEach(item => {
+            if (item.has_iva) {
+                const itemSubtotal = item.total / 1.16;
+                const itemIVA = item.total - itemSubtotal;
+                subtotal += itemSubtotal;
+                iva += itemIVA;
+            } else {
+                subtotal += item.total;
+            }
+        });
+        
+        document.getElementById('ocrSubtotal').textContent = formatMoney(subtotal);
+        document.getElementById('ocrIVA').textContent = formatMoney(iva);
+        document.getElementById('ocrTotal').textContent = formatMoney(subtotal + iva);
+    }
+
+    function retakePhoto() {
+        document.getElementById('ocrStep1').classList.remove('hidden');
+        document.getElementById('ocrStep2').classList.add('hidden');
+        document.getElementById('ocrStep3').classList.add('hidden');
+        document.getElementById('ticketImageInput').value = '';
+    }
+
+    // Guardar gasto con OCR
+    async function saveOCRExpense() {
+        if (currentExpenseItems.length === 0) {
+            alert('Debes agregar al menos un item');
+            return;
+        }
+        
+        // Validar que los items sumen el total
+        const calculatedTotal = currentExpenseItems.reduce((sum, item) => sum + item.total, 0);
+        
+        const expenseData = {
+            user_id: currentUser.id,
+            registered_by: currentProfile.full_name,
+            area: document.getElementById('ocrExpenseArea').value,
+            method: document.getElementById('ocrExpenseMethod').value,
+            ticket_number: document.getElementById('ocrTicketNumber').value,
+            ticket_date: document.getElementById('ocrTicketDate').value,
+            ticket_time: document.getElementById('ocrTicketTime').value || null,
+            ticket_data: currentOCRData,
+            has_ticket: true,
+            is_edited: false,
+            amount: calculatedTotal // Se calculará automáticamente en la base de datos
+        };
+        
+        try {
+            // Insertar gasto
+            const { data: expense, error: expenseError } = await supabaseClient
+                .from('expenses')
+                .insert([expenseData])
+                .select()
+                .single();
+            
+            if (expenseError) throw expenseError;
+            
+            // Insertar items
+            const itemsToInsert = currentExpenseItems.map(item => ({
+                expense_id: expense.id,
+                name: item.name,
+                quantity: item.quantity,
+                total: item.total,
+                has_iva: item.has_iva,
+                product_fingerprint: normalizeProductName(item.name)
+            }));
+            
+            const { error: itemsError } = await supabaseClient
+                .from('expense_items')
+                .insert(itemsToInsert);
+            
+            if (itemsError) throw itemsError;
+            
+            // Actualizar datos de aprendizaje
+            for (const item of currentExpenseItems) {
+                await updateLearningData(item.name, item.has_iva);
+            }
+            
+            closeModal('ocrExpenseModal');
+            await loadExpenses();
+            await updateDashboard();
+            
+            // Limpiar
+            currentExpenseItems = [];
+            currentOCRData = null;
+            
+            alert('¡Gasto guardado exitosamente!');
+            
+        } catch (error) {
+            console.error('Error saving expense:', error);
+            alert('Error al guardar el gasto: ' + error.message);
+        }
+    }
+
+    // Actualizar display de gasto manual
+    function updateManualExpenseDisplay() {
+        const amount = parseFloat(document.getElementById('manualExpenseAmount').value) || 0;
+        const hasIVA = document.getElementById('manualExpenseHasIVA').checked;
+        
+        if (hasIVA && amount > 0) {
+            const subtotal = amount / 1.16;
+            const iva = amount - subtotal;
+            
+            document.getElementById('manualSubtotal').textContent = formatMoney(subtotal);
+            document.getElementById('manualIVA').textContent = formatMoney(iva);
+            document.getElementById('manualTotalDisplay').textContent = formatMoney(amount);
+            document.getElementById('manualExpenseBreakdown').classList.remove('hidden');
+        } else {
+            document.getElementById('manualExpenseBreakdown').classList.add('hidden');
+        }
+    }
+
+    // Guardar gasto manual
+    async function saveManualExpense() {
+        const area = document.getElementById('manualExpenseArea').value;
+        const concept = document.getElementById('manualExpenseConcept').value;
+        const amount = parseFloat(document.getElementById('manualExpenseAmount').value);
+        const method = document.getElementById('manualExpenseMethod').value;
+        const hasIVA = document.getElementById('manualExpenseHasIVA').checked;
+        
+        if (!concept || !amount) {
+            alert('Complete todos los campos obligatorios');
+            return;
+        }
+        
+        let subtotal = amount;
+        let ivaAmount = 0;
+        
+        if (hasIVA) {
+            subtotal = amount / 1.16;
+            ivaAmount = amount - subtotal;
+        }
+        
+        try {
+            const { error } = await supabaseClient.from('expenses').insert([{
+                user_id: currentUser.id,
+                registered_by: currentProfile.full_name,
+                area,
+                concept,
+                amount: amount,
+                method,
+                has_iva: hasIVA,
+                subtotal: subtotal,
+                iva_amount: ivaAmount,
+                has_ticket: false,
+                is_edited: false,
+                ticket_data: { concept, manual: true }
+            }]);
+            
+            if (error) throw error;
+            
+            closeModal('manualExpenseModal');
+            await loadExpenses();
+            await updateDashboard();
+            
+            alert('¡Gasto registrado exitosamente!');
+            
+        } catch (error) {
+            alert('Error al guardar gasto: ' + error.message);
+        }
+    }
+
+    // Cargar gastos
     async function loadExpenses() {
         try {
             const filter = document.getElementById('expenseFilterArea').value;
             
-            let query = supabaseClient.from('expenses').select('*').order('created_at', { ascending: false });
+            let query = supabaseClient
+                .from('expenses')
+                .select(`
+                    *,
+                    expense_items (*)
+                `)
+                .order('created_at', { ascending: false });
             
             if (currentProfile?.role === 'cashier') {
                 query = query.eq('user_id', currentUser.id);
@@ -2891,8 +3893,11 @@
             const { data, error } = await query;
             if (error) throw error;
             
+            // Actualizar estadísticas
             if (currentProfile?.role === 'admin') {
-                const { data: allExpenses } = await supabaseClient.from('expenses').select('area, amount');
+                const { data: allExpenses } = await supabaseClient
+                    .from('expenses')
+                    .select('area, amount');
                 
                 const stats = {
                     produccion: allExpenses?.filter(e => e.area === 'produccion').reduce((sum, e) => sum + e.amount, 0) || 0,
@@ -2905,102 +3910,256 @@
                 document.getElementById('expenseCustomerService').textContent = formatMoney(stats.atencion);
                 document.getElementById('expenseAdmin').textContent = formatMoney(stats.administrativo);
                 document.getElementById('expenseOthers').textContent = formatMoney(stats.otros);
-            } else {
-                const cashierTotal = data?.reduce((sum, e) => sum + e.amount, 0) || 0;
-                document.getElementById('cashierTotalExpenses').textContent = formatMoney(cashierTotal);
             }
             
+            // Renderizar tabla
             const tbody = document.getElementById('expensesTableBody');
-            tbody.innerHTML = (data || []).map(exp => `
+            tbody.innerHTML = (data || []).map(exp => {
+                const hasItems = exp.expense_items && exp.expense_items.length > 0;
+                const itemCount = hasItems ? exp.expense_items.length : 0;
+                
+                // Determinar badges
+                let badges = '';
+                if (exp.has_ticket) {
+                    badges += `<span class="expense-badge badge-ocr" title="Procesado con OCR">📷</span>`;
+                }
+                if (exp.is_edited) {
+                    badges += `<span class="expense-badge badge-edited" title="Editado">✏️</span>`;
+                }
+                
+                // Verificar si hay sugerencias de aprendizaje
+                let hasSuggestion = false;
+                if (hasItems) {
+                    hasSuggestion = exp.expense_items.some(item => {
+                        const suggestion = getIVASuggestion(item.name);
+                        return suggestion && suggestion.confidence >= 2;
+                    });
+                    if (hasSuggestion) {
+                        badges += `<span class="expense-badge badge-suggestion" title="Sugerencia basada en aprendizaje">🧠</span>`;
+                    }
+                }
+                
+                const displayName = exp.has_ticket 
+                    ? (exp.ticket_number ? `Ticket #${exp.ticket_number}` : 'Ticket sin número')
+                    : (exp.concept || 'Sin concepto');
+                
+                return `
                 <tr class="hover:bg-gray-50 transition-colors">
                     <td class="px-4 py-3 text-gray-600">${new Date(exp.created_at).toLocaleDateString()}</td>
+                    <td class="px-4 py-3 font-medium">${displayName}</td>
                     ${currentProfile?.role === 'admin' ? `<td class="px-4 py-3"><span class="px-2 py-1 rounded-full text-xs ${getAreaColor(exp.area)}">${exp.area}</span></td>` : ''}
-                    <td class="px-4 py-3 text-sm text-gray-700">${exp.registered_by || 'Sistema'}</td>
-                    <td class="px-4 py-3 font-medium">${exp.concept}</td>
-                    <td class="px-4 py-3 text-gray-600 capitalize">${exp.method}</td>
                     <td class="px-4 py-3 text-center">
-                        ${exp.has_iva ? '<span class="text-blue-600"><i class="fas fa-check"></i> 16%</span>' : '<span class="text-gray-400">-</span>'}
+                        ${hasItems ? `<span class="font-medium">${itemCount}</span>` : '<span class="text-gray-400">-</span>'}
                     </td>
                     <td class="px-4 py-3 text-right font-bold text-red-600">-${formatMoney(exp.amount)}</td>
                     <td class="px-4 py-3 text-center">
-                        ${exp.user_id === currentUser.id ? `
-                            <button onclick="deleteExpense('${exp.id}')" class="text-gray-400 hover:text-red-500 transition-colors btn-action">
+                        ${exp.iva_total > 0 ? `<span class="text-blue-600 font-medium">${formatMoney(exp.iva_total)}</span>` : '<span class="text-gray-400">-</span>'}
+                    </td>
+                    <td class="px-4 py-3 text-center">
+                        ${badges}
+                    </td>
+                    <td class="px-4 py-3 text-center">
+                        <div class="flex justify-center gap-2">
+                            <button onclick="editExpense('${exp.id}')" class="text-blue-500 hover:text-blue-700 btn-action" title="Editar">
+                                <i class="fas fa-edit"></i>
+                            </button>
+                            ${exp.has_ticket ? `
+                                <button onclick="viewOCR('${exp.id}')" class="text-purple-500 hover:text-purple-700 btn-action" title="Ver OCR">
+                                    <i class="fas fa-file-alt"></i>
+                                </button>
+                            ` : ''}
+                            ${hasItems ? `
+                                <button onclick="viewBreakdown('${exp.id}')" class="text-green-500 hover:text-green-700 btn-action" title="Desglose">
+                                    <i class="fas fa-list-alt"></i>
+                                </button>
+                            ` : ''}
+                            <button onclick="deleteExpense('${exp.id}')" class="text-red-500 hover:text-red-700 btn-action" title="Eliminar">
                                 <i class="fas fa-trash"></i>
                             </button>
-                        ` : '<span class="text-gray-300">-</span>'}
+                        </div>
                     </td>
                 </tr>
-            `).join('');
+            `}).join('');
             
         } catch (error) {
             console.error('Error loading expenses:', error);
         }
     }
 
-    function calculateExpenseIVA() {
-        const amount = parseFloat(document.getElementById('expenseAmount').value) || 0;
-        const hasIVA = document.getElementById('expenseHasIVA').checked;
-        
-        if (hasIVA && amount > 0) {
-            const total = amount * 1.16;
-            const iva = total - amount;
-            document.getElementById('expenseTotalDisplay').textContent = formatMoney(total);
-            document.getElementById('expenseSubtotalDisplay').textContent = formatMoney(amount);
-            document.getElementById('expenseIVADisplay').textContent = formatMoney(iva);
-            document.getElementById('expenseIVABreakdown').classList.remove('hidden');
-        } else {
-            document.getElementById('expenseTotalDisplay').textContent = formatMoney(amount);
-            document.getElementById('expenseIVABreakdown').classList.add('hidden');
-        }
-    }
-
-    async function saveExpense() {
-        const area = document.getElementById('expenseArea').value;
-        const concept = document.getElementById('expenseConcept').value;
-        const amount = parseFloat(document.getElementById('expenseAmount').value);
-        const method = document.getElementById('expenseMethod').value;
-        const hasIVA = document.getElementById('expenseHasIVA').checked;
-        
-        if (!concept || !amount) {
-            alert('Complete todos los campos');
-            return;
-        }
-        
-        let finalAmount = amount;
-        let ivaAmount = 0;
-        if (hasIVA) {
-            finalAmount = amount * 1.16;
-            ivaAmount = finalAmount - amount;
-        }
-        
+    // Editar gasto
+    async function editExpense(id) {
         try {
-            const { error } = await supabaseClient.from('expenses').insert([{
-                user_id: currentUser.id,
-                registered_by: currentProfile.full_name,
-                area,
-                concept,
-                amount: finalAmount,
-                method,
-                has_iva: hasIVA,
-                iva_amount: ivaAmount
-            }]);
+            const { data: expense, error } = await supabaseClient
+                .from('expenses')
+                .select(`
+                    *,
+                    expense_items (*)
+                `)
+                .eq('id', id)
+                .single();
             
             if (error) throw error;
             
-            closeModal('expenseModal');
-            await loadExpenses();
-            await updateDashboard();
+            document.getElementById('editExpenseId').value = expense.id;
+            document.getElementById('editExpenseArea').value = expense.area;
+            document.getElementById('editExpenseMethod').value = expense.method;
             
-            document.getElementById('expenseConcept').value = '';
-            document.getElementById('expenseAmount').value = '';
-            document.getElementById('expenseHasIVA').checked = false;
-            calculateExpenseIVA();
+            const hasItems = expense.expense_items && expense.expense_items.length > 0;
+            
+            if (hasItems) {
+                document.getElementById('editExpenseHasItems').classList.remove('hidden');
+                document.getElementById('editExpenseNoItems').classList.add('hidden');
+                
+                const container = document.getElementById('editItemsList');
+                container.innerHTML = expense.expense_items.map((item, index) => {
+                    const suggestion = getIVASuggestion(item.name);
+                    
+                    return `
+                    <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                        <div class="flex-1">
+                            <p class="font-medium text-sm">${item.name}</p>
+                            <p class="text-xs text-gray-500">${item.quantity} x ${formatMoney(item.total / item.quantity)} = ${formatMoney(item.total)}</p>
+                            ${suggestion ? `
+                                <p class="text-xs text-purple-600 mt-1">
+                                    <i class="fas fa-lightbulb mr-1"></i>${suggestion.text}
+                                </p>
+                            ` : ''}
+                        </div>
+                        <label class="flex items-center gap-2 cursor-pointer">
+                            <input type="checkbox" id="editItem_${item.id}" ${item.has_iva ? 'checked' : ''} 
+                                class="w-4 h-4 text-brand-600 rounded">
+                            <span class="text-sm text-gray-600">IVA</span>
+                        </label>
+                    </div>
+                `}).join('');
+            } else {
+                document.getElementById('editExpenseHasItems').classList.add('hidden');
+                document.getElementById('editExpenseNoItems').classList.remove('hidden');
+                document.getElementById('editExpenseConcept').textContent = expense.concept || 'Sin concepto';
+                document.getElementById('editExpenseTotal').textContent = formatMoney(expense.amount);
+            }
+            
+            openModal('editExpenseModal');
             
         } catch (error) {
-            alert('Error al guardar gasto: ' + error.message);
+            console.error('Error loading expense:', error);
+            alert('Error al cargar el gasto');
         }
     }
 
+    // Guardar gasto editado
+    async function saveEditedExpense() {
+        const id = document.getElementById('editExpenseId').value;
+        const area = document.getElementById('editExpenseArea').value;
+        const method = document.getElementById('editExpenseMethod').value;
+        
+        try {
+            // Obtener items actuales
+            const { data: expense } = await supabaseClient
+                .from('expenses')
+                .select('expense_items(*)')
+                .eq('id', id)
+                .single();
+            
+            const hasItems = expense.expense_items && expense.expense_items.length > 0;
+            
+            if (hasItems) {
+                // Actualizar IVA de cada item
+                for (const item of expense.expense_items) {
+                    const checkbox = document.getElementById(`editItem_${item.id}`);
+                    if (checkbox) {
+                        const newHasIVA = checkbox.checked;
+                        
+                        await supabaseClient
+                            .from('expense_items')
+                            .update({ has_iva: newHasIVA })
+                            .eq('id', item.id);
+                        
+                        // Actualizar aprendizaje
+                        await updateLearningData(item.name, newHasIVA);
+                    }
+                }
+            }
+            
+            // Marcar como editado
+            await supabaseClient
+                .from('expenses')
+                .update({ 
+                    area,
+                    method,
+                    is_edited: true 
+                })
+                .eq('id', id);
+            
+            closeModal('editExpenseModal');
+            await loadExpenses();
+            await updateDashboard();
+            
+            alert('Gasto actualizado correctamente');
+            
+        } catch (error) {
+            console.error('Error updating expense:', error);
+            alert('Error al actualizar el gasto');
+        }
+    }
+
+    // Ver OCR
+    async function viewOCR(id) {
+        try {
+            const { data, error } = await supabaseClient
+                .from('expenses')
+                .select('ticket_data')
+                .eq('id', id)
+                .single();
+            
+            if (error) throw error;
+            
+            const container = document.getElementById('ocrRawText');
+            if (data.ticket_data && data.ticket_data.raw_text) {
+                container.textContent = data.ticket_data.raw_text;
+            } else {
+                container.textContent = 'No hay texto OCR disponible';
+            }
+            
+            openModal('viewOCRModal');
+            
+        } catch (error) {
+            console.error('Error:', error);
+        }
+    }
+
+    // Ver desglose
+    async function viewBreakdown(id) {
+        try {
+            const { data, error } = await supabaseClient
+                .from('expense_items')
+                .select('*')
+                .eq('expense_id', id);
+            
+            if (error) throw error;
+            
+            const container = document.getElementById('expenseBreakdownContent');
+            container.innerHTML = data.map(item => `
+                <div class="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
+                    <div>
+                        <p class="font-medium">${item.name}</p>
+                        <p class="text-sm text-gray-500">${item.quantity} unidades</p>
+                    </div>
+                    <div class="text-right">
+                        <p class="font-bold">${formatMoney(item.total)}</p>
+                        ${item.has_iva ? `<p class="text-xs text-blue-600">IVA incluido</p>` : ''}
+                    </div>
+                </div>
+            `).join('');
+            
+            openModal('expenseBreakdownModal');
+            
+        } catch (error) {
+            console.error('Error:', error);
+        }
+    }
+
+    // Eliminar gasto
     async function deleteExpense(id) {
         if (!confirm('¿Eliminar este gasto?')) return;
         
@@ -3011,6 +4170,164 @@
         } catch (error) {
             alert('Error al eliminar: ' + error.message);
         }
+    }
+
+    // Abrir reportes de gastos
+    function openExpenseReports() {
+        // Establecer fechas por defecto (mes actual)
+        const today = new Date();
+        const firstDay = new Date(today.getFullYear(), today.getMonth(), 1);
+        
+        document.getElementById('reportDateFrom').value = firstDay.toISOString().split('T')[0];
+        document.getElementById('reportDateTo').value = today.toISOString().split('T')[0];
+        
+        openModal('expenseReportsModal');
+    }
+
+    // Generar reporte de gastos
+    async function generateExpenseReport() {
+        const from = document.getElementById('reportDateFrom').value;
+        const to = document.getElementById('reportDateTo').value;
+        
+        if (!from || !to) {
+            alert('Selecciona un rango de fechas');
+            return;
+        }
+        
+        try {
+            const { data, error } = await supabaseClient
+                .from('expenses')
+                .select(`
+                    *,
+                    expense_items (*)
+                `)
+                .gte('created_at', from)
+                .lte('created_at', to + 'T23:59:59')
+                .order('created_at', { ascending: false });
+            
+            if (error) throw error;
+            
+            // Calcular totales
+            const totalGeneral = data.reduce((sum, e) => sum + e.amount, 0);
+            const totalIVA0 = data.filter(e => e.iva_total === 0).reduce((sum, e) => sum + e.amount, 0);
+            const totalIVA16 = data.filter(e => e.iva_total > 0).reduce((sum, e) => sum + e.amount, 0);
+            const totalIVA = data.reduce((sum, e) => sum + (e.iva_total || 0), 0);
+            
+            // Por área
+            const porArea = {};
+            data.forEach(e => {
+                if (!porArea[e.area]) porArea[e.area] = { total: 0, count: 0 };
+                porArea[e.area].total += e.amount;
+                porArea[e.area].count++;
+            });
+            
+            // Productos más comprados
+            const productos = {};
+            data.forEach(e => {
+                if (e.expense_items) {
+                    e.expense_items.forEach(item => {
+                        const name = item.name;
+                        if (!productos[name]) {
+                            productos[name] = {
+                                total: 0,
+                                count: 0,
+                                avgPrice: 0,
+                                hasIVA: item.has_iva
+                            };
+                        }
+                        productos[name].total += item.total;
+                        productos[name].count += item.quantity;
+                    });
+                }
+            });
+            
+            // Calcular promedios
+            Object.keys(productos).forEach(key => {
+                productos[key].avgPrice = productos[key].total / productos[key].count;
+            });
+            
+            // Top 10 productos
+            const topProductos = Object.entries(productos)
+                .sort((a, b) => b[1].total - a[1].total)
+                .slice(0, 10);
+            
+            const container = document.getElementById('expenseReportResults');
+            container.innerHTML = `
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                    <div class="expense-report-card p-4 rounded-xl">
+                        <p class="text-xs text-blue-600 uppercase font-bold">Total Gastos</p>
+                        <h4 class="text-2xl font-bold text-blue-900">${formatMoney(totalGeneral)}</h4>
+                    </div>
+                    <div class="bg-pink-50 border border-pink-200 p-4 rounded-xl">
+                        <p class="text-xs text-pink-600 uppercase font-bold">IVA 0%</p>
+                        <h4 class="text-2xl font-bold text-pink-900">${formatMoney(totalIVA0)}</h4>
+                    </div>
+                    <div class="bg-blue-50 border border-blue-200 p-4 rounded-xl">
+                        <p class="text-xs text-blue-600 uppercase font-bold">Con IVA 16%</p>
+                        <h4 class="text-2xl font-bold text-blue-900">${formatMoney(totalIVA16)}</h4>
+                    </div>
+                    <div class="bg-purple-50 border border-purple-200 p-4 rounded-xl">
+                        <p class="text-xs text-purple-600 uppercase font-bold">IVA Total</p>
+                        <h4 class="text-2xl font-bold text-purple-900">${formatMoney(totalIVA)}</h4>
+                    </div>
+                </div>
+                
+                <div class="mt-6">
+                    <h4 class="font-bold text-gray-800 mb-3">Por Área</h4>
+                    <div class="space-y-2">
+                        ${Object.entries(porArea).map(([area, data]) => `
+                            <div class="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
+                                <span class="capitalize">${area}</span>
+                                <div class="text-right">
+                                    <span class="font-bold">${formatMoney(data.total)}</span>
+                                    <span class="text-xs text-gray-500 ml-2">(${data.count} gastos)</span>
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+                
+                <div class="mt-6">
+                    <h4 class="font-bold text-gray-800 mb-3">Top Productos Comprados</h4>
+                    <div class="space-y-2">
+                        ${topProductos.map(([name, data]) => `
+                            <div class="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
+                                <div>
+                                    <span class="font-medium">${name}</span>
+                                    <span class="text-xs text-gray-500 ml-2">${data.count} unidades</span>
+                                    ${data.hasIVA ? '<span class="text-xs text-blue-600 ml-2">IVA</span>' : ''}
+                                </div>
+                                <div class="text-right">
+                                    <span class="font-bold">${formatMoney(data.total)}</span>
+                                    <span class="text-xs text-gray-500 block">Prom: ${formatMoney(data.avgPrice)}/u</span>
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+                
+                <div class="mt-6 flex gap-2">
+                    <button onclick="printExpenseReport()" class="flex-1 bg-brand-600 text-white py-2 rounded-lg hover:bg-brand-700">
+                        <i class="fas fa-print mr-2"></i>Imprimir
+                    </button>
+                    <button onclick="exportExpenseReport()" class="flex-1 bg-green-600 text-white py-2 rounded-lg hover:bg-green-700">
+                        <i class="fas fa-file-export mr-2"></i>Exportar
+                    </button>
+                </div>
+            `;
+            
+        } catch (error) {
+            console.error('Error generating report:', error);
+            alert('Error al generar el reporte');
+        }
+    }
+
+    function printExpenseReport() {
+        window.print();
+    }
+
+    function exportExpenseReport() {
+        alert('Función de exportación en desarrollo');
     }
 
     function getAreaColor(area) {
@@ -3278,7 +4595,7 @@
     }
 
     // ============================================
-    // IMPUESTOS - CORREGIDO PARA IVA MIXTO
+    // IMPUESTOS
     // ============================================
 
     function setTaxPeriodThisMonth() {
@@ -3323,7 +4640,6 @@
                 .gte('created_at', fromDate)
                 .lte('created_at', toDate + 'T23:59:59');
 
-            // CORREGIDO: Usar las nuevas columnas total_iva_0 y total_iva_16
             let totalSales = 0;
             let totalIVA0 = 0;
             let totalIVA16 = 0;
@@ -3339,7 +4655,6 @@
                 totalIVA16 += saleIVA16;
                 totalSales += sale.total;
                 
-                // Clasificar venta
                 if (saleIVA0 > 0 && saleIVA16 > 0) {
                     countMixed++;
                 } else if (saleIVA16 > 0) {
@@ -3349,37 +4664,31 @@
                 }
             });
             
-            // Calcular IVA incluido en el 16%
             const ivaFrom16 = totalIVA16 - (totalIVA16 / 1.16);
             
-            // Actualizar UI
             document.getElementById('taxPeriodSummary').classList.remove('hidden');
             document.getElementById('taxPeriodLabel').textContent = `${new Date(fromDate).toLocaleDateString('es-MX')} - ${new Date(toDate).toLocaleDateString('es-MX')}`;
             document.getElementById('taxPeriodTotalSales').textContent = formatMoney(totalSales);
             document.getElementById('taxPeriodTransactions').textContent = salesData?.length || 0;
-            document.getElementById('taxPeriodCount0').textContent = countIVA0 + countMixed; // IVA 0 incluye mixtas
-            document.getElementById('taxPeriodCount16').textContent = countIVA16 + countMixed; // IVA 16 incluye mixtas
+            document.getElementById('taxPeriodCount0').textContent = countIVA0 + countMixed;
+            document.getElementById('taxPeriodCount16').textContent = countIVA16 + countMixed;
             
-            // Cards de IVA
             document.getElementById('salesIVA0').textContent = formatMoney(totalIVA0);
             document.getElementById('transactionsIVA0').textContent = countIVA0 + countMixed;
             document.getElementById('salesIVA16').textContent = formatMoney(totalIVA16);
             document.getElementById('transactionsIVA16').textContent = countIVA16 + countMixed;
             document.getElementById('ivaIncluded16').textContent = formatMoney(ivaFrom16);
             
-            // IVA en gastos
-            const ivaInExpenses = expensesData?.filter(e => e.has_iva).reduce((sum, e) => sum + (e.iva_amount || 0), 0) || 0;
+            const ivaInExpenses = expensesData?.filter(e => e.iva_total > 0).reduce((sum, e) => sum + e.iva_total, 0) || 0;
             
             document.getElementById('ivaCharged').textContent = formatMoney(ivaFrom16);
             document.getElementById('ivaExpenses').textContent = formatMoney(ivaInExpenses);
             document.getElementById('ivaToPay').textContent = formatMoney(ivaFrom16 - ivaInExpenses);
             
-            // ISR
             const isr = totalSales * 0.025;
             document.getElementById('isrIncome').textContent = formatMoney(totalSales);
             document.getElementById('isrAmount').textContent = formatMoney(isr);
             
-            // Tabla detalle con tipo de IVA
             const tbody = document.getElementById('taxSalesDetailTable');
             tbody.innerHTML = (salesData || []).sort((a, b) => new Date(b.created_at) - new Date(a.created_at)).map(sale => {
                 const hasIVA0 = (sale.total_iva_0 || 0) > 0;
@@ -3519,7 +4828,7 @@
     }
 
     // ============================================
-    // NÓMINA - CORREGIDO CON employee_name
+    // NÓMINA
     // ============================================
 
     async function loadNomina() {
@@ -3542,7 +4851,6 @@
             const { data, error } = await query;
             if (error) throw error;
             
-            // Calcular totales mes actual
             const currentMonthRecords = (data || []).filter(n => n.month === currentMonth && n.year === currentYear);
             const totalMes = currentMonthRecords.reduce((sum, n) => sum + n.total, 0);
             const totalSueldos = currentMonthRecords.reduce((sum, n) => sum + n.sueldo, 0);
@@ -3554,7 +4862,6 @@
             document.getElementById('totalHorasExtras').textContent = formatMoney(totalHorasExtras);
             document.getElementById('totalBonos').textContent = formatMoney(totalBonos);
             
-            // Tabla
             const tbody = document.getElementById('nominaTableBody');
             tbody.innerHTML = (data || []).map(rec => `
                 <tr class="hover:bg-gray-50 transition-colors">
@@ -3574,7 +4881,6 @@
                 </tr>
             `).join('');
             
-            // Resumen por empleado
             const employeeTotals = {};
             currentMonthRecords.forEach(rec => {
                 const empName = rec.employee_name || 'N/A';
@@ -3655,7 +4961,7 @@
         try {
             const { error } = await supabaseClient.from('nomina').insert([{
                 employee_id: empId,
-                employee_name: employee.name,  // AHORA FUNCIONA CON LA NUEVA COLUMNA
+                employee_name: employee.name,
                 user_id: currentUser.id,
                 month,
                 year,
@@ -3674,7 +4980,6 @@
             closeModal('nominaModal');
             await loadNomina();
             
-            // Limpiar formulario
             document.getElementById('nominaEmployee').value = '';
             document.getElementById('nominaSueldo').value = '';
             document.getElementById('nominaHorasExtras').value = '';
@@ -3721,15 +5026,6 @@
     }
 
     function openCustomProductModal() { openModal('customProductModal'); }
-    function openExpenseModal() { 
-        calculateExpenseIVA();
-        openModal('expenseModal'); 
-    }
-    function openEmployeeModal() { openModal('employeeModal'); }
-    function openNominaModal() { 
-        calculateNominaTotal();
-        openModal('nominaModal'); 
-    }
 
     window.onclick = function(event) {
         if (event.target.classList.contains('modal')) {
@@ -3747,7 +5043,6 @@
         if (dateFrom) dateFrom.value = today;
         if (dateTo) dateTo.value = today;
         
-        // Event listener para input de stock
         const stockInput = document.getElementById('stockNewValue');
         if (stockInput) {
             stockInput.addEventListener('input', (e) => {
