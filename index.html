@@ -3871,115 +3871,197 @@
         }
     }
 
-    // Cargar gastos
-    async function loadExpenses() {
-        try {
-            const filter = document.getElementById('expenseFilterArea').value;
+    // REEMPLAZA la función loadExpenses() completa con esta versión:
+
+async function loadExpenses() {
+    try {
+        const filter = document.getElementById('expenseFilterArea').value;
+        
+        // CORRECCIÓN 1: Consulta base simplificada sin el join problemático
+        let query = supabaseClient
+            .from('expenses')
+            .select('*')
+            .order('created_at', { ascending: false });
+        
+        // Aplicar filtros de usuario
+        if (currentProfile?.role === 'cashier') {
+            query = query.eq('user_id', currentUser.id);
+        } else if (filter !== 'all') {
+            query = query.eq('area', filter);
+        }
+        
+        const { data: expenses, error } = await query;
+        
+        if (error) {
+            console.error('Error en consulta de gastos:', error);
+            throw error;
+        }
+        
+        console.log('Gastos cargados:', expenses?.length || 0, expenses); // Debug
+        
+        // CORRECCIÓN 2: Cargar items de gastos en una consulta separada para evitar problemas de join
+        let expenseItems = [];
+        if (expenses && expenses.length > 0) {
+            const expenseIds = expenses.map(e => e.id);
             
-            let query = supabaseClient
-                .from('expenses')
-                .select(`
-                    *,
-                    expense_items (*)
-                `)
-                .order('created_at', { ascending: false });
+            const { data: items, error: itemsError } = await supabaseClient
+                .from('expense_items')
+                .select('*')
+                .in('expense_id', expenseIds);
             
-            if (currentProfile?.role === 'cashier') {
-                query = query.eq('user_id', currentUser.id);
-            } else if (filter !== 'all') {
-                query = query.eq('area', filter);
+            if (itemsError) {
+                console.error('Error cargando items:', itemsError);
+            } else {
+                expenseItems = items || [];
             }
-            
-            const { data, error } = await query;
-            if (error) throw error;
-            
-            // Actualizar estadísticas
-            if (currentProfile?.role === 'admin') {
-                const { data: allExpenses } = await supabaseClient
-                    .from('expenses')
-                    .select('area, amount');
-                
-                const stats = {
-                    produccion: allExpenses?.filter(e => e.area === 'produccion').reduce((sum, e) => sum + e.amount, 0) || 0,
-                    atencion: allExpenses?.filter(e => e.area === 'atencion').reduce((sum, e) => sum + e.amount, 0) || 0,
-                    administrativo: allExpenses?.filter(e => e.area === 'administrativo').reduce((sum, e) => sum + e.amount, 0) || 0,
-                    otros: allExpenses?.filter(e => e.area === 'otros').reduce((sum, e) => sum + e.amount, 0) || 0
-                };
-                
-                document.getElementById('expenseProduction').textContent = formatMoney(stats.produccion);
-                document.getElementById('expenseCustomerService').textContent = formatMoney(stats.atencion);
-                document.getElementById('expenseAdmin').textContent = formatMoney(stats.administrativo);
-                document.getElementById('expenseOthers').textContent = formatMoney(stats.otros);
+        }
+        
+        // Combinar datos
+        const expensesWithItems = (expenses || []).map(exp => ({
+            ...exp,
+            expense_items: expenseItems.filter(item => item.expense_id === exp.id)
+        }));
+        
+        // Actualizar estadísticas (solo admin)
+        if (currentProfile?.role === 'admin') {
+            await updateExpenseStats();
+        }
+        
+        // Renderizar tabla con los datos combinados
+        renderExpensesTable(expensesWithItems);
+        
+    } catch (error) {
+        console.error('Error loading expenses:', error);
+        // Mostrar error en la tabla
+        document.getElementById('expensesTableBody').innerHTML = `
+            <tr>
+                <td colspan="8" class="px-4 py-8 text-center text-red-500">
+                    <i class="fas fa-exclamation-triangle mr-2"></i>
+                    Error al cargar gastos: ${error.message}
+                </td>
+            </tr>
+        `;
+    }
+}
+
+// Función separada para actualizar estadísticas
+async function updateExpenseStats() {
+    try {
+        const { data: allExpenses, error } = await supabaseClient
+            .from('expenses')
+            .select('area, amount');
+        
+        if (error) throw error;
+        
+        const stats = {
+            produccion: 0,
+            atencion: 0,
+            administrativo: 0,
+            otros: 0
+        };
+        
+        (allExpenses || []).forEach(e => {
+            if (stats[e.area] !== undefined) {
+                stats[e.area] += e.amount || 0;
             }
-            
-            // Renderizar tabla
-            const tbody = document.getElementById('expensesTableBody');
-            tbody.innerHTML = (data || []).map(exp => {
-                const hasItems = exp.expense_items && exp.expense_items.length > 0;
-                const itemCount = hasItems ? exp.expense_items.length : 0;
-                
-                // Determinar badges
-                let badges = '';
-                if (exp.has_ticket) {
-                    badges += `<span class="expense-badge badge-ocr" title="Procesado con OCR">📷</span>`;
-                }
-                if (exp.is_edited) {
-                    badges += `<span class="expense-badge badge-edited" title="Editado">✏️</span>`;
-                }
-                
-                // Verificar si hay sugerencias de aprendizaje
-                let hasSuggestion = false;
-                if (hasItems) {
-                    hasSuggestion = exp.expense_items.some(item => {
-                        const suggestion = getIVASuggestion(item.name);
-                        return suggestion && suggestion.confidence >= 2;
-                    });
-                    if (hasSuggestion) {
-                        badges += `<span class="expense-badge badge-suggestion" title="Sugerencia basada en aprendizaje">🧠</span>`;
-                    }
-                }
-                
-                const displayName = exp.has_ticket 
-                    ? (exp.ticket_number ? `Ticket #${exp.ticket_number}` : 'Ticket sin número')
-                    : (exp.concept || 'Sin concepto');
-                
-                return `
-                <tr class="hover:bg-gray-50 transition-colors">
-                    <td class="px-4 py-3 text-gray-600">${new Date(exp.created_at).toLocaleDateString()}</td>
-                    <td class="px-4 py-3 font-medium">${displayName}</td>
-                    ${currentProfile?.role === 'admin' ? `<td class="px-4 py-3"><span class="px-2 py-1 rounded-full text-xs ${getAreaColor(exp.area)}">${exp.area}</span></td>` : ''}
-                    <td class="px-4 py-3 text-center">
-                        ${hasItems ? `<span class="font-medium">${itemCount}</span>` : '<span class="text-gray-400">-</span>'}
-                    </td>
-                    <td class="px-4 py-3 text-right font-bold text-red-600">-${formatMoney(exp.amount)}</td>
-                    <td class="px-4 py-3 text-center">
-                        ${exp.iva_total > 0 ? `<span class="text-blue-600 font-medium">${formatMoney(exp.iva_total)}</span>` : '<span class="text-gray-400">-</span>'}
-                    </td>
-                    <td class="px-4 py-3 text-center">
-                        ${badges}
-                    </td>
-                    <td class="px-4 py-3 text-center">
-                        <div class="flex justify-center gap-2">
-                            <button onclick="editExpense('${exp.id}')" class="text-blue-500 hover:text-blue-700 btn-action" title="Editar">
-                                <i class="fas fa-edit"></i>
+        });
+        
+        document.getElementById('expenseProduction').textContent = formatMoney(stats.produccion);
+        document.getElementById('expenseCustomerService').textContent = formatMoney(stats.atencion);
+        document.getElementById('expenseAdmin').textContent = formatMoney(stats.administrativo);
+        document.getElementById('expenseOthers').textContent = formatMoney(stats.otros);
+        
+    } catch (error) {
+        console.error('Error updating stats:', error);
+    }
+}
+
+// Función separada para renderizar la tabla
+function renderExpensesTable(expenses) {
+    const tbody = document.getElementById('expensesTableBody');
+    
+    if (!expenses || expenses.length === 0) {
+        tbody.innerHTML = `
+            <tr>
+                <td colspan="8" class="px-4 py-8 text-center text-gray-500">
+                    <i class="fas fa-inbox text-4xl mb-2 block"></i>
+                    No hay gastos registrados
+                </td>
+            </tr>
+        `;
+        return;
+    }
+    
+    tbody.innerHTML = expenses.map(exp => {
+        const hasItems = exp.expense_items && exp.expense_items.length > 0;
+        const itemCount = hasItems ? exp.expense_items.length : 0;
+        
+        // Badges
+        let badges = '';
+        if (exp.has_ticket) {
+            badges += `<span class="expense-badge badge-ocr" title="Procesado con OCR">📷</span>`;
+        }
+        if (exp.is_edited) {
+            badges += `<span class="expense-badge badge-edited" title="Editado">✏️</span>`;
+        }
+        
+        // Verificar sugerencias
+        let hasSuggestion = false;
+        if (hasItems) {
+            hasSuggestion = exp.expense_items.some(item => {
+                const suggestion = getIVASuggestion(item.name);
+                return suggestion && suggestion.confidence >= 2;
+            });
+            if (hasSuggestion) {
+                badges += `<span class="expense-badge badge-suggestion" title="Sugerencia basada en aprendizaje">🧠</span>`;
+            }
+        }
+        
+        const displayName = exp.has_ticket 
+            ? (exp.ticket_number ? `Ticket #${exp.ticket_number}` : 'Ticket sin número')
+            : (exp.concept || 'Sin concepto');
+        
+        // Determinar columnas visibles según rol
+        const isAdmin = currentProfile?.role === 'admin';
+        const areaColumn = isAdmin ? `<td class="px-4 py-3"><span class="px-2 py-1 rounded-full text-xs ${getAreaColor(exp.area)}">${exp.area}</span></td>` : '';
+        
+        return `
+            <tr class="hover:bg-gray-50 transition-colors">
+                <td class="px-4 py-3 text-gray-600">${new Date(exp.created_at).toLocaleDateString()}</td>
+                <td class="px-4 py-3 font-medium">${displayName}</td>
+                ${areaColumn}
+                <td class="px-4 py-3 text-center">
+                    ${hasItems ? `<span class="font-medium">${itemCount}</span>` : '<span class="text-gray-400">-</span>'}
+                </td>
+                <td class="px-4 py-3 text-right font-bold text-red-600">-${formatMoney(exp.amount)}</td>
+                <td class="px-4 py-3 text-center">
+                    ${exp.iva_total > 0 ? `<span class="text-blue-600 font-medium">${formatMoney(exp.iva_total)}</span>` : '<span class="text-gray-400">-</span>'}
+                </td>
+                <td class="px-4 py-3 text-center">${badges}</td>
+                <td class="px-4 py-3 text-center">
+                    <div class="flex justify-center gap-2">
+                        <button onclick="editExpense('${exp.id}')" class="text-blue-500 hover:text-blue-700 btn-action" title="Editar">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                        ${exp.has_ticket ? `
+                            <button onclick="viewOCR('${exp.id}')" class="text-purple-500 hover:text-purple-700 btn-action" title="Ver OCR">
+                                <i class="fas fa-file-alt"></i>
                             </button>
-                            ${exp.has_ticket ? `
-                                <button onclick="viewOCR('${exp.id}')" class="text-purple-500 hover:text-purple-700 btn-action" title="Ver OCR">
-                                    <i class="fas fa-file-alt"></i>
-                                </button>
-                            ` : ''}
-                            ${hasItems ? `
-                                <button onclick="viewBreakdown('${exp.id}')" class="text-green-500 hover:text-green-700 btn-action" title="Desglose">
-                                    <i class="fas fa-list-alt"></i>
-                                </button>
-                            ` : ''}
-                            <button onclick="deleteExpense('${exp.id}')" class="text-red-500 hover:text-red-700 btn-action" title="Eliminar">
-                                <i class="fas fa-trash"></i>
+                        ` : ''}
+                        ${hasItems ? `
+                            <button onclick="viewBreakdown('${exp.id}')" class="text-green-500 hover:text-green-700 btn-action" title="Desglose">
+                                <i class="fas fa-list-alt"></i>
                             </button>
-                        </div>
-                    </td>
-                </tr>
-            `}).join('');
+                        ` : ''}
+                        <button onclick="deleteExpense('${exp.id}')" class="text-red-500 hover:text-red-700 btn-action" title="Eliminar">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
+                </td>
+            </tr>
+        `;
+    }).join('');
+}
             
         } catch (error) {
             console.error('Error loading expenses:', error);
