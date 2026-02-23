@@ -299,6 +299,28 @@
             background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
             border: 1px solid #bae6fd;
         }
+
+        /* NUEVO: Notificaciones toast */
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 16px 24px;
+            border-radius: 12px;
+            color: white;
+            font-weight: 500;
+            z-index: 9999;
+            transform: translateX(150%);
+            transition: transform 0.3s ease;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+            max-width: 400px;
+        }
+        .notification.show {
+            transform: translateX(0);
+        }
+        .notification.success { background: linear-gradient(135deg, #10b981, #059669); }
+        .notification.error { background: linear-gradient(135deg, #ef4444, #dc2626); }
+        .notification.info { background: linear-gradient(135deg, #3b82f6, #2563eb); }
     </style>
 </head>
 <body class="h-screen overflow-hidden">
@@ -3469,7 +3491,7 @@
                 document.getElementById('ocrWarning').classList.add('hidden');
             }
             
-            // Parsear datos del ticket
+            // Parsear datos del ticket con el nuevo sistema mejorado
             parseTicketData(result.data.text);
             
             // Guardar datos OCR crudos
@@ -3493,127 +3515,299 @@
         }
     }
 
-    // Parsear datos del ticket
+    // Parsear datos del ticket MEJORADO
     function parseTicketData(text) {
-        const lines = text.split('\n').filter(line => line.trim());
+        console.log('OCR Texto crudo:', text); // Debug
         
-        // Buscar número de ticket (patrones comunes)
-        let ticketNumber = '';
-        const ticketPatterns = [
-            /ticket[:\s]*#?\s*(\d+)/i,
-            /folio[:\s]*#?\s*(\d+)/i,
-            /no[:\s]*#?\s*(\d+)/i,
-            /(\d{4,})/ // Número largo cualquiera
-        ];
+        const lines = text.split('\n')
+            .map(line => line.trim())
+            .filter(line => line.length > 0);
         
-        for (const pattern of ticketPatterns) {
-            const match = text.match(pattern);
-            if (match) {
-                ticketNumber = match[1];
+        // Detectar tienda por patrones específicos
+        const storePatterns = {
+            chedraui: /chedraui|super\s*chedraui/i,
+            walmart: /walmart|superama/i,
+            soriana: /soriana/i,
+            liverpool: /liverpool/i,
+            costco: /costco/i,
+            local: /tienda|abarrotes|miscelanea/i
+        };
+        
+        let detectedStore = 'generic';
+        for (const [store, pattern] of Object.entries(storePatterns)) {
+            if (pattern.test(text)) {
+                detectedStore = store;
                 break;
             }
         }
         
-        // Buscar fecha
-        let ticketDate = new Date().toISOString().split('T')[0];
+        console.log('Tienda detectada:', detectedStore);
+        
+        // Extraer número de ticket según tienda
+        let ticketNumber = extractTicketNumber(text, detectedStore);
+        
+        // Extraer fecha con múltiples formatos mexicanos
+        let ticketDate = extractDate(text);
+        
+        // Extraer hora
+        let ticketTime = extractTime(text);
+        
+        // Parsear items con lógica específica por tienda
+        const items = parseItemsByStore(text, lines, detectedStore);
+        
+        // Calcular total
+        let totalGeneral = extractTotal(text, lines, detectedStore);
+        
+        // Si no hay total pero hay items, sumar
+        if (totalGeneral === 0 && items.length > 0) {
+            totalGeneral = items.reduce((sum, item) => sum + item.total, 0);
+        }
+        
+        // Llenar formulario
+        document.getElementById('ocrTicketNumber').value = ticketNumber;
+        document.getElementById('ocrTicketDate').value = ticketDate;
+        document.getElementById('ocrTicketTime').value = ticketTime;
+        
+        // Renderizar items detectados
+        renderOCRItems(items, totalGeneral);
+        
+        // Guardar metadatos del OCR
+        currentOCRData = {
+            raw_text: text,
+            store_detected: detectedStore,
+            confidence: 0,
+            processed_at: new Date().toISOString()
+        };
+    }
+
+    // Funciones auxiliares para extracción inteligente:
+
+    function extractTicketNumber(text, store) {
+        const patterns = {
+            chedraui: /ticket[:\s]*#?\s*(\d{6,})/i,
+            walmart: /(?:folio|ticket)[:\s]*#?\s*(\d{6,})/i,
+            soriana: /ticket[:\s]*#?\s*(\d{6,})/i,
+            generic: /(?:ticket|folio|no|número)[:\s]*#?\s*(\d{4,})/i
+        };
+        
+        const pattern = patterns[store] || patterns.generic;
+        const match = text.match(pattern);
+        return match ? match[1] : '';
+    }
+
+    function extractDate(text) {
         const datePatterns = [
-            /(\d{1,2})[\/\-\.](\d{1,2})[\/\-\.](\d{2,4})/,
-            /(\d{2,4})[\/\-\.](\d{1,2})[\/\-\.](\d{1,2})/
+            // DD/MM/YYYY o DD-MM-YYYY
+            /(\d{1,2})[\/\-\.](\d{1,2})[\/\-\.](\d{4})/,
+            // YYYY/MM/DD
+            /(\d{4})[\/\-\.](\d{1,2})[\/\-\.](\d{1,2})/,
+            // Texto en español: 15 de enero de 2024
+            /(\d{1,2})\s+de\s+([a-z]+)\s+de\s+(\d{4})/i
         ];
+        
+        const months = {
+            'enero': 0, 'febrero': 1, 'marzo': 2, 'abril': 3, 'mayo': 4, 'junio': 5,
+            'julio': 6, 'agosto': 7, 'septiembre': 8, 'octubre': 9, 'noviembre': 10, 'diciembre': 11
+        };
         
         for (const pattern of datePatterns) {
             const match = text.match(pattern);
             if (match) {
                 try {
-                    const day = parseInt(match[1]);
-                    const month = parseInt(match[2]) - 1;
-                    const year = parseInt(match[3]) < 100 ? 2000 + parseInt(match[3]) : parseInt(match[3]);
+                    let day, month, year;
+                    
+                    if (match[0].includes('de')) {
+                        // Formato texto español
+                        day = parseInt(match[1]);
+                        month = months[match[2].toLowerCase()];
+                        year = parseInt(match[3]);
+                    } else if (match[1].length === 4) {
+                        // Formato YYYY/MM/DD
+                        year = parseInt(match[1]);
+                        month = parseInt(match[2]) - 1;
+                        day = parseInt(match[3]);
+                    } else {
+                        // Formato DD/MM/YYYY
+                        day = parseInt(match[1]);
+                        month = parseInt(match[2]) - 1;
+                        year = parseInt(match[3]);
+                    }
+                    
                     const date = new Date(year, month, day);
                     if (!isNaN(date.getTime())) {
-                        ticketDate = date.toISOString().split('T')[0];
-                        break;
+                        return date.toISOString().split('T')[0];
                     }
-                } catch (e) {}
-            }
-        }
-        
-        // Buscar hora
-        let ticketTime = '';
-        const timeMatch = text.match(/(\d{1,2}):(\d{2})(?::(\d{2}))?\s*(AM|PM|am|pm)?/);
-        if (timeMatch) {
-            let hours = parseInt(timeMatch[1]);
-            const minutes = timeMatch[2];
-            const period = timeMatch[4];
-            
-            if (period && (period.toUpperCase() === 'PM') && hours !== 12) {
-                hours += 12;
-            } else if (period && (period.toUpperCase() === 'AM') && hours === 12) {
-                hours = 0;
-            }
-            
-            ticketTime = `${hours.toString().padStart(2, '0')}:${minutes}`;
-        }
-        
-        // Parsear items (líneas con cantidad, descripción y precio)
-        const items = [];
-        const itemPatterns = [
-            /(\d+(?:\.\d+)?)\s+([^\d]+?)\s+\$?(\d+(?:\.\d+)?)/i,
-            /([^\d]+?)\s+(\d+(?:\.\d+)?)\s+\$?(\d+(?:\.\d+)?)/i,
-            /(\d+)\s+x\s+\$?([\d.]+)\s+([^\d]+)/i
-        ];
-        
-        for (const line of lines) {
-            // Intentar diferentes patrones
-            let match = line.match(/(\d+(?:\.\d+)?)\s+([A-Za-z\s]+)\s+\$?(\d+(?:,\d{3})*(?:\.\d+)?)/);
-            
-            if (match) {
-                const quantity = parseFloat(match[1]) || 1;
-                const name = match[2].trim();
-                const total = parseFloat(match[3].replace(',', '')) || 0;
-                
-                if (name.length > 2 && total > 0) {
-                    // Buscar sugerencia de IVA
-                    const suggestion = getIVASuggestion(name);
-                    
-                    items.push({
-                        name: name,
-                        quantity: quantity,
-                        total: total,
-                        has_iva: suggestion ? suggestion.hasIVA : false,
-                        suggestion: suggestion
-                    });
+                } catch (e) {
+                    console.error('Error parsing date:', e);
                 }
             }
         }
         
-        // Buscar total general
-        let totalGeneral = 0;
+        return new Date().toISOString().split('T')[0];
+    }
+
+    function extractTime(text) {
+        const timePatterns = [
+            /(\d{1,2}):(\d{2}):(\d{2})/,  // HH:MM:SS
+            /(\d{1,2}):(\d{2})\s*(AM|PM|am|pm)?/i  // HH:MM AM/PM
+        ];
+        
+        for (const pattern of timePatterns) {
+            const match = text.match(pattern);
+            if (match) {
+                let hours = parseInt(match[1]);
+                const minutes = match[2];
+                const period = match[3];
+                
+                if (period) {
+                    const isPM = period.toUpperCase() === 'PM';
+                    const isAM = period.toUpperCase() === 'AM';
+                    
+                    if (isPM && hours !== 12) hours += 12;
+                    if (isAM && hours === 12) hours = 0;
+                }
+                
+                return `${hours.toString().padStart(2, '0')}:${minutes}`;
+            }
+        }
+        
+        return '';
+    }
+
+    function parseItemsByStore(text, lines, store) {
+        const items = [];
+        const processedLines = new Set();
+        
+        // Patrones específicos por tienda
+        const patterns = {
+            chedraui: [
+                /(\d+(?:\.\d+)?)\s+([A-Z\s]+)\s+(\d+\.\d{2})/,  // Cantidad DESCRIPCION PRECIO
+                /([A-Z\s]+)\s+(\d+\.\d{2})/  // DESCRIPCION PRECIO (cantidad implícita 1)
+            ],
+            walmart: [
+                /(\d+)\s+([^\d]+)\s+(\d+\.\d{2})/,
+                /([^\d]+)\s+(\d+\.\d{2})/
+            ],
+            generic: [
+                // Cantidad x PrecioUnitario = Total
+                /(\d+(?:\.\d+)?)\s*[xX]\s*\$?(\d+(?:\.\d+)?)\s*[=]?\s*\$?(\d+(?:\.\d+)?)/,
+                // Cantidad Descripción $Total
+                /(\d+(?:\.\d+)?)\s+([A-Za-z\s]+)\s+\$?(\d+(?:,\d{3})*(?:\.\d+)?)/,
+                // Descripción $Total (cantidad 1 implícita)
+                /([A-Za-z\s]{3,})\s+\$?(\d+(?:,\d{3})*(?:\.\d{2}))/
+            ]
+        };
+        
+        const storePatterns = patterns[store] || patterns.generic;
+        
+        // Líneas a ignorar (encabezados, totales, etc.)
+        const ignorePatterns = [
+            /total|subtotal|iva|ieps|descuento|pago|cambio|efectivo|tarjeta/i,
+            /^\d{2}\/\d{2}\/\d{4}/,  // Fechas
+            /^[A-Z\s]{0,3}$/,  // Líneas muy cortas solo mayúsculas
+            /cajero|vendedor|sucursal|direccion/i
+        ];
+        
+        for (const line of lines) {
+            // Ignorar líneas que son encabezados o metadatos
+            if (ignorePatterns.some(p => p.test(line))) continue;
+            if (processedLines.has(line)) continue;
+            
+            let matched = false;
+            
+            for (const pattern of storePatterns) {
+                const match = line.match(pattern);
+                if (match) {
+                    let quantity, name, total;
+                    
+                    if (match.length === 4) {
+                        // Patrón con cantidad explícita
+                        quantity = parseFloat(match[1]) || 1;
+                        name = match[2].trim();
+                        total = parseFloat(match[3].replace(',', '')) || 0;
+                    } else if (match.length === 3) {
+                        // Determinar si es (cantidad, nombre, total) o (nombre, total)
+                        const firstNum = parseFloat(match[1]);
+                        if (firstNum && firstNum < 100 && !isNaN(firstNum)) {
+                            quantity = firstNum;
+                            name = match[2].trim();
+                            total = parseFloat(match[3]?.replace(',', '')) || 0;
+                        } else {
+                            quantity = 1;
+                            name = match[1].trim();
+                            total = parseFloat(match[2].replace(',', '')) || 0;
+                        }
+                    }
+                    
+                    // Validaciones
+                    if (name.length > 2 && 
+                        total > 0 && 
+                        !/^\d+$/.test(name) &&  // No solo números
+                        name.length < 100) {     // No demasiado largo
+                        
+                        // Limpiar nombre
+                        name = name
+                            .replace(/\s+/g, ' ')
+                            .replace(/[^\w\sáéíóúÁÉÍÓÚñÑ]/gi, '')
+                            .trim();
+                        
+                        // Buscar sugerencia de IVA
+                        const suggestion = getIVASuggestion(name);
+                        
+                        // Heurística: productos de panadería/pastelería usualmente no llevan IVA
+                        const noIVAKeywords = ['pan', 'paste', 'torta', 'gelatina', 'flan', 'pay', 'brownie', 'galleta', 'donut', 'mantecada'];
+                        const hasIVAKeyword = noIVAKeywords.some(k => name.toLowerCase().includes(k));
+                        
+                        items.push({
+                            name: name,
+                            quantity: quantity,
+                            total: total,
+                            has_iva: suggestion ? suggestion.hasIVA : !hasIVAKeyword,
+                            suggestion: suggestion,
+                            raw_line: line
+                        });
+                        
+                        processedLines.add(line);
+                        matched = true;
+                        break;
+                    }
+                }
+            }
+        }
+        
+        // Post-procesamiento: eliminar duplicados por nombre similar
+        const uniqueItems = [];
+        const seenNames = new Set();
+        
+        for (const item of items) {
+            const normalized = normalizeProductName(item.name);
+            if (!seenNames.has(normalized)) {
+                seenNames.add(normalized);
+                uniqueItems.push(item);
+            }
+        }
+        
+        return uniqueItems;
+    }
+
+    function extractTotal(text, lines, store) {
+        // Patrones específicos para totales
         const totalPatterns = [
-            /total[:\s]*\$?(\d+(?:,\d{3})*(?:\.\d+)?)/i,
-            /importe[:\s]*\$?(\d+(?:,\d{3})*(?:\.\d+)?)/i,
-            /\$?\s*(\d+(?:,\d{3})*(?:\.\d{2}))\s*$/m
+            /total[:\s]*\$?\s*(\d+(?:,\d{3})*(?:\.\d{2}))/i,
+            /importe[:\s]*\$?\s*(\d+(?:,\d{3})*(?:\.\d{2}))/i,
+            /a[:\s]*pagar[:\s]*\$?\s*(\d+(?:,\d{3})*(?:\.\d{2}))/i,
+            /(?:^|\s)\$?\s*(\d{1,3}(?:,\d{3})+\.\d{2})(?=\s*$)/m  // Último número grande al final
         ];
         
         for (const pattern of totalPatterns) {
             const match = text.match(pattern);
             if (match) {
-                totalGeneral = parseFloat(match[1].replace(',', '')) || 0;
-                if (totalGeneral > 0) break;
+                const total = parseFloat(match[1].replace(',', ''));
+                if (total > 0) return total;
             }
         }
         
-        // Si no hay total, sumar items
-        if (totalGeneral === 0 && items.length > 0) {
-            totalGeneral = items.reduce((sum, item) => sum + item.total, 0);
-        }
-        
-        // Llenar campos del formulario
-        document.getElementById('ocrTicketNumber').value = ticketNumber;
-        document.getElementById('ocrTicketDate').value = ticketDate;
-        document.getElementById('ocrTicketTime').value = ticketTime;
-        
-        // Renderizar items
-        renderOCRItems(items, totalGeneral);
+        return 0;
     }
 
     // Renderizar items del OCR
@@ -3732,28 +3926,65 @@
         document.getElementById('ticketImageInput').value = '';
     }
 
-    // Guardar gasto con OCR
+    // Guardar gasto con OCR MEJORADO
     async function saveOCRExpense() {
-        if (currentExpenseItems.length === 0) {
-            alert('Debes agregar al menos un item');
+        // Validaciones mejoradas
+        if (!currentExpenseItems || currentExpenseItems.length === 0) {
+            alert('Debes agregar al menos un item al gasto');
             return;
         }
         
-        // Validar que los items sumen el total
-        const calculatedTotal = currentExpenseItems.reduce((sum, item) => sum + item.total, 0);
+        // Validar que los montos sean válidos
+        const invalidItems = currentExpenseItems.filter(item => 
+            !item.name || item.name.trim() === '' || 
+            item.total <= 0 || 
+            isNaN(item.total)
+        );
+        
+        if (invalidItems.length > 0) {
+            alert(`Hay ${invalidItems.length} items con datos inválidos. Por favor verifica.`);
+            return;
+        }
+        
+        // Calcular totales
+        const calculatedSubtotal = currentExpenseItems.reduce((sum, item) => {
+            if (item.has_iva) {
+                return sum + (item.total / 1.16);
+            }
+            return sum + item.total;
+        }, 0);
+        
+        const calculatedIVA = currentExpenseItems.reduce((sum, item) => {
+            if (item.has_iva) {
+                return sum + (item.total - (item.total / 1.16));
+            }
+            return sum;
+        }, 0);
+        
+        const calculatedTotal = calculatedSubtotal + calculatedIVA;
+        
+        // Confirmar si hay diferencia significativa
+        const declaredTotal = parseFloat(document.getElementById('ocrTotal').textContent.replace(/[$,]/g, '')) || 0;
+        if (Math.abs(calculatedTotal - declaredTotal) > 0.01 && declaredTotal > 0) {
+            if (!confirm(`Hay una diferencia entre el total calculado (${formatMoney(calculatedTotal)}) y el detectado (${formatMoney(declaredTotal)}). ¿Continuar con el calculado?`)) {
+                return;
+            }
+        }
         
         const expenseData = {
             user_id: currentUser.id,
-            registered_by: currentProfile.full_name,
+            registered_by: currentProfile.full_name || currentProfile.username,
             area: document.getElementById('ocrExpenseArea').value,
             method: document.getElementById('ocrExpenseMethod').value,
-            ticket_number: document.getElementById('ocrTicketNumber').value,
+            ticket_number: document.getElementById('ocrTicketNumber').value || null,
             ticket_date: document.getElementById('ocrTicketDate').value,
             ticket_time: document.getElementById('ocrTicketTime').value || null,
             ticket_data: currentOCRData,
             has_ticket: true,
             is_edited: false,
-            amount: calculatedTotal // Se calculará automáticamente en la base de datos
+            amount: calculatedTotal,
+            subtotal: calculatedSubtotal,
+            iva_total: calculatedIVA
         };
         
         try {
@@ -3764,41 +3995,57 @@
                 .select()
                 .single();
             
-            if (expenseError) throw expenseError;
+            if (expenseError) {
+                console.error('Error insertando gasto:', expenseError);
+                throw new Error(`Error al guardar gasto: ${expenseError.message}`);
+            }
             
-            // Insertar items
+            if (!expense || !expense.id) {
+                throw new Error('No se pudo obtener el ID del gasto creado');
+            }
+            
+            // Preparar items para insertar
             const itemsToInsert = currentExpenseItems.map(item => ({
                 expense_id: expense.id,
-                name: item.name,
-                quantity: item.quantity,
+                name: item.name.trim(),
+                quantity: item.quantity || 1,
                 total: item.total,
                 has_iva: item.has_iva,
-                product_fingerprint: normalizeProductName(item.name)
+                product_fingerprint: normalizeProductName(item.name),
+                unit_price: item.total / (item.quantity || 1)
             }));
             
             const { error: itemsError } = await supabaseClient
                 .from('expense_items')
                 .insert(itemsToInsert);
             
-            if (itemsError) throw itemsError;
-            
-            // Actualizar datos de aprendizaje
-            for (const item of currentExpenseItems) {
-                await updateLearningData(item.name, item.has_iva);
+            if (itemsError) {
+                console.error('Error insertando items:', itemsError);
+                // Rollback: eliminar el gasto creado
+                await supabaseClient.from('expenses').delete().eq('id', expense.id);
+                throw new Error(`Error al guardar items: ${itemsError.message}`);
             }
             
+            // Actualizar datos de aprendizaje en paralelo
+            const learningUpdates = currentExpenseItems.map(item => 
+                updateLearningData(item.name, item.has_iva)
+            );
+            Promise.all(learningUpdates).catch(e => console.error('Error en aprendizaje:', e));
+            
+            // Cerrar modal y recargar
             closeModal('ocrExpenseModal');
             await loadExpenses();
             await updateDashboard();
             
-            // Limpiar
+            // Resetear estado
             currentExpenseItems = [];
             currentOCRData = null;
             
-            alert('¡Gasto guardado exitosamente!');
+            // Notificación de éxito
+            showNotification('¡Gasto guardado exitosamente!', 'success');
             
         } catch (error) {
-            console.error('Error saving expense:', error);
+            console.error('Error completo:', error);
             alert('Error al guardar el gasto: ' + error.message);
         }
     }
@@ -3845,7 +4092,7 @@
         try {
             const { error } = await supabaseClient.from('expenses').insert([{
                 user_id: currentUser.id,
-                registered_by: currentProfile.full_name,
+                registered_by: currentProfile.full_name || currentProfile.username,
                 area,
                 concept,
                 amount: amount,
@@ -3864,208 +4111,202 @@
             await loadExpenses();
             await updateDashboard();
             
-            alert('¡Gasto registrado exitosamente!');
+            showNotification('¡Gasto registrado exitosamente!', 'success');
             
         } catch (error) {
             alert('Error al guardar gasto: ' + error.message);
         }
     }
 
-                // REEMPLAZA la función loadExpenses() completa con esta versión:
+    // Cargar gastos CORREGIDO
+    async function loadExpenses() {
+        try {
+            const filter = document.getElementById('expenseFilterArea').value;
             
-            async function loadExpenses() {
-                try {
-                    const filter = document.getElementById('expenseFilterArea').value;
-                    
-                    // CORRECCIÓN 1: Consulta base simplificada sin el join problemático
-                    let query = supabaseClient
-                        .from('expenses')
-                        .select('*')
-                        .order('created_at', { ascending: false });
-                    
-                    // Aplicar filtros de usuario
-                    if (currentProfile?.role === 'cashier') {
-                        query = query.eq('user_id', currentUser.id);
-                    } else if (filter !== 'all') {
-                        query = query.eq('area', filter);
-                    }
-                    
-                    const { data: expenses, error } = await query;
-                    
-                    if (error) {
-                        console.error('Error en consulta de gastos:', error);
-                        throw error;
-                    }
-                    
-                    console.log('Gastos cargados:', expenses?.length || 0, expenses); // Debug
-                    
-                    // CORRECCIÓN 2: Cargar items de gastos en una consulta separada para evitar problemas de join
-                    let expenseItems = [];
-                    if (expenses && expenses.length > 0) {
-                        const expenseIds = expenses.map(e => e.id);
-                        
-                        const { data: items, error: itemsError } = await supabaseClient
-                            .from('expense_items')
-                            .select('*')
-                            .in('expense_id', expenseIds);
-                        
-                        if (itemsError) {
-                            console.error('Error cargando items:', itemsError);
-                        } else {
-                            expenseItems = items || [];
-                        }
-                    }
-                    
-                    // Combinar datos
-                    const expensesWithItems = (expenses || []).map(exp => ({
-                        ...exp,
-                        expense_items: expenseItems.filter(item => item.expense_id === exp.id)
-                    }));
-                    
-                    // Actualizar estadísticas (solo admin)
-                    if (currentProfile?.role === 'admin') {
-                        await updateExpenseStats();
-                    }
-                    
-                    // Renderizar tabla con los datos combinados
-                    renderExpensesTable(expensesWithItems);
-                    
-                } catch (error) {
-                    console.error('Error loading expenses:', error);
-                    // Mostrar error en la tabla
-                    document.getElementById('expensesTableBody').innerHTML = `
-                        <tr>
-                            <td colspan="8" class="px-4 py-8 text-center text-red-500">
-                                <i class="fas fa-exclamation-triangle mr-2"></i>
-                                Error al cargar gastos: ${error.message}
-                            </td>
-                        </tr>
-                    `;
-                }
+            // CORRECCIÓN: Consulta base simplificada sin el join problemático
+            let query = supabaseClient
+                .from('expenses')
+                .select('*')
+                .order('created_at', { ascending: false });
+            
+            // Aplicar filtros de usuario
+            if (currentProfile?.role === 'cashier') {
+                query = query.eq('user_id', currentUser.id);
+            } else if (filter !== 'all') {
+                query = query.eq('area', filter);
             }
             
-            // Función separada para actualizar estadísticas
-            async function updateExpenseStats() {
-                try {
-                    const { data: allExpenses, error } = await supabaseClient
-                        .from('expenses')
-                        .select('area, amount');
-                    
-                    if (error) throw error;
-                    
-                    const stats = {
-                        produccion: 0,
-                        atencion: 0,
-                        administrativo: 0,
-                        otros: 0
-                    };
-                    
-                    (allExpenses || []).forEach(e => {
-                        if (stats[e.area] !== undefined) {
-                            stats[e.area] += e.amount || 0;
-                        }
-                    });
-                    
-                    document.getElementById('expenseProduction').textContent = formatMoney(stats.produccion);
-                    document.getElementById('expenseCustomerService').textContent = formatMoney(stats.atencion);
-                    document.getElementById('expenseAdmin').textContent = formatMoney(stats.administrativo);
-                    document.getElementById('expenseOthers').textContent = formatMoney(stats.otros);
-                    
-                } catch (error) {
-                    console.error('Error updating stats:', error);
-                }
+            const { data: expenses, error } = await query;
+            
+            if (error) {
+                console.error('Error en consulta de gastos:', error);
+                throw error;
             }
             
-            // Función separada para renderizar la tabla
-            function renderExpensesTable(expenses) {
-                const tbody = document.getElementById('expensesTableBody');
+            console.log('Gastos cargados:', expenses?.length || 0, expenses); // Debug
+            
+            // CORRECCIÓN: Cargar items de gastos en una consulta separada para evitar problemas de join
+            let expenseItems = [];
+            if (expenses && expenses.length > 0) {
+                const expenseIds = expenses.map(e => e.id);
                 
-                if (!expenses || expenses.length === 0) {
-                    tbody.innerHTML = `
-                        <tr>
-                            <td colspan="8" class="px-4 py-8 text-center text-gray-500">
-                                <i class="fas fa-inbox text-4xl mb-2 block"></i>
-                                No hay gastos registrados
-                            </td>
-                        </tr>
-                    `;
-                    return;
-                }
+                const { data: items, error: itemsError } = await supabaseClient
+                    .from('expense_items')
+                    .select('*')
+                    .in('expense_id', expenseIds);
                 
-                tbody.innerHTML = expenses.map(exp => {
-                    const hasItems = exp.expense_items && exp.expense_items.length > 0;
-                    const itemCount = hasItems ? exp.expense_items.length : 0;
-                    
-                    // Badges
-                    let badges = '';
-                    if (exp.has_ticket) {
-                        badges += `<span class="expense-badge badge-ocr" title="Procesado con OCR">📷</span>`;
-                    }
-                    if (exp.is_edited) {
-                        badges += `<span class="expense-badge badge-edited" title="Editado">✏️</span>`;
-                    }
-                    
-                    // Verificar sugerencias
-                    let hasSuggestion = false;
-                    if (hasItems) {
-                        hasSuggestion = exp.expense_items.some(item => {
-                            const suggestion = getIVASuggestion(item.name);
-                            return suggestion && suggestion.confidence >= 2;
-                        });
-                        if (hasSuggestion) {
-                            badges += `<span class="expense-badge badge-suggestion" title="Sugerencia basada en aprendizaje">🧠</span>`;
-                        }
-                    }
-                    
-                    const displayName = exp.has_ticket 
-                        ? (exp.ticket_number ? `Ticket #${exp.ticket_number}` : 'Ticket sin número')
-                        : (exp.concept || 'Sin concepto');
-                    
-                    // Determinar columnas visibles según rol
-                    const isAdmin = currentProfile?.role === 'admin';
-                    const areaColumn = isAdmin ? `<td class="px-4 py-3"><span class="px-2 py-1 rounded-full text-xs ${getAreaColor(exp.area)}">${exp.area}</span></td>` : '';
-                    
-                    return `
-                        <tr class="hover:bg-gray-50 transition-colors">
-                            <td class="px-4 py-3 text-gray-600">${new Date(exp.created_at).toLocaleDateString()}</td>
-                            <td class="px-4 py-3 font-medium">${displayName}</td>
-                            ${areaColumn}
-                            <td class="px-4 py-3 text-center">
-                                ${hasItems ? `<span class="font-medium">${itemCount}</span>` : '<span class="text-gray-400">-</span>'}
-                            </td>
-                            <td class="px-4 py-3 text-right font-bold text-red-600">-${formatMoney(exp.amount)}</td>
-                            <td class="px-4 py-3 text-center">
-                                ${exp.iva_total > 0 ? `<span class="text-blue-600 font-medium">${formatMoney(exp.iva_total)}</span>` : '<span class="text-gray-400">-</span>'}
-                            </td>
-                            <td class="px-4 py-3 text-center">${badges}</td>
-                            <td class="px-4 py-3 text-center">
-                                <div class="flex justify-center gap-2">
-                                    <button onclick="editExpense('${exp.id}')" class="text-blue-500 hover:text-blue-700 btn-action" title="Editar">
-                                        <i class="fas fa-edit"></i>
-                                    </button>
-                                    ${exp.has_ticket ? `
-                                        <button onclick="viewOCR('${exp.id}')" class="text-purple-500 hover:text-purple-700 btn-action" title="Ver OCR">
-                                            <i class="fas fa-file-alt"></i>
-                                        </button>
-                                    ` : ''}
-                                    ${hasItems ? `
-                                        <button onclick="viewBreakdown('${exp.id}')" class="text-green-500 hover:text-green-700 btn-action" title="Desglose">
-                                            <i class="fas fa-list-alt"></i>
-                                        </button>
-                                    ` : ''}
-                                    <button onclick="deleteExpense('${exp.id}')" class="text-red-500 hover:text-red-700 btn-action" title="Eliminar">
-                                        <i class="fas fa-trash"></i>
-                                    </button>
-                                </div>
-                            </td>
-                        </tr>
-                    `;
-                }).join('');
+                if (itemsError) {
+                    console.error('Error cargando items:', itemsError);
+                } else {
+                    expenseItems = items || [];
+                }
             }
+            
+            // Combinar datos
+            const expensesWithItems = (expenses || []).map(exp => ({
+                ...exp,
+                expense_items: expenseItems.filter(item => item.expense_id === exp.id)
+            }));
+            
+            // Actualizar estadísticas (solo admin)
+            if (currentProfile?.role === 'admin') {
+                await updateExpenseStats();
+            }
+            
+            // Renderizar tabla con los datos combinados
+            renderExpensesTable(expensesWithItems);
             
         } catch (error) {
             console.error('Error loading expenses:', error);
+            // Mostrar error en la tabla
+            document.getElementById('expensesTableBody').innerHTML = `
+                <tr>
+                    <td colspan="8" class="px-4 py-8 text-center text-red-500">
+                        <i class="fas fa-exclamation-triangle mr-2"></i>
+                        Error al cargar gastos: ${error.message}
+                    </td>
+                </tr>
+            `;
         }
+    }
+
+    // Función separada para actualizar estadísticas
+    async function updateExpenseStats() {
+        try {
+            const { data: allExpenses, error } = await supabaseClient
+                .from('expenses')
+                .select('area, amount');
+            
+            if (error) throw error;
+            
+            const stats = {
+                produccion: 0,
+                atencion: 0,
+                administrativo: 0,
+                otros: 0
+            };
+            
+            (allExpenses || []).forEach(e => {
+                if (stats[e.area] !== undefined) {
+                    stats[e.area] += e.amount || 0;
+                }
+            });
+            
+            document.getElementById('expenseProduction').textContent = formatMoney(stats.produccion);
+            document.getElementById('expenseCustomerService').textContent = formatMoney(stats.atencion);
+            document.getElementById('expenseAdmin').textContent = formatMoney(stats.administrativo);
+            document.getElementById('expenseOthers').textContent = formatMoney(stats.otros);
+            
+        } catch (error) {
+            console.error('Error updating stats:', error);
+        }
+    }
+
+    // Función separada para renderizar la tabla
+    function renderExpensesTable(expenses) {
+        const tbody = document.getElementById('expensesTableBody');
+        
+        if (!expenses || expenses.length === 0) {
+            tbody.innerHTML = `
+                <tr>
+                    <td colspan="8" class="px-4 py-8 text-center text-gray-500">
+                        <i class="fas fa-inbox text-4xl mb-2 block"></i>
+                        No hay gastos registrados
+                    </td>
+                </tr>
+            `;
+            return;
+        }
+        
+        tbody.innerHTML = expenses.map(exp => {
+            const hasItems = exp.expense_items && exp.expense_items.length > 0;
+            const itemCount = hasItems ? exp.expense_items.length : 0;
+            
+            // Badges
+            let badges = '';
+            if (exp.has_ticket) {
+                badges += `<span class="expense-badge badge-ocr" title="Procesado con OCR">📷</span>`;
+            }
+            if (exp.is_edited) {
+                badges += `<span class="expense-badge badge-edited" title="Editado">✏️</span>`;
+            }
+            
+            // Verificar si hay sugerencias de aprendizaje
+            let hasSuggestion = false;
+            if (hasItems) {
+                hasSuggestion = exp.expense_items.some(item => {
+                    const suggestion = getIVASuggestion(item.name);
+                    return suggestion && suggestion.confidence >= 2;
+                });
+                if (hasSuggestion) {
+                    badges += `<span class="expense-badge badge-suggestion" title="Sugerencia basada en aprendizaje">🧠</span>`;
+                }
+            }
+            
+            const displayName = exp.has_ticket 
+                ? (exp.ticket_number ? `Ticket #${exp.ticket_number}` : 'Ticket sin número')
+                : (exp.concept || 'Sin concepto');
+            
+            // Determinar columnas visibles según rol
+            const isAdmin = currentProfile?.role === 'admin';
+            const areaColumn = isAdmin ? `<td class="px-4 py-3"><span class="px-2 py-1 rounded-full text-xs ${getAreaColor(exp.area)}">${exp.area}</span></td>` : '';
+            
+            return `
+                <tr class="hover:bg-gray-50 transition-colors">
+                    <td class="px-4 py-3 text-gray-600">${new Date(exp.created_at).toLocaleDateString()}</td>
+                    <td class="px-4 py-3 font-medium">${displayName}</td>
+                    ${areaColumn}
+                    <td class="px-4 py-3 text-center">
+                        ${hasItems ? `<span class="font-medium">${itemCount}</span>` : '<span class="text-gray-400">-</span>'}
+                    </td>
+                    <td class="px-4 py-3 text-right font-bold text-red-600">-${formatMoney(exp.amount)}</td>
+                    <td class="px-4 py-3 text-center">
+                        ${exp.iva_total > 0 ? `<span class="text-blue-600 font-medium">${formatMoney(exp.iva_total)}</span>` : '<span class="text-gray-400">-</span>'}
+                    </td>
+                    <td class="px-4 py-3 text-center">${badges}</td>
+                    <td class="px-4 py-3 text-center">
+                        <div class="flex justify-center gap-2">
+                            <button onclick="editExpense('${exp.id}')" class="text-blue-500 hover:text-blue-700 btn-action" title="Editar">
+                                <i class="fas fa-edit"></i>
+                            </button>
+                            ${exp.has_ticket ? `
+                                <button onclick="viewOCR('${exp.id}')" class="text-purple-500 hover:text-purple-700 btn-action" title="Ver OCR">
+                                    <i class="fas fa-file-alt"></i>
+                                </button>
+                            ` : ''}
+                            ${hasItems ? `
+                                <button onclick="viewBreakdown('${exp.id}')" class="text-green-500 hover:text-green-700 btn-action" title="Desglose">
+                                    <i class="fas fa-list-alt"></i>
+                                </button>
+                            ` : ''}
+                            <button onclick="deleteExpense('${exp.id}')" class="text-red-500 hover:text-red-700 btn-action" title="Eliminar">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
+                    </td>
+                </tr>
+            `;
+        }).join('');
     }
 
     // Editar gasto
@@ -4177,7 +4418,7 @@
             await loadExpenses();
             await updateDashboard();
             
-            alert('Gasto actualizado correctamente');
+            showNotification('Gasto actualizado correctamente', 'success');
             
         } catch (error) {
             console.error('Error updating expense:', error);
@@ -4249,6 +4490,7 @@
             await supabaseClient.from('expenses').delete().eq('id', id);
             await loadExpenses();
             await updateDashboard();
+            showNotification('Gasto eliminado', 'success');
         } catch (error) {
             alert('Error al eliminar: ' + error.message);
         }
@@ -4534,7 +4776,7 @@
             await loadProductsTable();
             await loadProducts();
             
-            alert('Stock actualizado correctamente');
+            showNotification('Stock actualizado correctamente', 'success');
             
         } catch (error) {
             alert('Error al actualizar stock: ' + error.message);
@@ -5092,7 +5334,7 @@
     }
 
     // ============================================
-    // UTILIDADES
+    // UTILIDADES Y NOTIFICACIONES
     // ============================================
 
     function formatMoney(amount) {
@@ -5109,9 +5351,77 @@
 
     function openCustomProductModal() { openModal('customProductModal'); }
 
+    // Función de notificación visual
+    function showNotification(message, type = 'success') {
+        // Remover notificación anterior si existe
+        const existing = document.querySelector('.notification');
+        if (existing) existing.remove();
+        
+        const notification = document.createElement('div');
+        notification.className = `notification ${type}`;
+        notification.innerHTML = `
+            <div class="flex items-center gap-2">
+                <i class="fas ${type === 'success' ? 'fa-check-circle' : type === 'error' ? 'fa-exclamation-circle' : 'fa-info-circle'}"></i>
+                <span>${message}</span>
+            </div>
+        `;
+        
+        document.body.appendChild(notification);
+        
+        // Animación de entrada
+        requestAnimationFrame(() => {
+            notification.classList.add('show');
+        });
+        
+        // Auto-remover
+        setTimeout(() => {
+            notification.classList.remove('show');
+            setTimeout(() => notification.remove(), 300);
+        }, 3000);
+    }
+
     window.onclick = function(event) {
         if (event.target.classList.contains('modal')) {
             event.target.classList.remove('active');
+        }
+    }
+
+    // Atajos de teclado
+    document.addEventListener('keydown', (e) => {
+        // ESC para cerrar modales
+        if (e.key === 'Escape') {
+            document.querySelectorAll('.modal.active').forEach(modal => {
+                modal.classList.remove('active');
+            });
+        }
+        
+        // Ctrl/Cmd + S para guardar en modales de gastos
+        if ((e.ctrlKey || e.metaKey) && e.key === 's') {
+            e.preventDefault();
+            if (document.getElementById('ocrExpenseModal').classList.contains('active')) {
+                saveOCRExpense();
+            } else if (document.getElementById('manualExpenseModal').classList.contains('active')) {
+                saveManualExpense();
+            }
+        }
+    });
+
+    // Manejo de errores global
+    window.addEventListener('error', (e) => {
+        console.error('Error global:', e.error);
+    });
+
+    // Verificación de conexión a Supabase
+    async function checkSupabaseConnection() {
+        try {
+            const { data, error } = await supabaseClient.from('expenses').select('count', { count: 'exact', head: true });
+            if (error) throw error;
+            console.log('Conexión a Supabase OK');
+            return true;
+        } catch (error) {
+            console.error('Error de conexión a Supabase:', error);
+            showNotification('Error de conexión con la base de datos', 'error');
+            return false;
         }
     }
 
@@ -5133,6 +5443,9 @@
                 document.getElementById('stockPreview').textContent = value;
             });
         }
+        
+        // Verificar conexión después de 2 segundos
+        setTimeout(checkSupabaseConnection, 2000);
     });
 </script>
 
