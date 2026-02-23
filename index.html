@@ -224,7 +224,7 @@
             border-color: #a77f70;
         }
 
-        /* NUEVO: Estilos para expansión de ventas mixtas */
+        /* Estilos para expansión de ventas mixtas */
         .sale-row {
             cursor: pointer;
             transition: background-color 0.2s;
@@ -243,6 +243,49 @@
         .iva-badge-0 { background: #fce7f3; color: #be185d; }
         .iva-badge-16 { background: #dbeafe; color: #1e40af; }
         .iva-badge-mix { background: #f3e8ff; color: #7c3aed; }
+
+        /* NUEVOS: Estilos para items de gasto */
+        .expense-item-row {
+            transition: all 0.2s;
+        }
+        .expense-item-row:hover {
+            background-color: #f3f4f6;
+        }
+        .expense-item-iva-toggle {
+            transition: all 0.2s;
+        }
+        .expense-item-iva-toggle.active {
+            background-color: #dbeafe;
+            border-color: #3b82f6;
+            color: #1e40af;
+        }
+        
+        /* Estilos para semanas de facturación */
+        .week-card {
+            transition: all 0.3s;
+            cursor: pointer;
+        }
+        .week-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+        }
+        .week-card.facturada {
+            opacity: 0.6;
+            background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
+            border-color: #86efac;
+        }
+        .week-card.facturada::after {
+            content: 'FACTURADA';
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: #22c55e;
+            color: white;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 10px;
+            font-weight: bold;
+        }
     </style>
 </head>
 <body class="h-screen overflow-hidden">
@@ -385,6 +428,12 @@
             <button onclick="showModule('nomina')" data-title="Nómina" class="sidebar-item w-full flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-brand-700 transition-colors text-left admin-only">
                 <i class="fas fa-money-check-alt w-5 text-center"></i>
                 <span class="sidebar-text">Nómina</span>
+            </button>
+
+            <!-- NUEVO: Botón Facturas Globales -->
+            <button onclick="showModule('globalInvoices')" data-title="Facturas Globales" class="sidebar-item w-full flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-brand-700 transition-colors text-left admin-only">
+                <i class="fas fa-file-invoice w-5 text-center"></i>
+                <span class="sidebar-text">Facturas Globales</span>
             </button>
         </nav>
 
@@ -721,12 +770,12 @@
             </div>
         </div>
 
-        <!-- Expenses Module -->
+        <!-- EXPENSES MODULE - COMPLETAMENTE REESTRUCTURADO -->
         <div id="expenses" class="module hidden fade-in">
             <div class="mb-6 flex justify-between items-center">
                 <div>
                     <h1 class="text-3xl font-serif font-bold text-brand-900 mb-2" id="expensesTitle">Gastos y Egresos</h1>
-                    <p class="text-gray-600" id="expensesSubtitle">Control de egresos por área</p>
+                    <p class="text-gray-600" id="expensesSubtitle">Control de egresos con items editables</p>
                 </div>
                 <button onclick="openExpenseModal()" class="bg-red-500 hover:bg-red-600 text-white px-6 py-2 rounded-lg transition-colors shadow-lg">
                     <i class="fas fa-plus mr-2"></i>Registrar Gasto
@@ -787,11 +836,10 @@
                             <tr>
                                 <th class="px-4 py-3 text-left">Fecha</th>
                                 <th class="px-4 py-3 text-left admin-only-inline">Área</th>
-                                <th class="px-4 py-3 text-left">Registrado por</th>
-                                <th class="px-4 py-3 text-left">Concepto</th>
+                                <th class="px-4 py-3 text-left">Proveedor/Concepto</th>
+                                <th class="px-4 py-3 text-center">Items</th>
                                 <th class="px-4 py-3 text-left">Método</th>
-                                <th class="px-4 py-3 text-center">IVA</th>
-                                <th class="px-4 py-3 text-right">Monto</th>
+                                <th class="px-4 py-3 text-right">Total</th>
                                 <th class="px-4 py-3 text-center">Acciones</th>
                             </tr>
                         </thead>
@@ -839,7 +887,7 @@
         <div id="bank" class="module hidden fade-in admin-only-content">
             <div class="mb-6">
                 <h1 class="text-3xl font-serif font-bold text-brand-900 mb-2">Bancos y Efectivo</h1>
-                <p class="text-gray-600">Saldos actualizados en tiempo real</p>
+                <p class="text-gray-600">Saldos actualizados en tiempo real (incluye Nómina)</p>
             </div>
 
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
@@ -852,7 +900,7 @@
                             </div>
                             <div>
                                 <h3 class="text-lg font-bold text-gray-800">Efectivo en Caja</h3>
-                                <p class="text-sm text-gray-500">Disponible actual</p>
+                                <p class="text-sm text-gray-500">Ventas - Gastos - Nómina (Efectivo)</p>
                             </div>
                         </div>
                         <div class="text-3xl font-bold text-green-700 mb-2" id="cashBalance">$0.00</div>
@@ -868,11 +916,18 @@
                             </div>
                             <div>
                                 <h3 class="text-lg font-bold text-gray-800">Cuenta Bancaria</h3>
-                                <p class="text-sm text-gray-500">Transferencias y tarjetas</p>
+                                <p class="text-sm text-gray-500">Transferencias, tarjetas y Nómina bancaria</p>
                             </div>
                         </div>
                         <div class="text-3xl font-bold text-blue-700 mb-2" id="bankBalance">$0.00</div>
                     </div>
+                </div>
+            </div>
+
+            <div class="glass-panel p-6 rounded-2xl">
+                <h3 class="text-lg font-bold text-brand-800 mb-4">Desglose de Movimientos</h3>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4" id="bankMovements">
+                    <!-- Se llena dinámicamente -->
                 </div>
             </div>
         </div>
@@ -1082,12 +1137,12 @@
             </div>
         </div>
 
-        <!-- NOMINA MODULE -->
+        <!-- NOMINA MODULE - AHORA CON IMPACTO EN BANCOS -->
         <div id="nomina" class="module hidden fade-in admin-only-content">
             <div class="mb-6 flex justify-between items-center">
                 <div>
                     <h1 class="text-3xl font-serif font-bold text-brand-900 mb-2">Nómina</h1>
-                    <p class="text-gray-600">Gestión de pagos y sueldos</p>
+                    <p class="text-gray-600">Gestión de pagos y sueldos (se registra automáticamente como gasto)</p>
                 </div>
                 <div class="flex gap-3">
                     <button onclick="generateNominaReport()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors shadow-lg">
@@ -1154,6 +1209,7 @@
                                 <th class="px-4 py-3 text-right">Bono</th>
                                 <th class="px-4 py-3 text-right">Bono Punt.</th>
                                 <th class="px-4 py-3 text-right">Total</th>
+                                <th class="px-4 py-3 text-center">Método</th>
                                 <th class="px-4 py-3 text-center">Acciones</th>
                             </tr>
                         </thead>
@@ -1170,10 +1226,150 @@
             </div>
         </div>
 
+        <!-- NUEVO: MÓDULO DE FACTURAS GLOBALES -->
+        <div id="globalInvoices" class="module hidden fade-in admin-only-content">
+            <div class="mb-6">
+                <h1 class="text-3xl font-serif font-bold text-brand-900 mb-2">Facturas Globales</h1>
+                <p class="text-gray-600">Resumen semanal para facturación global (CFDI)</p>
+            </div>
+
+            <div class="glass-panel p-6 rounded-2xl mb-6 border-l-4 border-brand-500">
+                <h3 class="text-lg font-bold text-brand-800 mb-4">
+                    <i class="fas fa-calendar-alt mr-2"></i>Seleccionar Mes para Facturación
+                </h3>
+                <div class="flex flex-wrap gap-4 items-end">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Mes</label>
+                        <select id="globalInvoiceMonth" class="border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-brand-500 outline-none">
+                            <option value="0">Enero</option>
+                            <option value="1">Febrero</option>
+                            <option value="2">Marzo</option>
+                            <option value="3">Abril</option>
+                            <option value="4">Mayo</option>
+                            <option value="5">Junio</option>
+                            <option value="6">Julio</option>
+                            <option value="7">Agosto</option>
+                            <option value="8">Septiembre</option>
+                            <option value="9">Octubre</option>
+                            <option value="10">Noviembre</option>
+                            <option value="11">Diciembre</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Año</label>
+                        <input type="number" id="globalInvoiceYear" class="border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-brand-500 outline-none" value="2024">
+                    </div>
+                    <button onclick="loadGlobalInvoiceWeeks()" class="bg-brand-600 hover:bg-brand-700 text-white px-6 py-2 rounded-lg transition-colors shadow-lg">
+                        <i class="fas fa-search mr-2"></i>Cargar Semanas
+                    </button>
+                    <button onclick="setCurrentMonthForGlobal()" class="bg-gray-200 hover:bg-gray-300 text-gray-700 px-4 py-2 rounded-lg transition-colors">
+                        Mes Actual
+                    </button>
+                </div>
+            </div>
+
+            <div id="globalInvoiceSummary" class="hidden mb-6">
+                <div class="glass-panel p-4 rounded-xl bg-brand-50 border border-brand-200">
+                    <h4 class="font-bold text-brand-800 mb-2">
+                        <i class="fas fa-file-invoice-dollar mr-2"></i>Resumen del Mes: 
+                        <span id="globalInvoiceMonthLabel" class="text-brand-600"></span>
+                    </h4>
+                    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+                        <div>
+                            <span class="text-gray-600">Total Ventas Mes:</span>
+                            <span class="font-bold text-brand-800 ml-2" id="globalMonthTotal">$0.00</span>
+                        </div>
+                        <div>
+                            <span class="text-gray-600">Semanas:</span>
+                            <span class="font-bold text-brand-800 ml-2" id="globalWeeksCount">0</span>
+                        </div>
+                        <div>
+                            <span class="text-gray-600">Semanas Facturadas:</span>
+                            <span class="font-bold text-green-600 ml-2" id="globalWeeksInvoiced">0</span>
+                        </div>
+                        <div>
+                            <span class="text-gray-600">Pendientes:</span>
+                            <span class="font-bold text-orange-600 ml-2" id="globalWeeksPending">0</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="weeksContainer" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+                <!-- Las semanas se generan dinámicamente -->
+            </div>
+
+            <!-- Modal para detalle de semana -->
+            <div id="weekDetailModal" class="modal">
+                <div class="bg-white rounded-2xl p-6 w-full max-w-4xl mx-4 shadow-2xl max-h-[90vh] overflow-y-auto">
+                    <div class="flex justify-between items-start mb-6">
+                        <div>
+                            <h3 class="text-2xl font-bold text-brand-800" id="weekDetailTitle">Semana 1</h3>
+                            <p class="text-gray-500" id="weekDetailDates">1-7 de Enero 2024</p>
+                        </div>
+                        <button onclick="closeModal('weekDetailModal')" class="text-gray-400 hover:text-gray-600">
+                            <i class="fas fa-times text-2xl"></i>
+                        </button>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                        <div class="glass-panel p-4 rounded-xl bg-pink-50 border border-pink-200">
+                            <p class="text-xs text-pink-600 uppercase font-bold">Ventas IVA 0%</p>
+                            <h4 class="text-xl font-bold text-pink-700" id="weekDetailIVA0">$0.00</h4>
+                            <p class="text-xs text-gray-500 mt-1"><span id="weekDetailCount0">0</span> transacciones</p>
+                        </div>
+                        <div class="glass-panel p-4 rounded-xl bg-blue-50 border border-blue-200">
+                            <p class="text-xs text-blue-600 uppercase font-bold">Ventas IVA 16%</p>
+                            <h4 class="text-xl font-bold text-blue-700" id="weekDetailIVA16">$0.00</h4>
+                            <p class="text-xs text-gray-500 mt-1"><span id="weekDetailCount16">0</span> transacciones</p>
+                        </div>
+                        <div class="glass-panel p-4 rounded-xl bg-green-50 border border-green-200">
+                            <p class="text-xs text-green-600 uppercase font-bold">Total Semana</p>
+                            <h4 class="text-xl font-bold text-green-700" id="weekDetailTotal">$0.00</h4>
+                            <p class="text-xs text-gray-500 mt-1">IVA incluido: <span id="weekDetailIVATotal">$0.00</span></p>
+                        </div>
+                    </div>
+
+                    <div class="mb-6">
+                        <h4 class="font-bold text-gray-800 mb-3">Desglose para CFDI:</h4>
+                        <div class="bg-gray-50 p-4 rounded-lg space-y-2 text-sm font-mono">
+                            <div class="flex justify-between">
+                                <span>Subtotal (IVA 0%):</span>
+                                <span id="cfdiSubtotal0">$0.00</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span>Subtotal (IVA 16%):</span>
+                                <span id="cfdiSubtotal16">$0.00</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span>IVA Trasladado (16%):</span>
+                                <span id="cfdiIVA">$0.00</span>
+                            </div>
+                            <div class="flex justify-between border-t pt-2 font-bold text-lg">
+                                <span>Total:</span>
+                                <span id="cfdiTotal">$0.00</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="flex gap-3">
+                        <button onclick="markWeekAsInvoiced()" id="btnMarkInvoiced" class="flex-1 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-bold">
+                            <i class="fas fa-check-circle mr-2"></i>Marcar como Facturada
+                        </button>
+                        <button onclick="exportWeekToExcel()" class="flex-1 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-bold">
+                            <i class="fas fa-file-excel mr-2"></i>Exportar a Excel
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
     </main>
 </div>
 
-<!-- Modals -->
+<!-- MODALES -->
+
+<!-- Modal Producto Personalizado -->
 <div id="customProductModal" class="modal">
     <div class="bg-white rounded-2xl p-6 w-full max-w-md mx-4 shadow-2xl">
         <h3 class="text-xl font-bold text-brand-800 mb-4">Pastel Personalizado</h3>
@@ -1198,6 +1394,7 @@
     </div>
 </div>
 
+<!-- Modal Pago Mixto -->
 <div id="mixedPaymentModal" class="modal">
     <div class="bg-white rounded-2xl p-6 w-full max-w-md mx-4 shadow-2xl">
         <h3 class="text-xl font-bold text-purple-800 mb-4">
@@ -1289,10 +1486,13 @@
     </div>
 </div>
 
+<!-- NUEVO: Modal de Gastos con Items Editables -->
 <div id="expenseModal" class="modal">
-    <div class="bg-white rounded-2xl p-6 w-full max-w-md mx-4 shadow-2xl">
-        <h3 class="text-xl font-bold text-brand-800 mb-4">Registrar Gasto</h3>
-        <div class="space-y-4">
+    <div class="bg-white rounded-2xl p-6 w-full max-w-4xl mx-4 shadow-2xl max-h-[90vh] overflow-y-auto">
+        <h3 class="text-xl font-bold text-brand-800 mb-4" id="expenseModalTitle">Registrar Gasto</h3>
+        
+        <!-- Encabezado del gasto -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6 p-4 bg-gray-50 rounded-lg">
             <div>
                 <label class="block text-sm font-medium text-gray-700 mb-1">Área</label>
                 <select id="expenseArea" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-brand-500 outline-none">
@@ -1303,29 +1503,8 @@
                 </select>
             </div>
             <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">Concepto</label>
-                <input type="text" id="expenseConcept" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-brand-500 outline-none" placeholder="Ej: Compra de harina">
-            </div>
-            <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">Monto sin IVA ($)</label>
-                <input type="number" id="expenseAmount" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-brand-500 outline-none" placeholder="0.00" oninput="calculateExpenseIVA()">
-            </div>
-            <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                <div class="flex items-center gap-2">
-                    <input type="checkbox" id="expenseHasIVA" class="w-4 h-4 text-brand-600 rounded" onchange="calculateExpenseIVA()">
-                    <label for="expenseHasIVA" class="text-sm text-gray-700">Factura con IVA (16%)</label>
-                </div>
-                <span class="text-sm font-bold text-brand-700" id="expenseTotalDisplay">$0.00</span>
-            </div>
-            <div id="expenseIVABreakdown" class="hidden text-xs text-gray-500 space-y-1">
-                <div class="flex justify-between">
-                    <span>Subtotal:</span>
-                    <span id="expenseSubtotalDisplay">$0.00</span>
-                </div>
-                <div class="flex justify-between">
-                    <span>IVA (16%):</span>
-                    <span id="expenseIVADisplay">$0.00</span>
-                </div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Proveedor/Concepto General</label>
+                <input type="text" id="expenseProvider" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-brand-500 outline-none" placeholder="Ej: Costco, Office Depot...">
             </div>
             <div>
                 <label class="block text-sm font-medium text-gray-700 mb-1">Método de Pago</label>
@@ -1336,13 +1515,148 @@
                 </select>
             </div>
         </div>
-        <div class="flex gap-3 mt-6">
+
+        <!-- Toggle para tipo de IVA -->
+        <div class="flex items-center justify-between mb-4 p-3 bg-blue-50 rounded-lg">
+            <div class="flex items-center gap-2">
+                <input type="checkbox" id="expenseIVAIncluded" class="w-4 h-4 text-brand-600 rounded" onchange="toggleExpenseIVAMode()">
+                <label for="expenseIVAIncluded" class="text-sm font-medium text-gray-700">
+                    El monto total YA INCLUYE IVA (16%)
+                </label>
+            </div>
+            <span class="text-xs text-blue-600" id="expenseIVAModeText">Modo: IVA se suma al subtotal</span>
+        </div>
+
+        <!-- Items del gasto -->
+        <div class="mb-4">
+            <div class="flex justify-between items-center mb-3">
+                <h4 class="font-bold text-gray-800">Conceptos/Items</h4>
+                <button onclick="addExpenseItem()" class="text-sm bg-brand-600 text-white px-3 py-1 rounded-lg hover:bg-brand-700 transition-colors">
+                    <i class="fas fa-plus mr-1"></i>Agregar Item
+                </button>
+            </div>
+            
+            <div id="expenseItemsContainer" class="space-y-2">
+                <!-- Los items se agregan dinámicamente -->
+            </div>
+        </div>
+
+        <!-- Totales -->
+        <div class="bg-brand-50 p-4 rounded-lg border-2 border-brand-200 mb-6">
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+                <div class="text-center">
+                    <p class="text-gray-600">Subtotal</p>
+                    <p class="text-lg font-bold text-gray-800" id="expenseSubtotal">$0.00</p>
+                </div>
+                <div class="text-center">
+                    <p class="text-gray-600">IVA (16%)</p>
+                    <p class="text-lg font-bold text-blue-600" id="expenseIVATotal">$0.00</p>
+                </div>
+                <div class="text-center">
+                    <p class="text-gray-600">Total Items</p>
+                    <p class="text-lg font-bold text-gray-800" id="expenseItemsCount">0</p>
+                </div>
+                <div class="text-center">
+                    <p class="text-gray-600 font-bold">TOTAL</p>
+                    <p class="text-xl font-bold text-brand-800" id="expenseGrandTotal">$0.00</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="flex gap-3">
             <button onclick="closeModal('expenseModal')" class="flex-1 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">Cancelar</button>
-            <button onclick="saveExpense()" class="flex-1 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors">Guardar</button>
+            <button onclick="saveExpense()" class="flex-1 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors">
+                <i class="fas fa-save mr-2"></i>Guardar Gasto
+            </button>
         </div>
     </div>
 </div>
 
+<!-- Modal Editar Gasto -->
+<div id="editExpenseModal" class="modal">
+    <div class="bg-white rounded-2xl p-6 w-full max-w-4xl mx-4 shadow-2xl max-h-[90vh] overflow-y-auto">
+        <h3 class="text-xl font-bold text-brand-800 mb-4">Editar Gasto</h3>
+        <input type="hidden" id="editExpenseId">
+        
+        <!-- Mismo contenido que expenseModal pero para edición -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6 p-4 bg-gray-50 rounded-lg">
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Área</label>
+                <select id="editExpenseArea" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-brand-500 outline-none">
+                    <option value="produccion">Producción</option>
+                    <option value="atencion">Atención a Clientes</option>
+                    <option value="administrativo">Administrativo</option>
+                    <option value="otros">Otros</option>
+                </select>
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Proveedor/Concepto</label>
+                <input type="text" id="editExpenseProvider" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-brand-500 outline-none">
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Método de Pago</label>
+                <select id="editExpenseMethod" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-brand-500 outline-none">
+                    <option value="efectivo">Efectivo</option>
+                    <option value="transferencia">Transferencia</option>
+                    <option value="tarjeta">Tarjeta</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="flex items-center justify-between mb-4 p-3 bg-blue-50 rounded-lg">
+            <div class="flex items-center gap-2">
+                <input type="checkbox" id="editExpenseIVAIncluded" class="w-4 h-4 text-brand-600 rounded" onchange="toggleEditExpenseIVAMode()">
+                <label for="editExpenseIVAIncluded" class="text-sm font-medium text-gray-700">
+                    El monto total YA INCLUYE IVA (16%)
+                </label>
+            </div>
+            <span class="text-xs text-blue-600" id="editExpenseIVAModeText">Modo: IVA se suma al subtotal</span>
+        </div>
+
+        <div class="mb-4">
+            <div class="flex justify-between items-center mb-3">
+                <h4 class="font-bold text-gray-800">Conceptos/Items</h4>
+                <button onclick="addEditExpenseItem()" class="text-sm bg-brand-600 text-white px-3 py-1 rounded-lg hover:bg-brand-700 transition-colors">
+                    <i class="fas fa-plus mr-1"></i>Agregar Item
+                </button>
+            </div>
+            
+            <div id="editExpenseItemsContainer" class="space-y-2">
+                <!-- Items existentes se cargan aquí -->
+            </div>
+        </div>
+
+        <div class="bg-brand-50 p-4 rounded-lg border-2 border-brand-200 mb-6">
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+                <div class="text-center">
+                    <p class="text-gray-600">Subtotal</p>
+                    <p class="text-lg font-bold text-gray-800" id="editExpenseSubtotal">$0.00</p>
+                </div>
+                <div class="text-center">
+                    <p class="text-gray-600">IVA (16%)</p>
+                    <p class="text-lg font-bold text-blue-600" id="editExpenseIVATotal">$0.00</p>
+                </div>
+                <div class="text-center">
+                    <p class="text-gray-600">Total Items</p>
+                    <p class="text-lg font-bold text-gray-800" id="editExpenseItemsCount">0</p>
+                </div>
+                <div class="text-center">
+                    <p class="text-gray-600 font-bold">TOTAL</p>
+                    <p class="text-xl font-bold text-brand-800" id="editExpenseGrandTotal">$0.00</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="flex gap-3">
+            <button onclick="closeModal('editExpenseModal')" class="flex-1 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">Cancelar</button>
+            <button onclick="updateExpense()" class="flex-1 py-2 bg-brand-600 text-white rounded-lg hover:bg-brand-700 transition-colors">
+                <i class="fas fa-save mr-2"></i>Actualizar Gasto
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Producto -->
 <div id="productModal" class="modal">
     <div class="bg-white rounded-2xl p-6 w-full max-w-md mx-4 shadow-2xl">
         <h3 class="text-xl font-bold text-brand-800 mb-4" id="productModalTitle">Nuevo Producto</h3>
@@ -1381,6 +1695,7 @@
     </div>
 </div>
 
+<!-- Modal Stock -->
 <div id="stockModal" class="modal">
     <div class="bg-white rounded-2xl p-6 w-full max-w-sm mx-4 shadow-2xl">
         <h3 class="text-xl font-bold text-brand-800 mb-4">Ajustar Stock</h3>
@@ -1408,6 +1723,7 @@
     </div>
 </div>
 
+<!-- Modal Empleado -->
 <div id="employeeModal" class="modal">
     <div class="bg-white rounded-2xl p-6 w-full max-w-md mx-4 shadow-2xl">
         <h3 class="text-xl font-bold text-brand-800 mb-4">Agregar Empleado</h3>
@@ -1435,6 +1751,7 @@
     </div>
 </div>
 
+<!-- Modal Nómina - AHORA CON MÉTODO DE PAGO -->
 <div id="nominaModal" class="modal">
     <div class="bg-white rounded-2xl p-6 w-full max-w-lg mx-4 shadow-2xl max-h-[90vh] overflow-y-auto">
         <h3 class="text-xl font-bold text-brand-800 mb-4">Registrar Pago de Nómina</h3>
@@ -1468,6 +1785,24 @@
                     <input type="number" id="nominaYear" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-brand-500 outline-none" value="2024">
                 </div>
             </div>
+            
+            <!-- NUEVO: Método de pago de nómina -->
+            <div class="p-3 bg-yellow-50 rounded-lg border border-yellow-200">
+                <label class="block text-sm font-medium text-gray-700 mb-2">Método de Pago de Nómina *</label>
+                <div class="grid grid-cols-3 gap-2">
+                    <button onclick="setNominaPaymentMethod('efectivo')" id="btnNominaEfectivo" class="payment-nomina-btn py-2 border-2 border-brand-500 bg-brand-50 text-brand-700 rounded-lg text-sm font-medium transition-all">
+                        <i class="fas fa-money-bill-wave mr-1"></i>Efectivo
+                    </button>
+                    <button onclick="setNominaPaymentMethod('transferencia')" id="btnNominaTransferencia" class="payment-nomina-btn py-2 border-2 border-gray-300 text-gray-600 rounded-lg text-sm font-medium transition-all hover:border-brand-400">
+                        <i class="fas fa-mobile-alt mr-1"></i>Transfer
+                    </button>
+                    <button onclick="setNominaPaymentMethod('tarjeta')" id="btnNominaTarjeta" class="payment-nomina-btn py-2 border-2 border-gray-300 text-gray-600 rounded-lg text-sm font-medium transition-all hover:border-brand-400">
+                        <i class="fas fa-credit-card mr-1"></i>Tarjeta
+                    </button>
+                </div>
+                <input type="hidden" id="nominaPaymentMethod" value="efectivo">
+            </div>
+
             <div class="border-t pt-4">
                 <h4 class="font-bold text-gray-800 mb-3">Conceptos de Pago</h4>
                 <div class="space-y-3">
@@ -1502,6 +1837,7 @@
                     <span class="font-bold text-brand-800">TOTAL A PAGAR:</span>
                     <span class="text-2xl font-bold text-brand-800" id="nominaTotal">$0.00</span>
                 </div>
+                <p class="text-xs text-gray-500 mt-1">Se registrará automáticamente como gasto</p>
             </div>
         </div>
         <div class="flex gap-3 mt-6">
@@ -1511,6 +1847,7 @@
     </div>
 </div>
 
+<!-- Modal Corte -->
 <div id="cutModal" class="modal">
     <div class="bg-white rounded-2xl p-6 w-full max-w-lg mx-4 shadow-2xl max-h-[90vh] overflow-y-auto">
         <div class="text-center mb-6">
@@ -1589,7 +1926,16 @@
     let currentProductFilter = 'all';
     let deferredPrompt = null;
     let isSidebarMini = false;
-    let expandedSales = new Set(); // NUEVO: Para trackear ventas expandidas
+    let expandedSales = new Set();
+    
+    // NUEVOS: Variables para gastos
+    let expenseItems = [];
+    let editExpenseItems = [];
+    let currentEditingExpenseId = null;
+    
+    // NUEVOS: Variables para facturas globales
+    let currentGlobalInvoiceWeeks = [];
+    let selectedWeekForInvoice = null;
 
     // ============================================
     // PWA - SERVICE WORKER & INSTALL
@@ -1856,6 +2202,7 @@
             case 'employees': await loadEmployees(); break;
             case 'nomina': await loadNomina(); break;
             case 'dashboard': await updateDashboard(); break;
+            case 'globalInvoices': setCurrentMonthForGlobal(); break;
         }
         
         if (window.innerWidth < 768 && !isSidebarMini) {
@@ -2462,7 +2809,7 @@
     }
 
     // ============================================
-    // PROCESAR VENTA - CORREGIDO PARA IVA MIXTO
+    // PROCESAR VENTA
     // ============================================
 
     async function processSale() {
@@ -2497,11 +2844,10 @@
             }
         }
         
-        // CORREGIDO: Calcular totales por tipo de IVA separadamente
         let subtotalSinIVA = 0;
         let iva = 0;
-        let totalIVA0 = 0;      // NUEVO: Total de items sin IVA
-        let totalIVA16 = 0;     // NUEVO: Total de items con IVA (precio con IVA incluido)
+        let totalIVA0 = 0;
+        let totalIVA16 = 0;
         
         cart.forEach(item => {
             const itemTotal = item.price * item.quantity;
@@ -2510,10 +2856,10 @@
                 const ivaItem = itemTotal - subtotalItem;
                 subtotalSinIVA += subtotalItem;
                 iva += ivaItem;
-                totalIVA16 += itemTotal;  // Acumular precio con IVA incluido
+                totalIVA16 += itemTotal;
             } else {
                 subtotalSinIVA += itemTotal;
-                totalIVA0 += itemTotal;   // Acumular precio sin IVA
+                totalIVA0 += itemTotal;
             }
         });
         
@@ -2532,8 +2878,8 @@
             subtotal: subtotalSinIVA,
             iva: iva,
             total: total,
-            total_iva_0: totalIVA0,      // NUEVO
-            total_iva_16: totalIVA16,    // NUEVO
+            total_iva_0: totalIVA0,
+            total_iva_16: totalIVA16,
             payment_method: isMixedPayment ? 'mixto' : currentPaymentMethod,
             payment_details: isMixedPayment ? mixedPaymentData : null,
             cancelled: false
@@ -2570,7 +2916,7 @@
     }
 
     // ============================================
-    // HISTORIAL DE VENTAS - CON TIPO IVA
+    // HISTORIAL DE VENTAS
     // ============================================
 
     async function loadTodaySales() {
@@ -2632,7 +2978,6 @@
         }
     }
 
-    // NUEVO: Función para determinar tipo de IVA de una venta
     function getSaleIVAType(sale) {
         const hasIVA0 = (sale.total_iva_0 || 0) > 0;
         const hasIVA16 = (sale.total_iva_16 || 0) > 0;
@@ -2664,7 +3009,6 @@
                 paymentDisplay = `<span class="px-2 py-1 rounded-full text-xs ${getPaymentMethodColor(sale.payment_method)}">${sale.payment_method}</span>`;
             }
             
-            // Fila principal
             const mainRow = document.createElement('tr');
             mainRow.className = `sale-row hover:bg-gray-50 transition-colors ${sale.cancelled ? 'bg-red-50' : ''}`;
             mainRow.onclick = () => toggleSaleDetails(sale.id);
@@ -2699,7 +3043,6 @@
             `;
             tbody.appendChild(mainRow);
             
-            // Fila de detalle (solo para ventas mixtas)
             if (ivaType.type === 'MIXTA') {
                 const detailRow = document.createElement('tr');
                 detailRow.id = `sale-detail-${sale.id}`;
@@ -2730,7 +3073,6 @@
         });
     }
 
-    // NUEVO: Toggle para expandir detalles de venta mixta
     function toggleSaleDetails(saleId) {
         const detailRow = document.getElementById(`sale-detail-${saleId}`);
         if (detailRow) {
@@ -2873,14 +3215,555 @@
     }
 
     // ============================================
-    // GASTOS
+    // GASTOS - COMPLETAMENTE REESTRUCTURADO CON ITEMS
     // ============================================
+
+    function openExpenseModal() {
+        expenseItems = [];
+        currentEditingExpenseId = null;
+        document.getElementById('expenseModalTitle').textContent = 'Registrar Gasto';
+        document.getElementById('expenseArea').value = 'produccion';
+        document.getElementById('expenseProvider').value = '';
+        document.getElementById('expenseMethod').value = 'efectivo';
+        document.getElementById('expenseIVAIncluded').checked = false;
+        
+        toggleExpenseIVAMode();
+        addExpenseItem(); // Agregar primer item vacío
+        updateExpenseTotals();
+        
+        openModal('expenseModal');
+    }
+
+    function toggleExpenseIVAMode() {
+        const ivaIncluded = document.getElementById('expenseIVAIncluded').checked;
+        const modeText = document.getElementById('expenseIVAModeText');
+        
+        if (ivaIncluded) {
+            modeText.textContent = 'Modo: El total YA incluye IVA (16%)';
+            modeText.className = 'text-xs text-green-600 font-bold';
+        } else {
+            modeText.textContent = 'Modo: IVA se suma al subtotal';
+            modeText.className = 'text-xs text-blue-600';
+        }
+        
+        updateExpenseTotals();
+    }
+
+    function addExpenseItem() {
+        const itemId = Date.now() + Math.random();
+        expenseItems.push({
+            id: itemId,
+            concept: '',
+            quantity: 1,
+            unit_price: 0,
+            has_iva: false
+        });
+        renderExpenseItems();
+    }
+
+    function removeExpenseItem(itemId) {
+        if (expenseItems.length <= 1) {
+            alert('Debe tener al menos un concepto');
+            return;
+        }
+        expenseItems = expenseItems.filter(item => item.id !== itemId);
+        renderExpenseItems();
+        updateExpenseTotals();
+    }
+
+    function updateExpenseItem(itemId, field, value) {
+        const item = expenseItems.find(i => i.id === itemId);
+        if (!item) return;
+        
+        if (field === 'quantity') {
+            item.quantity = parseInt(value) || 1;
+        } else if (field === 'unit_price') {
+            item.unit_price = parseFloat(value) || 0;
+        } else if (field === 'concept') {
+            item.concept = value;
+        } else if (field === 'has_iva') {
+            item.has_iva = value;
+        }
+        
+        updateExpenseTotals();
+    }
+
+    function renderExpenseItems() {
+        const container = document.getElementById('expenseItemsContainer');
+        const ivaIncluded = document.getElementById('expenseIVAIncluded').checked;
+        
+        container.innerHTML = expenseItems.map((item, index) => `
+            <div class="expense-item-row bg-white p-3 rounded-lg border border-gray-200 flex flex-wrap gap-2 items-center">
+                <div class="flex-1 min-w-[200px]">
+                    <input type="text" 
+                           placeholder="Concepto del item" 
+                           value="${item.concept}"
+                           onchange="updateExpenseItem(${item.id}, 'concept', this.value)"
+                           class="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:ring-2 focus:ring-brand-500 outline-none">
+                </div>
+                <div class="w-20">
+                    <input type="number" 
+                           placeholder="Cant" 
+                           value="${item.quantity}"
+                           min="1"
+                           onchange="updateExpenseItem(${item.id}, 'quantity', this.value)"
+                           class="w-full border border-gray-300 rounded px-2 py-2 text-sm text-center focus:ring-2 focus:ring-brand-500 outline-none">
+                </div>
+                <div class="w-28">
+                    <div class="relative">
+                        <span class="absolute left-2 top-2 text-gray-500 text-sm">$</span>
+                        <input type="number" 
+                               placeholder="Precio" 
+                               value="${item.unit_price || ''}"
+                               step="0.01"
+                               onchange="updateExpenseItem(${item.id}, 'unit_price', this.value)"
+                               class="w-full border border-gray-300 rounded pl-6 pr-2 py-2 text-sm text-right focus:ring-2 focus:ring-brand-500 outline-none">
+                    </div>
+                </div>
+                <button onclick="updateExpenseItem(${item.id}, 'has_iva', !${item.has_iva}); renderExpenseItems()" 
+                        class="expense-item-iva-toggle px-3 py-2 rounded border-2 ${item.has_iva ? 'active border-blue-500 bg-blue-50 text-blue-700' : 'border-gray-300 text-gray-500'} text-xs font-medium transition-all"
+                        title="${ivaIncluded ? 'IVA ya incluido en el total' : 'Sumar IVA al subtotal'}">
+                    <i class="fas fa-percentage mr-1"></i>IVA
+                </button>
+                <button onclick="removeExpenseItem(${item.id})" class="text-red-500 hover:text-red-700 px-2 py-2" title="Eliminar item">
+                    <i class="fas fa-trash"></i>
+                </button>
+            </div>
+        `).join('');
+    }
+
+    function updateExpenseTotals() {
+        const ivaIncluded = document.getElementById('expenseIVAIncluded').checked;
+        
+        let subtotal = 0;
+        let iva = 0;
+        
+        expenseItems.forEach(item => {
+            const itemTotal = (item.quantity || 0) * (item.unit_price || 0);
+            
+            if (ivaIncluded) {
+                // Si el total ya incluye IVA, desglosamos
+                if (item.has_iva) {
+                    const itemSubtotal = itemTotal / 1.16;
+                    const itemIVA = itemTotal - itemSubtotal;
+                    subtotal += itemSubtotal;
+                    iva += itemIVA;
+                } else {
+                    subtotal += itemTotal;
+                }
+            } else {
+                // Si no incluye IVA, sumamos normal y agregamos IVA si aplica
+                subtotal += itemTotal;
+                if (item.has_iva) {
+                    iva += itemTotal * 0.16;
+                }
+            }
+        });
+        
+        const grandTotal = subtotal + iva;
+        
+        document.getElementById('expenseSubtotal').textContent = formatMoney(subtotal);
+        document.getElementById('expenseIVATotal').textContent = formatMoney(iva);
+        document.getElementById('expenseItemsCount').textContent = expenseItems.length;
+        document.getElementById('expenseGrandTotal').textContent = formatMoney(grandTotal);
+    }
+
+    async function saveExpense() {
+        const area = document.getElementById('expenseArea').value;
+        const provider = document.getElementById('expenseProvider').value;
+        const method = document.getElementById('expenseMethod').value;
+        const ivaIncluded = document.getElementById('expenseIVAIncluded').checked;
+        
+        // Validar items
+        const validItems = expenseItems.filter(item => item.concept.trim() !== '' && item.unit_price > 0);
+        if (validItems.length === 0) {
+            alert('Debe agregar al menos un concepto válido');
+            return;
+        }
+        
+        // Calcular totales
+        let subtotal = 0;
+        let iva = 0;
+        
+        validItems.forEach(item => {
+            const itemTotal = item.quantity * item.unit_price;
+            
+            if (ivaIncluded) {
+                if (item.has_iva) {
+                    const itemSubtotal = itemTotal / 1.16;
+                    const itemIVA = itemTotal - itemSubtotal;
+                    item.calculated_subtotal = itemSubtotal;
+                    item.calculated_iva = itemIVA;
+                    subtotal += itemSubtotal;
+                    iva += itemIVA;
+                } else {
+                    item.calculated_subtotal = itemTotal;
+                    item.calculated_iva = 0;
+                    subtotal += itemTotal;
+                }
+            } else {
+                item.calculated_subtotal = itemTotal;
+                if (item.has_iva) {
+                    const itemIVA = itemTotal * 0.16;
+                    item.calculated_iva = itemIVA;
+                    iva += itemIVA;
+                } else {
+                    item.calculated_iva = 0;
+                }
+                subtotal += itemTotal;
+            }
+        });
+        
+        const total = subtotal + iva;
+        
+        try {
+            // Insertar gasto principal
+            const { data: expenseData, error: expenseError } = await supabaseClient
+                .from('expenses')
+                .insert([{
+                    user_id: currentUser.id,
+                    registered_by: currentProfile.full_name,
+                    area,
+                    concept: provider || 'Gasto varios',
+                    provider: provider,
+                    amount: total,
+                    subtotal: subtotal,
+                    iva_amount: iva,
+                    method,
+                    has_iva: iva > 0,
+                    iva_included: ivaIncluded,
+                    items_count: validItems.length
+                }])
+                .select()
+                .single();
+
+            if (expenseError) throw expenseError;
+
+            // Insertar items del gasto
+            const itemsToInsert = validItems.map(item => ({
+                expense_id: expenseData.id,
+                concept: item.concept,
+                quantity: item.quantity,
+                unit_price: item.unit_price,
+                has_iva: item.has_iva,
+                subtotal: item.calculated_subtotal,
+                iva_amount: item.calculated_iva,
+                total: item.calculated_subtotal + item.calculated_iva
+            }));
+
+            const { error: itemsError } = await supabaseClient
+                .from('expense_items')
+                .insert(itemsToInsert);
+
+            if (itemsError) throw itemsError;
+
+            closeModal('expenseModal');
+            await loadExpenses();
+            await updateDashboard();
+            
+            alert('Gasto registrado correctamente');
+            
+        } catch (error) {
+            console.error('Error saving expense:', error);
+            alert('Error al guardar gasto: ' + error.message);
+        }
+    }
+
+    // Funciones para editar gasto
+    async function editExpense(expenseId) {
+        try {
+            const { data: expense, error } = await supabaseClient
+                .from('expenses')
+                .select('*, expense_items(*)')
+                .eq('id', expenseId)
+                .single();
+
+            if (error) throw error;
+
+            currentEditingExpenseId = expenseId;
+            
+            // Cargar datos en el modal de edición
+            document.getElementById('editExpenseId').value = expenseId;
+            document.getElementById('editExpenseArea').value = expense.area;
+            document.getElementById('editExpenseProvider').value = expense.provider || expense.concept;
+            document.getElementById('editExpenseMethod').value = expense.method;
+            document.getElementById('editExpenseIVAIncluded').checked = expense.iva_included || false;
+            
+            // Cargar items
+            editExpenseItems = (expense.expense_items || []).map(item => ({
+                id: item.id,
+                concept: item.concept,
+                quantity: item.quantity,
+                unit_price: item.unit_price,
+                has_iva: item.has_iva
+            }));
+            
+            toggleEditExpenseIVAMode();
+            renderEditExpenseItems();
+            updateEditExpenseTotals();
+            
+            openModal('editExpenseModal');
+            
+        } catch (error) {
+            console.error('Error loading expense for edit:', error);
+            alert('Error al cargar el gasto: ' + error.message);
+        }
+    }
+
+    function toggleEditExpenseIVAMode() {
+        const ivaIncluded = document.getElementById('editExpenseIVAIncluded').checked;
+        const modeText = document.getElementById('editExpenseIVAModeText');
+        
+        if (ivaIncluded) {
+            modeText.textContent = 'Modo: El total YA incluye IVA (16%)';
+            modeText.className = 'text-xs text-green-600 font-bold';
+        } else {
+            modeText.textContent = 'Modo: IVA se suma al subtotal';
+            modeText.className = 'text-xs text-blue-600';
+        }
+        
+        updateEditExpenseTotals();
+    }
+
+    function addEditExpenseItem() {
+        const itemId = 'new_' + Date.now();
+        editExpenseItems.push({
+            id: itemId,
+            concept: '',
+            quantity: 1,
+            unit_price: 0,
+            has_iva: false,
+            isNew: true
+        });
+        renderEditExpenseItems();
+    }
+
+    function removeEditExpenseItem(itemId) {
+        if (editExpenseItems.length <= 1) {
+            alert('Debe tener al menos un concepto');
+            return;
+        }
+        editExpenseItems = editExpenseItems.filter(item => item.id !== itemId);
+        renderEditExpenseItems();
+        updateEditExpenseTotals();
+    }
+
+    function updateEditExpenseItem(itemId, field, value) {
+        const item = editExpenseItems.find(i => i.id === itemId);
+        if (!item) return;
+        
+        if (field === 'quantity') {
+            item.quantity = parseInt(value) || 1;
+        } else if (field === 'unit_price') {
+            item.unit_price = parseFloat(value) || 0;
+        } else if (field === 'concept') {
+            item.concept = value;
+        } else if (field === 'has_iva') {
+            item.has_iva = value;
+        }
+        
+        updateEditExpenseTotals();
+    }
+
+    function renderEditExpenseItems() {
+        const container = document.getElementById('editExpenseItemsContainer');
+        const ivaIncluded = document.getElementById('editExpenseIVAIncluded').checked;
+        
+        container.innerHTML = editExpenseItems.map((item, index) => `
+            <div class="expense-item-row bg-white p-3 rounded-lg border border-gray-200 flex flex-wrap gap-2 items-center">
+                <div class="flex-1 min-w-[200px]">
+                    <input type="text" 
+                           placeholder="Concepto del item" 
+                           value="${item.concept}"
+                           onchange="updateEditExpenseItem('${item.id}', 'concept', this.value)"
+                           class="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:ring-2 focus:ring-brand-500 outline-none">
+                </div>
+                <div class="w-20">
+                    <input type="number" 
+                           placeholder="Cant" 
+                           value="${item.quantity}"
+                           min="1"
+                           onchange="updateEditExpenseItem('${item.id}', 'quantity', this.value)"
+                           class="w-full border border-gray-300 rounded px-2 py-2 text-sm text-center focus:ring-2 focus:ring-brand-500 outline-none">
+                </div>
+                <div class="w-28">
+                    <div class="relative">
+                        <span class="absolute left-2 top-2 text-gray-500 text-sm">$</span>
+                        <input type="number" 
+                               placeholder="Precio" 
+                               value="${item.unit_price || ''}"
+                               step="0.01"
+                               onchange="updateEditExpenseItem('${item.id}', 'unit_price', this.value)"
+                               class="w-full border border-gray-300 rounded pl-6 pr-2 py-2 text-sm text-right focus:ring-2 focus:ring-brand-500 outline-none">
+                    </div>
+                </div>
+                <button onclick="updateEditExpenseItem('${item.id}', 'has_iva', !${item.has_iva}); renderEditExpenseItems()" 
+                        class="expense-item-iva-toggle px-3 py-2 rounded border-2 ${item.has_iva ? 'active border-blue-500 bg-blue-50 text-blue-700' : 'border-gray-300 text-gray-500'} text-xs font-medium transition-all"
+                        title="${ivaIncluded ? 'IVA ya incluido en el total' : 'Sumar IVA al subtotal'}">
+                    <i class="fas fa-percentage mr-1"></i>IVA
+                </button>
+                <button onclick="removeEditExpenseItem('${item.id}')" class="text-red-500 hover:text-red-700 px-2 py-2" title="Eliminar item">
+                    <i class="fas fa-trash"></i>
+                </button>
+            </div>
+        `).join('');
+    }
+
+    function updateEditExpenseTotals() {
+        const ivaIncluded = document.getElementById('editExpenseIVAIncluded').checked;
+        
+        let subtotal = 0;
+        let iva = 0;
+        
+        editExpenseItems.forEach(item => {
+            const itemTotal = (item.quantity || 0) * (item.unit_price || 0);
+            
+            if (ivaIncluded) {
+                if (item.has_iva) {
+                    const itemSubtotal = itemTotal / 1.16;
+                    const itemIVA = itemTotal - itemSubtotal;
+                    item.calculated_subtotal = itemSubtotal;
+                    item.calculated_iva = itemIVA;
+                    subtotal += itemSubtotal;
+                    iva += itemIVA;
+                } else {
+                    item.calculated_subtotal = itemTotal;
+                    item.calculated_iva = 0;
+                    subtotal += itemTotal;
+                }
+            } else {
+                item.calculated_subtotal = itemTotal;
+                if (item.has_iva) {
+                    const itemIVA = itemTotal * 0.16;
+                    item.calculated_iva = itemIVA;
+                    iva += itemIVA;
+                } else {
+                    item.calculated_iva = 0;
+                }
+                subtotal += itemTotal;
+            }
+        });
+        
+        const grandTotal = subtotal + iva;
+        
+        document.getElementById('editExpenseSubtotal').textContent = formatMoney(subtotal);
+        document.getElementById('editExpenseIVATotal').textContent = formatMoney(iva);
+        document.getElementById('editExpenseItemsCount').textContent = editExpenseItems.length;
+        document.getElementById('editExpenseGrandTotal').textContent = formatMoney(grandTotal);
+    }
+
+    async function updateExpense() {
+        const expenseId = document.getElementById('editExpenseId').value;
+        const area = document.getElementById('editExpenseArea').value;
+        const provider = document.getElementById('editExpenseProvider').value;
+        const method = document.getElementById('editExpenseMethod').value;
+        const ivaIncluded = document.getElementById('editExpenseIVAIncluded').checked;
+        
+        const validItems = editExpenseItems.filter(item => item.concept.trim() !== '' && item.unit_price > 0);
+        if (validItems.length === 0) {
+            alert('Debe agregar al menos un concepto válido');
+            return;
+        }
+        
+        let subtotal = 0;
+        let iva = 0;
+        
+        validItems.forEach(item => {
+            const itemTotal = item.quantity * item.unit_price;
+            
+            if (ivaIncluded) {
+                if (item.has_iva) {
+                    const itemSubtotal = itemTotal / 1.16;
+                    const itemIVA = itemTotal - itemSubtotal;
+                    item.calculated_subtotal = itemSubtotal;
+                    item.calculated_iva = itemIVA;
+                    subtotal += itemSubtotal;
+                    iva += itemIVA;
+                } else {
+                    item.calculated_subtotal = itemTotal;
+                    item.calculated_iva = 0;
+                    subtotal += itemTotal;
+                }
+            } else {
+                item.calculated_subtotal = itemTotal;
+                if (item.has_iva) {
+                    const itemIVA = itemTotal * 0.16;
+                    item.calculated_iva = itemIVA;
+                    iva += itemIVA;
+                } else {
+                    item.calculated_iva = 0;
+                }
+                subtotal += itemTotal;
+            }
+        });
+        
+        const total = subtotal + iva;
+        
+        try {
+            // Actualizar gasto principal
+            const { error: expenseError } = await supabaseClient
+                .from('expenses')
+                .update({
+                    area,
+                    concept: provider || 'Gasto varios',
+                    provider: provider,
+                    amount: total,
+                    subtotal: subtotal,
+                    iva_amount: iva,
+                    method,
+                    has_iva: iva > 0,
+                    iva_included: ivaIncluded,
+                    items_count: validItems.length,
+                    updated_at: new Date().toISOString()
+                })
+                .eq('id', expenseId);
+
+            if (expenseError) throw expenseError;
+
+            // Eliminar items antiguos
+            await supabaseClient
+                .from('expense_items')
+                .delete()
+                .eq('expense_id', expenseId);
+
+            // Insertar nuevos items
+            const itemsToInsert = validItems.map(item => ({
+                expense_id: expenseId,
+                concept: item.concept,
+                quantity: item.quantity,
+                unit_price: item.unit_price,
+                has_iva: item.has_iva,
+                subtotal: item.calculated_subtotal,
+                iva_amount: item.calculated_iva,
+                total: item.calculated_subtotal + item.calculated_iva
+            }));
+
+            const { error: itemsError } = await supabaseClient
+                .from('expense_items')
+                .insert(itemsToInsert);
+
+            if (itemsError) throw itemsError;
+
+            closeModal('editExpenseModal');
+            await loadExpenses();
+            await updateDashboard();
+            
+            alert('Gasto actualizado correctamente');
+            
+        } catch (error) {
+            console.error('Error updating expense:', error);
+            alert('Error al actualizar gasto: ' + error.message);
+        }
+    }
 
     async function loadExpenses() {
         try {
             const filter = document.getElementById('expenseFilterArea').value;
             
-            let query = supabaseClient.from('expenses').select('*').order('created_at', { ascending: false });
+            let query = supabaseClient
+                .from('expenses')
+                .select('*, expense_items(*)')
+                .order('created_at', { ascending: false });
             
             if (currentProfile?.role === 'cashier') {
                 query = query.eq('user_id', currentUser.id);
@@ -2911,93 +3794,146 @@
             }
             
             const tbody = document.getElementById('expensesTableBody');
-            tbody.innerHTML = (data || []).map(exp => `
+            tbody.innerHTML = (data || []).map(exp => {
+                const itemCount = exp.expense_items?.length || exp.items_count || 0;
+                const ivaBadge = exp.has_iva ? 
+                    `<span class="px-2 py-1 rounded-full text-xs bg-blue-100 text-blue-700" title="IVA: ${formatMoney(exp.iva_amount)}">
+                        <i class="fas fa-check mr-1"></i>IVA ${exp.iva_included ? 'incl.' : '+16%'}
+                     </span>` : 
+                    '<span class="text-gray-400">-</span>';
+                
+                return `
                 <tr class="hover:bg-gray-50 transition-colors">
                     <td class="px-4 py-3 text-gray-600">${new Date(exp.created_at).toLocaleDateString()}</td>
                     ${currentProfile?.role === 'admin' ? `<td class="px-4 py-3"><span class="px-2 py-1 rounded-full text-xs ${getAreaColor(exp.area)}">${exp.area}</span></td>` : ''}
-                    <td class="px-4 py-3 text-sm text-gray-700">${exp.registered_by || 'Sistema'}</td>
-                    <td class="px-4 py-3 font-medium">${exp.concept}</td>
-                    <td class="px-4 py-3 text-gray-600 capitalize">${exp.method}</td>
+                    <td class="px-4 py-3 font-medium">${exp.provider || exp.concept}</td>
                     <td class="px-4 py-3 text-center">
-                        ${exp.has_iva ? '<span class="text-blue-600"><i class="fas fa-check"></i> 16%</span>' : '<span class="text-gray-400">-</span>'}
+                        <span class="px-2 py-1 rounded-full text-xs bg-gray-100 text-gray-700">
+                            ${itemCount} item${itemCount !== 1 ? 's' : ''}
+                        </span>
                     </td>
+                    <td class="px-4 py-3 text-gray-600 capitalize">${exp.method}</td>
                     <td class="px-4 py-3 text-right font-bold text-red-600">-${formatMoney(exp.amount)}</td>
                     <td class="px-4 py-3 text-center">
-                        ${exp.user_id === currentUser.id ? `
-                            <button onclick="deleteExpense('${exp.id}')" class="text-gray-400 hover:text-red-500 transition-colors btn-action">
+                        <button onclick="viewExpenseDetail('${exp.id}')" class="text-blue-500 hover:text-blue-700 mr-2 btn-action" title="Ver detalle">
+                            <i class="fas fa-eye"></i>
+                        </button>
+                        ${exp.user_id === currentUser.id || currentProfile?.role === 'admin' ? `
+                            <button onclick="editExpense('${exp.id}')" class="text-brand-500 hover:text-brand-700 mr-2 btn-action" title="Editar">
+                                <i class="fas fa-edit"></i>
+                            </button>
+                            <button onclick="deleteExpense('${exp.id}')" class="text-red-500 hover:text-red-700 btn-action" title="Eliminar">
                                 <i class="fas fa-trash"></i>
                             </button>
-                        ` : '<span class="text-gray-300">-</span>'}
+                        ` : ''}
                     </td>
                 </tr>
-            `).join('');
+            `}).join('');
             
         } catch (error) {
             console.error('Error loading expenses:', error);
         }
     }
 
-    function calculateExpenseIVA() {
-        const amount = parseFloat(document.getElementById('expenseAmount').value) || 0;
-        const hasIVA = document.getElementById('expenseHasIVA').checked;
-        
-        if (hasIVA && amount > 0) {
-            const total = amount * 1.16;
-            const iva = total - amount;
-            document.getElementById('expenseTotalDisplay').textContent = formatMoney(total);
-            document.getElementById('expenseSubtotalDisplay').textContent = formatMoney(amount);
-            document.getElementById('expenseIVADisplay').textContent = formatMoney(iva);
-            document.getElementById('expenseIVABreakdown').classList.remove('hidden');
-        } else {
-            document.getElementById('expenseTotalDisplay').textContent = formatMoney(amount);
-            document.getElementById('expenseIVABreakdown').classList.add('hidden');
-        }
-    }
-
-    async function saveExpense() {
-        const area = document.getElementById('expenseArea').value;
-        const concept = document.getElementById('expenseConcept').value;
-        const amount = parseFloat(document.getElementById('expenseAmount').value);
-        const method = document.getElementById('expenseMethod').value;
-        const hasIVA = document.getElementById('expenseHasIVA').checked;
-        
-        if (!concept || !amount) {
-            alert('Complete todos los campos');
-            return;
-        }
-        
-        let finalAmount = amount;
-        let ivaAmount = 0;
-        if (hasIVA) {
-            finalAmount = amount * 1.16;
-            ivaAmount = finalAmount - amount;
-        }
-        
+    async function viewExpenseDetail(expenseId) {
         try {
-            const { error } = await supabaseClient.from('expenses').insert([{
-                user_id: currentUser.id,
-                registered_by: currentProfile.full_name,
-                area,
-                concept,
-                amount: finalAmount,
-                method,
-                has_iva: hasIVA,
-                iva_amount: ivaAmount
-            }]);
-            
+            const { data: expense, error } = await supabaseClient
+                .from('expenses')
+                .select('*, expense_items(*)')
+                .eq('id', expenseId)
+                .single();
+
             if (error) throw error;
-            
-            closeModal('expenseModal');
-            await loadExpenses();
-            await updateDashboard();
-            
-            document.getElementById('expenseConcept').value = '';
-            document.getElementById('expenseAmount').value = '';
-            document.getElementById('expenseHasIVA').checked = false;
-            calculateExpenseIVA();
+
+            const itemsHtml = (expense.expense_items || []).map((item, idx) => `
+                <tr class="border-b border-gray-100">
+                    <td class="py-2 text-sm">${idx + 1}</td>
+                    <td class="py-2 text-sm font-medium">${item.concept}</td>
+                    <td class="py-2 text-sm text-center">${item.quantity}</td>
+                    <td class="py-2 text-sm text-right">${formatMoney(item.unit_price)}</td>
+                    <td class="py-2 text-sm text-center">
+                        ${item.has_iva ? '<i class="fas fa-check text-blue-500"></i>' : '-'}
+                    </td>
+                    <td class="py-2 text-sm text-right font-medium">${formatMoney(item.total)}</td>
+                </tr>
+            `).join('');
+
+            const modalHtml = `
+                <div class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" onclick="this.remove()">
+                    <div class="bg-white rounded-2xl p-6 w-full max-w-2xl mx-4 shadow-2xl max-h-[80vh] overflow-y-auto" onclick="event.stopPropagation()">
+                        <div class="flex justify-between items-start mb-4">
+                            <div>
+                                <h3 class="text-xl font-bold text-brand-800">Detalle del Gasto</h3>
+                                <p class="text-sm text-gray-500">${new Date(expense.created_at).toLocaleString()}</p>
+                            </div>
+                            <button onclick="this.closest('.fixed').remove()" class="text-gray-400 hover:text-gray-600">
+                                <i class="fas fa-times text-xl"></i>
+                            </button>
+                        </div>
+                        
+                        <div class="grid grid-cols-2 gap-4 mb-4 text-sm">
+                            <div class="bg-gray-50 p-3 rounded">
+                                <span class="text-gray-600">Área:</span>
+                                <span class="font-medium ml-2 capitalize">${expense.area}</span>
+                            </div>
+                            <div class="bg-gray-50 p-3 rounded">
+                                <span class="text-gray-600">Método:</span>
+                                <span class="font-medium ml-2 capitalize">${expense.method}</span>
+                            </div>
+                            <div class="bg-gray-50 p-3 rounded">
+                                <span class="text-gray-600">Proveedor:</span>
+                                <span class="font-medium ml-2">${expense.provider || expense.concept}</span>
+                            </div>
+                            <div class="bg-gray-50 p-3 rounded">
+                                <span class="text-gray-600">Registrado por:</span>
+                                <span class="font-medium ml-2">${expense.registered_by}</span>
+                            </div>
+                        </div>
+
+                        <table class="w-full text-sm mb-4">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th class="px-2 py-2 text-left">#</th>
+                                    <th class="px-2 py-2 text-left">Concepto</th>
+                                    <th class="px-2 py-2 text-center">Cant</th>
+                                    <th class="px-2 py-2 text-right">P.Unit</th>
+                                    <th class="px-2 py-2 text-center">IVA</th>
+                                    <th class="px-2 py-2 text-right">Total</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${itemsHtml}
+                            </tbody>
+                            <tfoot class="bg-brand-50 font-bold">
+                                <tr>
+                                    <td colspan="5" class="px-2 py-3 text-right">Subtotal:</td>
+                                    <td class="px-2 py-3 text-right">${formatMoney(expense.subtotal)}</td>
+                                </tr>
+                                ${expense.iva_amount > 0 ? `
+                                <tr>
+                                    <td colspan="5" class="px-2 py-2 text-right text-blue-600">IVA:</td>
+                                    <td class="px-2 py-2 text-right text-blue-600">${formatMoney(expense.iva_amount)}</td>
+                                </tr>
+                                ` : ''}
+                                <tr class="text-lg">
+                                    <td colspan="5" class="px-2 py-3 text-right">TOTAL:</td>
+                                    <td class="px-2 py-3 text-right text-brand-800">${formatMoney(expense.amount)}</td>
+                                </tr>
+                            </tfoot>
+                        </table>
+
+                        <button onclick="this.closest('.fixed').remove()" class="w-full py-2 bg-gray-200 hover:bg-gray-300 rounded-lg transition-colors">
+                            Cerrar
+                        </button>
+                    </div>
+                </div>
+            `;
+
+            document.body.insertAdjacentHTML('beforeend', modalHtml);
             
         } catch (error) {
-            alert('Error al guardar gasto: ' + error.message);
+            console.error('Error viewing expense detail:', error);
+            alert('Error al cargar el detalle del gasto');
         }
     }
 
@@ -3005,6 +3941,7 @@
         if (!confirm('¿Eliminar este gasto?')) return;
         
         try {
+            // Los items se eliminan en cascada por la foreign key
             await supabaseClient.from('expenses').delete().eq('id', id);
             await loadExpenses();
             await updateDashboard();
@@ -3240,11 +4177,12 @@
     }
 
     // ============================================
-    // BANCOS
+    // BANCOS - AHORA INCLUYE NÓMINA
     // ============================================
 
     async function updateBankModule() {
         try {
+            // Ventas
             const { data: salesData } = await supabaseClient
                 .from('sales')
                 .select('payment_method, payment_details, total')
@@ -3262,6 +4200,7 @@
                 }
             });
             
+            // Gastos (incluye nómina ahora)
             const { data: expensesData } = await supabaseClient
                 .from('expenses')
                 .select('method, amount');
@@ -3272,13 +4211,36 @@
             document.getElementById('cashBalance').textContent = formatMoney(cashIn - cashOut);
             document.getElementById('bankBalance').textContent = formatMoney(bankIn - bankOut);
             
+            // Desglose de movimientos
+            const movementsContainer = document.getElementById('bankMovements');
+            movementsContainer.innerHTML = `
+                <div class="glass-panel p-4 rounded-xl">
+                    <h4 class="font-bold text-green-700 mb-2"><i class="fas fa-arrow-down mr-2"></i>Ingresos Efectivo</h4>
+                    <p class="text-2xl font-bold text-gray-800">${formatMoney(cashIn)}</p>
+                </div>
+                <div class="glass-panel p-4 rounded-xl">
+                    <h4 class="font-bold text-red-700 mb-2"><i class="fas fa-arrow-up mr-2"></i>Egresos Efectivo</h4>
+                    <p class="text-2xl font-bold text-gray-800">${formatMoney(cashOut)}</p>
+                    <p class="text-xs text-gray-500 mt-1">Incluye gastos y nómina</p>
+                </div>
+                <div class="glass-panel p-4 rounded-xl">
+                    <h4 class="font-bold text-blue-700 mb-2"><i class="fas fa-arrow-down mr-2"></i>Ingresos Banco</h4>
+                    <p class="text-2xl font-bold text-gray-800">${formatMoney(bankIn)}</p>
+                </div>
+                <div class="glass-panel p-4 rounded-xl">
+                    <h4 class="font-bold text-orange-700 mb-2"><i class="fas fa-arrow-up mr-2"></i>Egresos Banco</h4>
+                    <p class="text-2xl font-bold text-gray-800">${formatMoney(bankOut)}</p>
+                    <p class="text-xs text-gray-500 mt-1">Incluye gastos y nómina</p>
+                </div>
+            `;
+            
         } catch (error) {
             console.error('Error updating bank:', error);
         }
     }
 
     // ============================================
-    // IMPUESTOS - CORREGIDO PARA IVA MIXTO
+    // IMPUESTOS
     // ============================================
 
     function setTaxPeriodThisMonth() {
@@ -3323,7 +4285,6 @@
                 .gte('created_at', fromDate)
                 .lte('created_at', toDate + 'T23:59:59');
 
-            // CORREGIDO: Usar las nuevas columnas total_iva_0 y total_iva_16
             let totalSales = 0;
             let totalIVA0 = 0;
             let totalIVA16 = 0;
@@ -3339,7 +4300,6 @@
                 totalIVA16 += saleIVA16;
                 totalSales += sale.total;
                 
-                // Clasificar venta
                 if (saleIVA0 > 0 && saleIVA16 > 0) {
                     countMixed++;
                 } else if (saleIVA16 > 0) {
@@ -3349,37 +4309,31 @@
                 }
             });
             
-            // Calcular IVA incluido en el 16%
             const ivaFrom16 = totalIVA16 - (totalIVA16 / 1.16);
             
-            // Actualizar UI
             document.getElementById('taxPeriodSummary').classList.remove('hidden');
             document.getElementById('taxPeriodLabel').textContent = `${new Date(fromDate).toLocaleDateString('es-MX')} - ${new Date(toDate).toLocaleDateString('es-MX')}`;
             document.getElementById('taxPeriodTotalSales').textContent = formatMoney(totalSales);
             document.getElementById('taxPeriodTransactions').textContent = salesData?.length || 0;
-            document.getElementById('taxPeriodCount0').textContent = countIVA0 + countMixed; // IVA 0 incluye mixtas
-            document.getElementById('taxPeriodCount16').textContent = countIVA16 + countMixed; // IVA 16 incluye mixtas
+            document.getElementById('taxPeriodCount0').textContent = countIVA0 + countMixed;
+            document.getElementById('taxPeriodCount16').textContent = countIVA16 + countMixed;
             
-            // Cards de IVA
             document.getElementById('salesIVA0').textContent = formatMoney(totalIVA0);
             document.getElementById('transactionsIVA0').textContent = countIVA0 + countMixed;
             document.getElementById('salesIVA16').textContent = formatMoney(totalIVA16);
             document.getElementById('transactionsIVA16').textContent = countIVA16 + countMixed;
             document.getElementById('ivaIncluded16').textContent = formatMoney(ivaFrom16);
             
-            // IVA en gastos
             const ivaInExpenses = expensesData?.filter(e => e.has_iva).reduce((sum, e) => sum + (e.iva_amount || 0), 0) || 0;
             
             document.getElementById('ivaCharged').textContent = formatMoney(ivaFrom16);
             document.getElementById('ivaExpenses').textContent = formatMoney(ivaInExpenses);
             document.getElementById('ivaToPay').textContent = formatMoney(ivaFrom16 - ivaInExpenses);
             
-            // ISR
             const isr = totalSales * 0.025;
             document.getElementById('isrIncome').textContent = formatMoney(totalSales);
             document.getElementById('isrAmount').textContent = formatMoney(isr);
             
-            // Tabla detalle con tipo de IVA
             const tbody = document.getElementById('taxSalesDetailTable');
             tbody.innerHTML = (salesData || []).sort((a, b) => new Date(b.created_at) - new Date(a.created_at)).map(sale => {
                 const hasIVA0 = (sale.total_iva_0 || 0) > 0;
@@ -3519,8 +4473,23 @@
     }
 
     // ============================================
-    // NÓMINA - CORREGIDO CON employee_name
+    // NÓMINA - AHORA CON GASTO AUTOMÁTICO
     // ============================================
+
+    function setNominaPaymentMethod(method) {
+        document.getElementById('nominaPaymentMethod').value = method;
+        
+        document.querySelectorAll('.payment-nomina-btn').forEach(btn => {
+            btn.classList.remove('border-brand-500', 'bg-brand-50', 'text-brand-700');
+            btn.classList.add('border-gray-300', 'text-gray-600');
+        });
+        
+        const activeBtn = document.getElementById('btnNomina' + method.charAt(0).toUpperCase() + method.slice(1));
+        if (activeBtn) {
+            activeBtn.classList.remove('border-gray-300', 'text-gray-600');
+            activeBtn.classList.add('border-brand-500', 'bg-brand-50', 'text-brand-700');
+        }
+    }
 
     async function loadNomina() {
         try {
@@ -3542,7 +4511,6 @@
             const { data, error } = await query;
             if (error) throw error;
             
-            // Calcular totales mes actual
             const currentMonthRecords = (data || []).filter(n => n.month === currentMonth && n.year === currentYear);
             const totalMes = currentMonthRecords.reduce((sum, n) => sum + n.total, 0);
             const totalSueldos = currentMonthRecords.reduce((sum, n) => sum + n.sueldo, 0);
@@ -3554,7 +4522,6 @@
             document.getElementById('totalHorasExtras').textContent = formatMoney(totalHorasExtras);
             document.getElementById('totalBonos').textContent = formatMoney(totalBonos);
             
-            // Tabla
             const tbody = document.getElementById('nominaTableBody');
             tbody.innerHTML = (data || []).map(rec => `
                 <tr class="hover:bg-gray-50 transition-colors">
@@ -3567,6 +4534,11 @@
                     <td class="px-4 py-3 text-right text-purple-600">${formatMoney(rec.bono_puntualidad)}</td>
                     <td class="px-4 py-3 text-right font-bold">${formatMoney(rec.total)}</td>
                     <td class="px-4 py-3 text-center">
+                        <span class="px-2 py-1 rounded-full text-xs ${getPaymentMethodColor(rec.payment_method)}">
+                            ${rec.payment_method || 'efectivo'}
+                        </span>
+                    </td>
+                    <td class="px-4 py-3 text-center">
                         <button onclick="deleteNomina('${rec.id}')" class="text-gray-400 hover:text-red-500 transition-colors btn-action">
                             <i class="fas fa-trash"></i>
                         </button>
@@ -3574,7 +4546,6 @@
                 </tr>
             `).join('');
             
-            // Resumen por empleado
             const employeeTotals = {};
             currentMonthRecords.forEach(rec => {
                 const empName = rec.employee_name || 'N/A';
@@ -3637,6 +4608,7 @@
         const pagoHoraExtra = parseFloat(document.getElementById('nominaPagoHoraExtra').value) || 0;
         const bono = parseFloat(document.getElementById('nominaBono').value) || 0;
         const bonoPuntualidad = parseFloat(document.getElementById('nominaBonoPuntualidad').value) || 0;
+        const paymentMethod = document.getElementById('nominaPaymentMethod').value;
         
         if (!empId) {
             alert('Seleccione un empleado');
@@ -3653,24 +4625,52 @@
         const total = sueldo + totalHorasExtras + bono + bonoPuntualidad;
         
         try {
-            const { error } = await supabaseClient.from('nomina').insert([{
-                employee_id: empId,
-                employee_name: employee.name,  // AHORA FUNCIONA CON LA NUEVA COLUMNA
-                user_id: currentUser.id,
-                month,
-                year,
-                sueldo,
-                horas_extras: horasExtras,
-                pago_hora_extra: pagoHoraExtra,
-                total_horas_extras: totalHorasExtras,
-                bono,
-                bono_puntualidad: bonoPuntualidad,
-                total,
-                registered_by: currentProfile.full_name
-            }]);
-            
-            if (error) throw error;
-            
+            // Insertar nómina
+            const { data: nominaData, error: nominaError } = await supabaseClient
+                .from('nomina')
+                .insert([{
+                    employee_id: empId,
+                    employee_name: employee.name,
+                    user_id: currentUser.id,
+                    month,
+                    year,
+                    sueldo,
+                    horas_extras: horasExtras,
+                    pago_hora_extra: pagoHoraExtra,
+                    total_horas_extras: totalHorasExtras,
+                    bono,
+                    bono_puntualidad: bonoPuntualidad,
+                    total,
+                    payment_method: paymentMethod,
+                    registered_by: currentProfile.full_name
+                }])
+                .select()
+                .single();
+
+            if (nominaError) throw nominaError;
+
+            // Crear gasto automático vinculado a la nómina
+            const { error: expenseError } = await supabaseClient
+                .from('expenses')
+                .insert([{
+                    user_id: currentUser.id,
+                    registered_by: currentProfile.full_name,
+                    area: employee.area === 'produccion' ? 'produccion' : 'atencion',
+                    concept: `Nómina - ${employee.name} (${new Date(year, month).toLocaleString('es-MX', {month: 'long'})} ${year})`,
+                    provider: `Nómina: ${employee.name}`,
+                    amount: total,
+                    subtotal: total,
+                    iva_amount: 0,
+                    method: paymentMethod,
+                    has_iva: false,
+                    iva_included: false,
+                    items_count: 1,
+                    origen: 'nomina',
+                    reference_id: nominaData.id
+                }]);
+
+            if (expenseError) throw expenseError;
+
             closeModal('nominaModal');
             await loadNomina();
             
@@ -3681,7 +4681,10 @@
             document.getElementById('nominaPagoHoraExtra').value = '';
             document.getElementById('nominaBono').value = '';
             document.getElementById('nominaBonoPuntualidad').value = '';
+            setNominaPaymentMethod('efectivo');
             calculateNominaTotal();
+            
+            alert('Pago de nómina registrado correctamente. Se creó el gasto correspondiente.');
             
         } catch (error) {
             alert('Error al guardar nómina: ' + error.message);
@@ -3690,11 +4693,27 @@
     }
 
     async function deleteNomina(id) {
-        if (!confirm('¿Eliminar este registro de nómina?')) return;
+        if (!confirm('¿Eliminar este registro de nómina? También se eliminará el gasto asociado.')) return;
         
         try {
+            // Buscar y eliminar el gasto asociado primero
+            const { data: expenseData } = await supabaseClient
+                .from('expenses')
+                .select('id')
+                .eq('origen', 'nomina')
+                .eq('reference_id', id);
+
+            if (expenseData && expenseData.length > 0) {
+                await supabaseClient
+                    .from('expenses')
+                    .delete()
+                    .eq('id', expenseData[0].id);
+            }
+
+            // Eliminar nómina
             await supabaseClient.from('nomina').delete().eq('id', id);
             await loadNomina();
+            alert('Registro de nómina y gasto asociado eliminados correctamente');
         } catch (error) {
             alert('Error al eliminar: ' + error.message);
         }
@@ -3702,6 +4721,290 @@
 
     function generateNominaReport() {
         alert('Función de reporte en desarrollo');
+    }
+
+    // ============================================
+    // FACTURAS GLOBALES - NUEVO MÓDULO
+    // ============================================
+
+    function setCurrentMonthForGlobal() {
+        const now = new Date();
+        document.getElementById('globalInvoiceMonth').value = now.getMonth();
+        document.getElementById('globalInvoiceYear').value = now.getFullYear();
+        loadGlobalInvoiceWeeks();
+    }
+
+    async function loadGlobalInvoiceWeeks() {
+        const month = parseInt(document.getElementById('globalInvoiceMonth').value);
+        const year = parseInt(document.getElementById('globalInvoiceYear').value);
+        
+        const monthNames = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 
+                          'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
+        
+        document.getElementById('globalInvoiceMonthLabel').textContent = `${monthNames[month]} ${year}`;
+        document.getElementById('globalInvoiceSummary').classList.remove('hidden');
+        
+        // Calcular semanas del mes
+        const firstDay = new Date(year, month, 1);
+        const lastDay = new Date(year, month + 1, 0);
+        
+        const weeks = [];
+        let currentWeek = 1;
+        let currentDate = new Date(firstDay);
+        
+        while (currentDate <= lastDay) {
+            const weekStart = new Date(currentDate);
+            const weekEnd = new Date(currentDate);
+            weekEnd.setDate(weekEnd.getDate() + 6);
+            
+            if (weekEnd > lastDay) weekEnd.setDate(lastDay.getDate());
+            
+            weeks.push({
+                number: currentWeek,
+                start: new Date(weekStart),
+                end: new Date(weekEnd),
+                startStr: weekStart.toISOString().split('T')[0],
+                endStr: weekEnd.toISOString().split('T')[0]
+            });
+            
+            currentDate.setDate(currentDate.getDate() + 7);
+            currentWeek++;
+        }
+        
+        // Cargar datos de ventas para cada semana
+        const { data: monthSales } = await supabaseClient
+            .from('sales')
+            .select('*')
+            .gte('created_at', firstDay.toISOString())
+            .lt('created_at', new Date(year, month + 1, 1).toISOString())
+            .eq('cancelled', false);
+
+        // Cargar semanas ya facturadas
+        const { data: invoicedWeeks } = await supabaseClient
+            .from('global_invoices')
+            .select('*')
+            .eq('month', month)
+            .eq('year', year);
+
+        const invoicedWeekNumbers = new Set(invoicedWeeks?.map(w => w.week_number) || []);
+        
+        currentGlobalInvoiceWeeks = weeks.map(week => {
+            const weekSales = (monthSales || []).filter(sale => {
+                const saleDate = new Date(sale.created_at);
+                return saleDate >= week.start && saleDate <= week.end;
+            });
+            
+            const totalIVA0 = weekSales.reduce((sum, s) => sum + (s.total_iva_0 || 0), 0);
+            const totalIVA16 = weekSales.reduce((sum, s) => sum + (s.total_iva_16 || 0), 0);
+            const total = weekSales.reduce((sum, s) => sum + s.total, 0);
+            const iva = weekSales.reduce((sum, s) => sum + s.iva, 0);
+            
+            return {
+                ...week,
+                sales: weekSales,
+                totalIVA0,
+                totalIVA16,
+                total,
+                iva,
+                transactionCount: weekSales.length,
+                isInvoiced: invoicedWeekNumbers.has(week.number)
+            };
+        });
+        
+        // Actualizar resumen
+        const totalMonth = currentGlobalInvoiceWeeks.reduce((sum, w) => sum + w.total, 0);
+        const invoicedCount = currentGlobalInvoiceWeeks.filter(w => w.isInvoiced).length;
+        
+        document.getElementById('globalMonthTotal').textContent = formatMoney(totalMonth);
+        document.getElementById('globalWeeksCount').textContent = currentGlobalInvoiceWeeks.length;
+        document.getElementById('globalWeeksInvoiced').textContent = invoicedCount;
+        document.getElementById('globalWeeksPending').textContent = currentGlobalInvoiceWeeks.length - invoicedCount;
+        
+        renderGlobalInvoiceWeeks();
+    }
+
+    function renderGlobalInvoiceWeeks() {
+        const container = document.getElementById('weeksContainer');
+        
+        container.innerHTML = currentGlobalInvoiceWeeks.map(week => `
+            <div class="week-card glass-panel p-6 rounded-2xl relative ${week.isInvoiced ? 'facturada' : ''}" 
+                 onclick="openWeekDetail(${week.number})">
+                <div class="flex justify-between items-start mb-4">
+                    <div>
+                        <h3 class="text-xl font-bold text-brand-800">Semana ${week.number}</h3>
+                        <p class="text-sm text-gray-500">
+                            ${week.start.getDate()}-${week.end.getDate()} de ${week.start.toLocaleString('es-MX', {month: 'long'})}
+                        </p>
+                    </div>
+                    <div class="w-12 h-12 ${week.isInvoiced ? 'bg-green-500' : 'bg-brand-500'} rounded-full flex items-center justify-center text-white">
+                        <i class="fas ${week.isInvoiced ? 'fa-check' : 'fa-calendar-week'}"></i>
+                    </div>
+                </div>
+                
+                <div class="space-y-2">
+                    <div class="flex justify-between text-sm">
+                        <span class="text-gray-600">Transacciones:</span>
+                        <span class="font-bold">${week.transactionCount}</span>
+                    </div>
+                    <div class="flex justify-between text-sm">
+                        <span class="text-pink-600">IVA 0%:</span>
+                        <span class="font-bold text-pink-700">${formatMoney(week.totalIVA0)}</span>
+                    </div>
+                    <div class="flex justify-between text-sm">
+                        <span class="text-blue-600">IVA 16%:</span>
+                        <span class="font-bold text-blue-700">${formatMoney(week.totalIVA16)}</span>
+                    </div>
+                    <div class="flex justify-between pt-2 border-t">
+                        <span class="font-bold text-gray-800">Total:</span>
+                        <span class="font-bold text-xl text-brand-800">${formatMoney(week.total)}</span>
+                    </div>
+                </div>
+                
+                ${week.isInvoiced ? `
+                    <div class="mt-3 text-center">
+                        <span class="text-xs text-green-600 font-bold">
+                            <i class="fas fa-check-circle mr-1"></i>Facturada
+                        </span>
+                    </div>
+                ` : `
+                    <div class="mt-3 text-center">
+                        <span class="text-xs text-orange-600 font-bold">
+                            <i class="fas fa-clock mr-1"></i>Pendiente de facturar
+                        </span>
+                    </div>
+                `}
+            </div>
+        `).join('');
+    }
+
+    function openWeekDetail(weekNumber) {
+        const week = currentGlobalInvoiceWeeks.find(w => w.number === weekNumber);
+        if (!week) return;
+        
+        selectedWeekForInvoice = week;
+        
+        document.getElementById('weekDetailTitle').textContent = `Semana ${week.number}`;
+        document.getElementById('weekDetailDates').textContent = 
+            `${week.start.getDate()} de ${week.start.toLocaleString('es-MX', {month: 'long'})} al ${week.end.getDate()} de ${week.end.toLocaleString('es-MX', {month: 'long'})} ${week.start.getFullYear()}`;
+        
+        document.getElementById('weekDetailIVA0').textContent = formatMoney(week.totalIVA0);
+        document.getElementById('weekDetailCount0').textContent = week.sales.filter(s => (s.total_iva_0 || 0) > 0).length;
+        document.getElementById('weekDetailIVA16').textContent = formatMoney(week.totalIVA16);
+        document.getElementById('weekDetailCount16').textContent = week.sales.filter(s => (s.total_iva_16 || 0) > 0).length;
+        document.getElementById('weekDetailTotal').textContent = formatMoney(week.total);
+        document.getElementById('weekDetailIVATotal').textContent = formatMoney(week.iva);
+        
+        // Calcular desglose CFDI
+        const subtotal0 = week.totalIVA0;
+        const subtotal16 = week.totalIVA16 / 1.16;
+        const ivaTrasladado = week.totalIVA16 - subtotal16;
+        
+        document.getElementById('cfdiSubtotal0').textContent = formatMoney(subtotal0);
+        document.getElementById('cfdiSubtotal16').textContent = formatMoney(subtotal16);
+        document.getElementById('cfdiIVA').textContent = formatMoney(ivaTrasladado);
+        document.getElementById('cfdiTotal').textContent = formatMoney(week.total);
+        
+        // Actualizar botón según estado
+        const btnMark = document.getElementById('btnMarkInvoiced');
+        if (week.isInvoiced) {
+            btnMark.innerHTML = '<i class="fas fa-times-circle mr-2"></i>Desmarcar como Facturada';
+            btnMark.classList.remove('bg-green-600', 'hover:bg-green-700');
+            btnMark.classList.add('bg-red-500', 'hover:bg-red-600');
+        } else {
+            btnMark.innerHTML = '<i class="fas fa-check-circle mr-2"></i>Marcar como Facturada';
+            btnMark.classList.remove('bg-red-500', 'hover:bg-red-600');
+            btnMark.classList.add('bg-green-600', 'hover:bg-green-700');
+        }
+        
+        openModal('weekDetailModal');
+    }
+
+    async function markWeekAsInvoiced() {
+        if (!selectedWeekForInvoice) return;
+        
+        try {
+            const month = parseInt(document.getElementById('globalInvoiceMonth').value);
+            const year = parseInt(document.getElementById('globalInvoiceYear').value);
+            
+            if (selectedWeekForInvoice.isInvoiced) {
+                // Desmarcar
+                await supabaseClient
+                    .from('global_invoices')
+                    .delete()
+                    .eq('month', month)
+                    .eq('year', year)
+                    .eq('week_number', selectedWeekForInvoice.number);
+                
+                selectedWeekForInvoice.isInvoiced = false;
+            } else {
+                // Marcar como facturada
+                await supabaseClient
+                    .from('global_invoices')
+                    .insert([{
+                        month,
+                        year,
+                        week_number: selectedWeekForInvoice.number,
+                        date_from: selectedWeekForInvoice.startStr,
+                        date_to: selectedWeekForInvoice.endStr,
+                        total_iva_0: selectedWeekForInvoice.totalIVA0,
+                        total_iva_16: selectedWeekForInvoice.totalIVA16,
+                        iva_amount: selectedWeekForInvoice.iva,
+                        total: selectedWeekForInvoice.total,
+                        transaction_count: selectedWeekForInvoice.transactionCount,
+                        invoiced_by: currentProfile.full_name,
+                        invoiced_at: new Date().toISOString()
+                    }]);
+                
+                selectedWeekForInvoice.isInvoiced = true;
+            }
+            
+            renderGlobalInvoiceWeeks();
+            closeModal('weekDetailModal');
+            
+        } catch (error) {
+            console.error('Error marking week as invoiced:', error);
+            alert('Error al actualizar el estado: ' + error.message);
+        }
+    }
+
+    function exportWeekToExcel() {
+        if (!selectedWeekForInvoice) return;
+        
+        const week = selectedWeekForInvoice;
+        const month = parseInt(document.getElementById('globalInvoiceMonth').value);
+        const year = parseInt(document.getElementById('globalInvoiceYear').value);
+        const monthName = new Date(year, month).toLocaleString('es-MX', {month: 'long'});
+        
+        // Crear CSV
+        let csv = 'Fecha,Hora,Folio,Productos,Tipo IVA,Subtotal,IVA,Total\n';
+        
+        week.sales.forEach(sale => {
+            const date = new Date(sale.created_at);
+            const fecha = date.toLocaleDateString('es-MX');
+            const hora = date.toLocaleTimeString('es-MX');
+            const folio = sale.id.slice(0, 8);
+            const productos = sale.items.map(i => `${i.name}(${i.quantity})`).join('; ');
+            const tipoIVA = (sale.total_iva_0 || 0) > 0 && (sale.total_iva_16 || 0) > 0 ? 'MIXTA' : 
+                          (sale.total_iva_16 || 0) > 0 ? '16%' : '0%';
+            
+            csv += `"${fecha}","${hora}","${folio}","${productos}","${tipoIVA}",${sale.subtotal},${sale.iva},${sale.total}\n`;
+        });
+        
+        // Resumen al final
+        csv += '\n"RESUMEN SEMANA"\n';
+        csv += `"Semana ${week.number} de ${monthName} ${year}"\n`;
+        csv += `"Período:","${week.start.getDate()} al ${week.end.getDate()} de ${monthName}"\n`;
+        csv += `"Total IVA 0%:",${week.totalIVA0}\n`;
+        csv += `"Total IVA 16%:",${week.totalIVA16}\n`;
+        csv += `"IVA Trasladado:",${week.iva}\n`;
+        csv += `"TOTAL:",${week.total}\n`;
+        
+        // Descargar
+        const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+        const link = document.createElement('a');
+        link.href = URL.createObjectURL(blob);
+        link.download = `Factura_Global_Semana_${week.number}_${monthName}_${year}.csv`;
+        link.click();
     }
 
     // ============================================
@@ -3721,12 +5024,9 @@
     }
 
     function openCustomProductModal() { openModal('customProductModal'); }
-    function openExpenseModal() { 
-        calculateExpenseIVA();
-        openModal('expenseModal'); 
-    }
     function openEmployeeModal() { openModal('employeeModal'); }
     function openNominaModal() { 
+        setNominaPaymentMethod('efectivo');
         calculateNominaTotal();
         openModal('nominaModal'); 
     }
@@ -3747,7 +5047,6 @@
         if (dateFrom) dateFrom.value = today;
         if (dateTo) dateTo.value = today;
         
-        // Event listener para input de stock
         const stockInput = document.getElementById('stockNewValue');
         if (stockInput) {
             stockInput.addEventListener('input', (e) => {
@@ -3756,6 +5055,10 @@
                 document.getElementById('stockPreview').textContent = value;
             });
         }
+        
+        // Set current year for global invoices
+        const globalYear = document.getElementById('globalInvoiceYear');
+        if (globalYear) globalYear.value = new Date().getFullYear();
     });
 </script>
 
