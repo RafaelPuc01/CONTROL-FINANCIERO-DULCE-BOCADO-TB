@@ -223,6 +223,30 @@
             outline: none;
             border-color: #a77f70;
         }
+        /* Agregar en la sección <style> del HTML */
+
+        /* Contenedor de gráficas con altura fija */
+        .chart-container {
+            position: relative;
+            height: 300px;
+            width: 100%;
+        }
+        
+        /* Asegurar que el canvas no se expanda */
+        .chart-container canvas {
+            max-height: 100% !important;
+        }
+        
+        /* Alternativa: altura máxima en el glass-panel de gráficas */
+        #dashboard .glass-panel:has(canvas) {
+            min-height: 0;
+        }
+        
+        /* Forzar altura en los contenedores de chart específicos */
+        #salesChart, #expensesChart {
+            max-height: 300px !important;
+            height: 300px !important;
+        }
 
         /* Estilos para expansión de ventas mixtas */
         .sale-row {
@@ -529,13 +553,17 @@
             </div>
 
             <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-                <div class="glass-panel p-6 rounded-2xl">
+                 <div class="glass-panel p-6 rounded-2xl">
                     <h3 class="text-lg font-bold text-brand-800 mb-4">Ventas vs Gastos (Últimos 7 días)</h3>
-                    <canvas id="salesChart" class="w-full h-64"></canvas>
+                <div class="chart-container">
+                        <canvas id="salesChart"></canvas>
+                    </div>
                 </div>
                 <div class="glass-panel p-6 rounded-2xl">
                     <h3 class="text-lg font-bold text-brand-800 mb-4">Distribución de Gastos por Área</h3>
-                    <canvas id="expensesChart" class="w-full h-64"></canvas>
+                    <div class="chart-container">
+                        <canvas id="expensesChart"></canvas>
+                    </div>
                 </div>
             </div>
 
