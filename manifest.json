@@ -1,0 +1,85 @@
+{
+  "name": "Dulce Bocado ERP",
+  "short_name": "Dulce Bocado",
+  "start_url": "/CONTROL-FINANCIERO-DULCE-BOCADO-TB/",
+  "display": "standalone",
+  "background_color": "#fdf8f6",
+  "theme_color": "#6d453c",
+  "orientation": "portrait",
+  "scope": "/CONTROL-FINANCIERO-DULCE-BOCADO-TB/",
+  "id": "/CONTROL-FINANCIERO-DULCE-BOCADO-TB/",
+  "icons": [
+    {
+      "src": "https://cdn.jsdelivr.net/gh/twitter/twemoji@latest/assets/svg/1f370.svg",
+      "sizes": "72x72",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "https://cdn.jsdelivr.net/gh/twitter/twemoji@latest/assets/svg/1f370.svg",
+      "sizes": "96x96",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "https://cdn.jsdelivr.net/gh/twitter/twemoji@latest/assets/svg/1f370.svg",
+      "sizes": "128x128",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "https://cdn.jsdelivr.net/gh/twitter/twemoji@latest/assets/svg/1f370.svg",
+      "sizes": "144x144",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "https://cdn.jsdelivr.net/gh/twitter/twemoji@latest/assets/svg/1f370.svg",
+      "sizes": "152x152",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "https://cdn.jsdelivr.net/gh/twitter/twemoji@latest/assets/svg/1f370.svg",
+      "sizes": "192x192",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "https://cdn.jsdelivr.net/gh/twitter/twemoji@latest/assets/svg/1f370.svg",
+      "sizes": "384x384",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "https://cdn.jsdelivr.net/gh/twitter/twemoji@latest/assets/svg/1f370.svg",
+      "sizes": "512x512",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["business", "finance"],
+  "screenshots": [
+    {
+      "src": "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='320' height='640'%3E%3Crect fill='%236d453c' width='320' height='640'/%3E%3Ctext x='50%25' y='50%25' text-anchor='middle' dy='.3em' fill='white' font-size='24' font-family='sans-serif'%3EDulce Bocado%3C/text%3E%3C/svg%3E",
+      "sizes": "320x640",
+      "type": "image/svg+xml",
+      "form_factor": "narrow"
+    },
+    {
+      "src": "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='640' height='320'%3E%3Crect fill='%236d453c' width='640' height='320'/%3E%3Ctext x='50%25' y='50%25' text-anchor='middle' dy='.3em' fill='white' font-size='24' font-family='sans-serif'%3EDulce Bocado%3C/text%3E%3C/svg%3E",
+      "sizes": "640x320",
+      "type": "image/svg+xml",
+      "form_factor": "wide"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Punto de Venta",
+      "short_name": "POS",
+      "description": "Abrir caja registradora",
+      "url": "/CONTROL-FINANCIERO-DULCE-BOCADO-TB/?screen=pos",
+      "icons": [{ "src": "https://cdn.jsdelivr.net/gh/twitter/twemoji@latest/assets/svg/1f4b0.svg", "sizes": "96x96" }]
+    }
+  ]
+}
