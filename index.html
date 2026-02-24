@@ -4289,10 +4289,30 @@
         if (!confirm('¿Eliminar este producto?')) return;
         
         try {
-            await supabaseClient.from('products').update({ is_active: false }).eq('id', id);
+            console.log('Intentando eliminar producto:', id);
+            
+            // OPCIÓN A: Eliminación física (BORRADO REAL)
+            const { data, error } = await supabaseClient
+                .from('products')
+                .delete()
+                .eq('id', id)
+                .select(); // Devuelve el registro eliminado para confirmar
+            
+            if (error) {
+                console.error('Error de Supabase:', error);
+                throw error;
+            }
+            
+            console.log('Producto eliminado:', data);
+            
+            // Recargar tablas
             await loadProductsTable();
             await loadProducts();
+            
+            alert('Producto eliminado correctamente');
+            
         } catch (error) {
+            console.error('Error completo:', error);
             alert('Error al eliminar: ' + error.message);
         }
     }
