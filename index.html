@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>🧑🏻‍💻 Dulce Bocado - ERP</title>
     
     <!-- PWA Meta Tags -->
@@ -13,7 +13,8 @@
     <meta name="description" content="Sistema ERP para Dulce Bocado - Gestión de ventas, inventario y nómina">
 
     <!-- PWA Manifest -->
-    <link rel="manifest" href="data:application/json;base64,eyJuYW1lIjoiRHVsY2UgQm9jYWRvIC0gRVJQIiwic2hvcnRfbmFtZSI6IkR1bGNlIEJvY2FkbyIsInN0YXJ0X3VybCI6Ii4iLCJkaXNwbGF5Ijoic3RhbmRhbG9uZSIsImJhY2tncm91bmRfY29sb3IiOiIjZmRmOGY2IiwidGhlbWVfY29sb3IiOiIjNmQ0NTNjIiwiaWNvbnMiOlt7InNyYyI6Imh0dHBzOi8vY2RuLmpzZGVsaXZyLm5ldC9naC9kZXZlbG9wZXJzL2dpdGh1Yi9mbGFncy9lNDc0MjQucG5nIiwic2l6ZXMiOiIxOTJ4MTkyIiwidHlwZSI6ImltYWdlL3BuZyJ9XX0=">
+    <!-- REEMPLAZA el manifest actual por este -->
+    <link rel="manifest" href="data:application/json;base64,eyJuYW1lIjoiRHVsY2UgQm9jYWRvIC0gRVJQIiwic2hvcnRfbmFtZSI6IkR1bGNlIEJvY2FkbyIsInN0YXJ0X3VybCI6Ii4vIiwiZGlzcGxheSI6InN0YW5kYWxvbmUiLCJiYWNrZ3JvdW5kX2NvbG9yIjoiI2ZkZjhmNiIsInRoZW1lX2NvbG9yIjoiIzZkNDUzYyIsIm9yaWVudGF0aW9uIjoicG9ydHJhaXQiLCJpY29ucyI6W3sic3JjIjoiaHR0cHM6Ly9jZG4uanNkZWxpdnIubmV0L2doL2RldmVsb3BlcnMvZ2l0aHViL2ZsYWdzL2U0NzQyNC5wbmciLCJzaXplcyI6IjE5MngxOTIiLCJ0eXBlIjoiaW1hZ2UvcG5nIn1dfQ==">
 
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
@@ -310,6 +311,88 @@
             font-size: 10px;
             font-weight: bold;
         }
+                /* === INICIO: FIXES PARA TABLETS ANDROID === */
+        
+        /* Prevenir zoom en inputs en Android */
+        input, select, textarea {
+            font-size: 16px;
+        }
+
+        /* Asegurar que el body ocupe toda la pantalla */
+        body {
+            min-height: 100vh;
+            min-height: -webkit-fill-available;
+            width: 100%;
+            overflow-x: hidden;
+            -webkit-text-size-adjust: 100%;
+        }
+
+        /* Fix para tablets - evitar que el contenido se corte */
+        .main-content {
+            min-height: 100vh;
+            min-height: -webkit-fill-available;
+            padding-bottom: env(safe-area-inset-bottom, 20px);
+        }
+
+        /* Ajuste específico para el sidebar en tablets */
+        .sidebar {
+            height: 100vh;
+            height: -webkit-fill-available;
+            position: fixed;
+            left: 0;
+            top: 0;
+        }
+
+        /* Cuando el sidebar está mini, ajustar el main content */
+        .sidebar.mini ~ #mainContent,
+        .sidebar.mini + main {
+            margin-left: 4.5rem !important;
+        }
+
+        .sidebar:not(.mini) ~ #mainContent,
+        .sidebar:not(.mini) + main {
+            margin-left: 16rem !important;
+        }
+
+        /* Fix para botones que se cortan */
+        button, .btn-action {
+            min-height: 44px;
+        }
+
+        /* Ajuste para el grid de productos en tablets */
+        @media (min-width: 768px) and (max-width: 1024px) {
+            .sidebar {
+                width: 14rem;
+            }
+            
+            .sidebar:not(.mini) ~ #mainContent,
+            .sidebar:not(.mini) + main {
+                margin-left: 14rem !important;
+            }
+            
+            #productsGrid {
+                grid-template-columns: repeat(3, 1fr);
+            }
+            
+            #pos .grid {
+                grid-template-columns: 1fr 320px !important;
+            }
+        }
+
+        /* Fix para orientación landscape en tablets */
+        @media (min-height: 600px) and (orientation: landscape) {
+            .sidebar {
+                height: 100vh;
+                height: -webkit-fill-available;
+            }
+        }
+
+        /* Scroll suave en modales para tablets */
+        .modal > div {
+            -webkit-overflow-scrolling: touch;
+        }
+        
+        /* === FIN: FIXES PARA TABLETS ANDROID === */
     </style>
 </head>
 <body class="h-screen overflow-hidden">
@@ -479,7 +562,7 @@
     </aside>
 
     <!-- Main Content -->
-    <main id="mainContent" class="flex-1 overflow-y-auto bg-gray-50 p-8 custom-scrollbar main-content">
+    <main id="mainContent" class="flex-1 overflow-y-auto bg-gray-50 p-4 md:p-8 custom-scrollbar main-content" style="margin-left: 16rem;">
         
         <!-- Dashboard Module -->
         <div id="dashboard" class="module fade-in">
@@ -5075,8 +5158,8 @@
         }
     }
 
-    // Inicializar al cargar
-    document.addEventListener('DOMContentLoaded', () => {
+        // Inicializar al cargar
+        document.addEventListener('DOMContentLoaded', () => {
         checkSession();
         
         const today = new Date().toISOString().split('T')[0];
@@ -5097,8 +5180,52 @@
         // Set current year for global invoices
         const globalYear = document.getElementById('globalInvoiceYear');
         if (globalYear) globalYear.value = new Date().getFullYear();
+        
+        // === INICIO: FIXES PARA TABLETS ANDROID ===
+        
+        // Detectar si es Android o Tablet
+        const isAndroid = /Android/i.test(navigator.userAgent);
+        const isTablet = /(tablet|ipad|playbook|silk)|(android(?!.*mobi))/i.test(navigator.userAgent);
+        
+        if (isAndroid || isTablet) {
+            // Ajustar altura del viewport para Android
+            const setVH = () => {
+                let vh = window.innerHeight * 0.01;
+                document.documentElement.style.setProperty('--vh', `${vh}px`);
+            };
+            setVH();
+            window.addEventListener('resize', setVH);
+            
+            // Prevenir comportamientos raros del scroll
+            document.body.style.overscrollBehavior = 'none';
+            
+            // Fix para el teclado virtual en Android
+            const inputs = document.querySelectorAll('input, textarea');
+            inputs.forEach(input => {
+                input.addEventListener('focus', () => {
+                    setTimeout(() => {
+                        input.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    }, 300);
+                });
+            });
+            
+            // Forzar margin-left inicial en mainContent
+            const sidebar = document.getElementById('sidebar');
+            const mainContent = document.getElementById('mainContent');
+            if (sidebar && mainContent) {
+                if (sidebar.classList.contains('mini')) {
+                    mainContent.style.marginLeft = '4.5rem';
+                } else {
+                    mainContent.style.marginLeft = '16rem';
+                }
+            }
+        }
+        
+        // Forzar recálculo del layout después de cargar
+        setTimeout(() => {
+            window.dispatchEvent(new Event('resize'));
+        }, 100);
+        
+        // === FIN: FIXES PARA TABLETS ANDROID ===
     });
 </script>
-
-</body>
-</html>
