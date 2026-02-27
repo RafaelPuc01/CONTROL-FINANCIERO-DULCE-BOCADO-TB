@@ -2327,11 +2327,15 @@
 
     async function updateDashboard() {
         try {
-            const today = new Date().toLocaleDateString('es-MX', {
-                year: 'numeric',
-                month: '2-digit',
-                day: '2-digit'
-            }).split('/').reverse().join('-');
+            // Obtener fecha local de México con offset explícito
+            const now = new Date();
+            const year = now.getFullYear();
+            const month = String(now.getMonth() + 1).padStart(2, '0');
+            const day = String(now.getDate()).padStart(2, '0');
+            
+            // Formato ISO con timezone de México (UTC-6)
+            const todayStart = `${year}-${month}-${day}T00:00:00-06:00`;
+            const todayEnd = `${year}-${month}-${day}T23:59:59-06:00`;
             
             const { data: todaySales } = await supabaseClient
                 .from('sales')
@@ -3046,11 +3050,15 @@
 
     async function loadTodaySales() {
         try {
-            const today = new Date().toLocaleDateString('es-MX', {
-                year: 'numeric',
-                month: '2-digit',
-                day: '2-digit'
-            }).split('/').reverse().join('-');
+            // Obtener fecha local de México con offset explícito
+            const now = new Date();
+            const year = now.getFullYear();
+            const month = String(now.getMonth() + 1).padStart(2, '0');
+            const day = String(now.getDate()).padStart(2, '0');
+            
+            // Formato ISO con timezone de México (UTC-6)
+            const todayStart = `${year}-${month}-${day}T00:00:00-06:00`;
+            const todayEnd = `${year}-${month}-${day}T23:59:59-06:00`;
             
             const { data: todaySales } = await supabaseClient
                 .from('sales')
@@ -5190,11 +5198,15 @@
         document.addEventListener('DOMContentLoaded', () => {
         checkSession();
         
-        const today = new Date().toLocaleDateString('es-MX', {
-            year: 'numeric',
-            month: '2-digit',
-            day: '2-digit'
-        }).split('/').reverse().join('-');
+        // Obtener fecha local de México con offset explícito
+        const now = new Date();
+        const year = now.getFullYear();
+        const month = String(now.getMonth() + 1).padStart(2, '0');
+        const day = String(now.getDate()).padStart(2, '0');
+        
+        // Formato ISO con timezone de México (UTC-6)
+        const todayStart = `${year}-${month}-${day}T00:00:00-06:00`;
+        const todayEnd = `${year}-${month}-${day}T23:59:59-06:00`;
         const dateFrom = document.getElementById('filterDateFrom');
         const dateTo = document.getElementById('filterDateTo');
         if (dateFrom) dateFrom.value = today;
