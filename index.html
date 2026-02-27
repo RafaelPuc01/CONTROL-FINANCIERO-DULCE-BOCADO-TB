@@ -2340,13 +2340,15 @@
             const { data: todaySales } = await supabaseClient
                 .from('sales')
                 .select('*')
-                .gte('created_at', today)
+                .gte('created_at', todayStart)
+                .lte('created_at', todayEnd)
                 .eq('cancelled', false);
 
             const { data: todayCancelled } = await supabaseClient
                 .from('sales')
                 .select('*')
-                .gte('created_at', today)
+                .gte('created_at', todayStart)
+                .lte('created_at', todayEnd)
                 .eq('cancelled', true);
 
             const todayTotal = todaySales?.reduce((sum, s) => sum + s.total, 0) || 0;
@@ -3063,14 +3065,16 @@
             const { data: todaySales } = await supabaseClient
                 .from('sales')
                 .select('*')
-                .gte('created_at', today)
+                .gte('created_at', todayStart)
+                .lte('created_at', todayEnd)
                 .eq('cancelled', false)
                 .order('created_at', { ascending: false });
 
             const { data: todayCancelled } = await supabaseClient
                 .from('sales')
                 .select('*')
-                .gte('created_at', today)
+                .gte('created_at', todayStart)
+                .lte('created_at', todayEnd)
                 .eq('cancelled', true);
 
             const total = todaySales?.reduce((sum, s) => sum + s.total, 0) || 0;
