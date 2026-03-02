@@ -5,7 +5,7 @@
   "display": "standalone",
   "background_color": "#fdf8f6",
   "theme_color": "#6d453c",
-  "orientation": "portrait",
+  "orientation": "any",
   "scope": "/CONTROL-FINANCIERO-DULCE-BOCADO-TB/",
   "id": "/CONTROL-FINANCIERO-DULCE-BOCADO-TB/",
   "icons": [
