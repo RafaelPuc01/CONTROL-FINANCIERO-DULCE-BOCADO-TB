@@ -2940,7 +2940,7 @@ function setPaymentMethod(method) {
     // Aplicar estilo activo según método
     const activeBtn = document.getElementById('btn' + method.charAt(0).toUpperCase() + method.slice(1));
     if (activeBtn) {
-        btn.classList.remove('border-gray-300', 'text-gray-600');
+        activeBtn.classList.remove('border-gray-300', 'text-gray-600');
         
         if (method === 'efectivo') {
             activeBtn.classList.add('border-green-500', 'bg-green-50', 'text-green-700');
