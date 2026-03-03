@@ -1019,6 +1019,7 @@
         </div>
 
         <!-- Products Module -->
+        <!-- Products Module -->
         <div id="products" class="module hidden fade-in">
             <div class="mb-6 flex justify-between items-center">
                 <div>
@@ -1029,7 +1030,15 @@
                     <i class="fas fa-plus mr-2"></i>Nuevo Producto
                 </button>
             </div>
-
+        
+            <!-- NUEVO: Caja de búsqueda de productos -->
+            <div class="glass-panel p-4 rounded-xl mb-6">
+                <div class="search-container" style="margin-bottom: 0;">
+                    <i class="fas fa-search search-icon"></i>
+                    <input type="text" id="productSearchTable" class="search-input" placeholder="Buscar productos por nombre o categoría..." oninput="filterProductsTable(this.value)">
+                </div>
+            </div>
+        
             <div class="glass-panel rounded-2xl overflow-hidden">
                 <div class="overflow-x-auto">
                     <table class="w-full text-sm">
@@ -4559,49 +4568,13 @@ function confirmMixedPayment() {
             if (error) throw error;
             products = data || [];
             
-            const tbody = document.getElementById('productsTableBody');
-            tbody.innerHTML = products.map(p => {
-                const isAdmin = currentProfile?.role === 'admin';
-                
-                const editButton = isAdmin ? `
-                    <button onclick="editProduct('${p.id}')" class="text-blue-500 hover:text-blue-700 mr-3 btn-action" title="Editar producto">
-                        <i class="fas fa-edit"></i>
-                    </button>
-                ` : '';
-                
-                const stockButton = !isAdmin ? `
-                    <button onclick="openStockModal('${p.id}')" class="text-green-500 hover:text-green-700 mr-3 btn-action" title="Ajustar stock">
-                        <i class="fas fa-boxes"></i>
-                    </button>
-                ` : '';
-                
-                const deleteButton = isAdmin ? `
-                    <button onclick="deleteProduct('${p.id}')" class="text-red-500 hover:text-red-700 btn-action" title="Eliminar producto">
-                        <i class="fas fa-trash"></i>
-                    </button>
-                ` : '';
-                
-                return `
-                <tr class="hover:bg-gray-50 transition-colors">
-                    <td class="px-4 py-3 font-medium">${p.name}</td>
-                    <td class="px-4 py-3 capitalize">${p.category}</td>
-                    <td class="px-4 py-3 text-center">
-                        <span class="${p.stock < 5 ? 'text-red-600 font-bold' : 'text-gray-700'}">${p.stock}</span>
-                    </td>
-                    <td class="px-4 py-3 text-center">
-                        ${p.has_iva ? '<span class="text-blue-600 font-medium">Sí (16%)</span>' : '<span class="text-gray-400">No</span>'}
-                    </td>
-                    <td class="px-4 py-3 text-right font-bold">${formatMoney(p.price)}</td>
-                    <td class="px-4 py-3 text-center">
-                        <span class="px-2 py-1 rounded-full text-xs ${p.stock > 0 ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}">
-                            ${p.stock > 0 ? 'Activo' : 'Agotado'}
-                        </span>
-                    </td>
-                    <td class="px-4 py-3 text-center">
-                        ${editButton}${stockButton}${deleteButton}
-                    </td>
-                </tr>
-            `}).join('');
+            // Limpiar el campo de búsqueda si existe
+            const searchInput = document.getElementById('productSearchTable');
+            if (searchInput) {
+                searchInput.value = '';
+            }
+            
+            renderProductsTableBody(products);
             
             const btnNewProduct = document.getElementById('btnNewProduct');
             if (btnNewProduct) {
@@ -4611,6 +4584,88 @@ function confirmMixedPayment() {
         } catch (error) {
             console.error('Error loading products table:', error);
         }
+    }
+
+    // ============================================
+    // FILTRO DE PRODUCTOS EN TABLA
+    // ============================================
+
+    function filterProductsTable(searchTerm) {
+        const term = searchTerm.toLowerCase().trim();
+        
+        if (!term) {
+            // Si no hay término de búsqueda, mostrar todos los productos
+            renderProductsTableBody(products);
+            return;
+        }
+        
+        // Filtrar productos que coincidan con el término de búsqueda
+        const filteredProducts = products.filter(p => 
+            p.name.toLowerCase().includes(term) || 
+            p.category.toLowerCase().includes(term)
+        );
+        
+        // Renderizar solo los productos filtrados
+        renderProductsTableBody(filteredProducts);
+    }
+
+    // Función auxiliar para renderizar el tbody (reutilizable)
+    function renderProductsTableBody(productsToRender) {
+        const tbody = document.getElementById('productsTableBody');
+        const isAdmin = currentProfile?.role === 'admin';
+        
+        if (productsToRender.length === 0) {
+            tbody.innerHTML = `
+                <tr>
+                    <td colspan="7" class="px-4 py-8 text-center text-gray-500">
+                        <i class="fas fa-search text-3xl mb-2 text-gray-300"></i>
+                        <p>No se encontraron productos</p>
+                    </td>
+                </tr>
+            `;
+            return;
+        }
+        
+        tbody.innerHTML = productsToRender.map(p => {
+            const editButton = isAdmin ? `
+                <button onclick="editProduct('${p.id}')" class="text-blue-500 hover:text-blue-700 mr-3 btn-action" title="Editar producto">
+                    <i class="fas fa-edit"></i>
+                </button>
+            ` : '';
+            
+            const stockButton = !isAdmin ? `
+                <button onclick="openStockModal('${p.id}')" class="text-green-500 hover:text-green-700 mr-3 btn-action" title="Ajustar stock">
+                    <i class="fas fa-boxes"></i>
+                </button>
+            ` : '';
+            
+            const deleteButton = isAdmin ? `
+                <button onclick="deleteProduct('${p.id}')" class="text-red-500 hover:text-red-700 btn-action" title="Eliminar producto">
+                    <i class="fas fa-trash"></i>
+                </button>
+            ` : '';
+            
+            return `
+            <tr class="hover:bg-gray-50 transition-colors">
+                <td class="px-4 py-3 font-medium">${p.name}</td>
+                <td class="px-4 py-3 capitalize">${p.category}</td>
+                <td class="px-4 py-3 text-center">
+                    <span class="${p.stock < 5 ? 'text-red-600 font-bold' : 'text-gray-700'}">${p.stock}</span>
+                </td>
+                <td class="px-4 py-3 text-center">
+                    ${p.has_iva ? '<span class="text-blue-600 font-medium">Sí (16%)</span>' : '<span class="text-gray-400">No</span>'}
+                </td>
+                <td class="px-4 py-3 text-right font-bold">${formatMoney(p.price)}</td>
+                <td class="px-4 py-3 text-center">
+                    <span class="px-2 py-1 rounded-full text-xs ${p.stock > 0 ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}">
+                        ${p.stock > 0 ? 'Activo' : 'Agotado'}
+                    </span>
+                </td>
+                <td class="px-4 py-3 text-center">
+                    ${editButton}${stockButton}${deleteButton}
+                </td>
+            </tr>
+        `}).join('');
     }
 
     function openStockModal(productId) {
@@ -4780,7 +4835,7 @@ function confirmMixedPayment() {
             alert('Error al eliminar: ' + error.message);
         }
     }
-
+    
     // ============================================
     // BANCOS - AHORA INCLUYE NÓMINA
     // ============================================
