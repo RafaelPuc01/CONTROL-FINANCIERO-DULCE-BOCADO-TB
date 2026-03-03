@@ -823,66 +823,130 @@
     </div>
 </div>
 
-        <!-- Sales History Module -->
+                <!-- Sales History Module -->
         <div id="salesHistory" class="module hidden fade-in">
-            <div class="mb-6 flex justify-between items-center">
+            <!-- Header -->
+            <div class="mb-6 flex flex-col md:flex-row md:justify-between md:items-center gap-4">
                 <div>
                     <h1 class="text-3xl font-serif font-bold text-brand-900 mb-2">Historial de Ventas</h1>
-                    <p class="text-gray-600">Corte del día y ventas anteriores</p>
+                    <p class="text-gray-600">Análisis detallado de transacciones</p>
                 </div>
                 <button onclick="generateDailyCut()" class="bg-brand-600 hover:bg-brand-700 text-white px-6 py-2 rounded-lg transition-colors shadow-lg">
                     <i class="fas fa-cut mr-2"></i>Generar Corte del Día
                 </button>
             </div>
-
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
-                <div class="glass-panel p-6 rounded-2xl bg-gradient-to-br from-green-50 to-green-100 border border-green-200">
-                    <div class="flex items-center justify-between">
-                        <div>
-                            <p class="text-green-800 text-sm font-medium">Ventas Hoy (Reales)</p>
-                            <h3 class="text-2xl font-bold text-green-900" id="historyTotalSales">$0.00</h3>
-                            <p class="text-xs text-green-700 mt-1"><span id="historyCount">0</span> transacciones</p>
-                        </div>
-                        <div class="w-12 h-12 bg-green-500 rounded-full flex items-center justify-center text-white text-xl">
-                            <i class="fas fa-shopping-cart"></i>
-                        </div>
-                    </div>
+        
+            <!-- NUEVO: Resumen Ejecutivo -->
+            <div id="salesSummary" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+                <div class="glass-panel p-4 rounded-xl bg-gradient-to-br from-green-50 to-green-100 border border-green-200">
+                    <p class="text-xs text-green-600 uppercase font-bold mb-1">Total Ventas</p>
+                    <h3 class="text-2xl font-bold text-green-900" id="summaryTotalSales">$0.00</h3>
+                    <p class="text-xs text-green-700 mt-1"><span id="summaryCount">0</span> transacciones</p>
                 </div>
-
-                <div class="glass-panel p-6 rounded-2xl bg-gradient-to-br from-blue-50 to-blue-100 border border-blue-200">
-                    <div class="flex items-center justify-between">
-                        <div>
-                            <p class="text-blue-800 text-sm font-medium">En Caja Debería Haber</p>
-                            <h3 class="text-2xl font-bold text-blue-900" id="historyShouldHave">$0.00</h3>
-                            <div class="text-xs text-blue-700 mt-1 space-x-2">
-                                <span id="cashTotal">E: $0</span>
-                                <span id="transferTotal">T: $0</span>
-                                <span id="cardTotal">C: $0</span>
-                            </div>
-                        </div>
-                        <div class="w-12 h-12 bg-blue-500 rounded-full flex items-center justify-center text-white text-xl">
-                            <i class="fas fa-cash-register"></i>
-                        </div>
-                    </div>
+                <div class="glass-panel p-4 rounded-xl bg-gradient-to-br from-blue-50 to-blue-100 border border-blue-200">
+                    <p class="text-xs text-blue-600 uppercase font-bold mb-1">Ticket Promedio</p>
+                    <h3 class="text-2xl font-bold text-blue-900" id="summaryAverage">$0.00</h3>
+                    <p class="text-xs text-blue-700 mt-1">Por transacción</p>
                 </div>
-
-                <div class="glass-panel p-6 rounded-2xl bg-gradient-to-br from-purple-50 to-purple-100 border border-purple-200">
-                    <div class="flex items-center justify-between">
-                        <div>
-                            <p class="text-purple-800 text-sm font-medium">IVA Generado Hoy</p>
-                            <h3 class="text-2xl font-bold text-purple-900" id="historyIVA">$0.00</h3>
-                            <p class="text-xs text-purple-700 mt-1">IVA incluido en precios</p>
-                        </div>
-                        <div class="w-12 h-12 bg-purple-500 rounded-full flex items-center justify-center text-white text-xl">
-                            <i class="fas fa-receipt"></i>
-                        </div>
-                    </div>
+                <div class="glass-panel p-4 rounded-xl bg-gradient-to-br from-purple-50 to-purple-100 border border-purple-200">
+                    <p class="text-xs text-purple-600 uppercase font-bold mb-1">Venta Más Alta</p>
+                    <h3 class="text-2xl font-bold text-purple-900" id="summaryHighest">$0.00</h3>
+                    <p class="text-xs text-purple-700 mt-1">Máximo del período</p>
+                </div>
+                <div class="glass-panel p-4 rounded-xl bg-gradient-to-br from-orange-50 to-orange-100 border border-orange-200">
+                    <p class="text-xs text-orange-600 uppercase font-bold mb-1">Venta Más Baja</p>
+                    <h3 class="text-2xl font-bold text-orange-900" id="summaryLowest">$0.00</h3>
+                    <p class="text-xs text-orange-700 mt-1">Mínimo del período</p>
                 </div>
             </div>
-
+        
+            <!-- NUEVO: Panel de Filtros Avanzados -->
+            <div class="glass-panel p-4 rounded-xl mb-6">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="font-bold text-brand-800 flex items-center">
+                        <i class="fas fa-filter mr-2"></i>Filtros de Búsqueda
+                    </h3>
+                    <button onclick="resetFilters()" class="text-sm text-brand-600 hover:text-brand-800 underline">
+                        <i class="fas fa-undo mr-1"></i>Limpiar filtros
+                    </button>
+                </div>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
+                    <!-- Fecha Desde -->
+                    <div>
+                        <label class="block text-xs font-medium text-gray-700 mb-1">Desde</label>
+                        <input type="date" id="filterDateFrom" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-brand-500 outline-none">
+                    </div>
+                    <!-- Fecha Hasta -->
+                    <div>
+                        <label class="block text-xs font-medium text-gray-700 mb-1">Hasta</label>
+                        <input type="date" id="filterDateTo" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-brand-500 outline-none">
+                    </div>
+                    <!-- Método de Pago -->
+                    <div>
+                        <label class="block text-xs font-medium text-gray-700 mb-1">Método de Pago</label>
+                        <select id="filterPaymentMethod" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-brand-500 outline-none">
+                            <option value="all">Todos</option>
+                            <option value="efectivo">Efectivo</option>
+                            <option value="transferencia">Transferencia</option>
+                            <option value="tarjeta">Tarjeta</option>
+                            <option value="mixto">Mixto</option>
+                        </select>
+                    </div>
+                    <!-- Tipo de IVA -->
+                    <div>
+                        <label class="block text-xs font-medium text-gray-700 mb-1">Tipo de IVA</label>
+                        <select id="filterIVAType" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-brand-500 outline-none">
+                            <option value="all">Todos</option>
+                            <option value="0">IVA 0%</option>
+                            <option value="16">IVA 16%</option>
+                            <option value="mix">Mixto</option>
+                        </select>
+                    </div>
+                </div>
+        
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                    <!-- Cajero (solo admin) -->
+                    <div class="admin-only-inline" id="cashierFilterContainer">
+                        <label class="block text-xs font-medium text-gray-700 mb-1">Cajero</label>
+                        <select id="filterCashier" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-brand-500 outline-none">
+                            <option value="all">Todos los cajeros</option>
+                        </select>
+                    </div>
+                    <!-- Monto Mínimo -->
+                    <div>
+                        <label class="block text-xs font-medium text-gray-700 mb-1">Monto Mínimo ($)</label>
+                        <input type="number" id="filterMinAmount" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-brand-500 outline-none" placeholder="0.00" step="0.01" min="0">
+                    </div>
+                    <!-- Monto Máximo -->
+                    <div>
+                        <label class="block text-xs font-medium text-gray-700 mb-1">Monto Máximo ($)</label>
+                        <input type="number" id="filterMaxAmount" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-brand-500 outline-none" placeholder="Sin límite" step="0.01" min="0">
+                    </div>
+                </div>
+        
+                <!-- Búsqueda por folio o producto -->
+                <div class="flex gap-2">
+                    <div class="flex-1 relative">
+                        <i class="fas fa-search absolute left-3 top-3 text-gray-400"></i>
+                        <input type="text" id="filterSearchText" class="w-full border border-gray-300 rounded-lg pl-10 pr-4 py-2 text-sm focus:ring-2 focus:ring-brand-500 outline-none" placeholder="Buscar por folio o nombre de producto...">
+                    </div>
+                    <button onclick="applyFilters()" class="bg-brand-600 hover:bg-brand-700 text-white px-6 py-2 rounded-lg text-sm font-medium transition-colors">
+                        <i class="fas fa-search mr-1"></i>Aplicar
+                    </button>
+                    <button onclick="loadTodaySales()" class="bg-gray-200 hover:bg-gray-300 text-gray-700 px-4 py-2 rounded-lg text-sm font-medium transition-colors">
+                        Hoy
+                    </button>
+                </div>
+            </div>
+        
+            <!-- Alerta de ventas canceladas -->
             <div id="historyCancelledSection" class="hidden mb-6 glass-panel p-4 rounded-xl bg-red-50 border border-red-200">
-                <h4 class="font-bold text-red-800 mb-2">Ventas Canceladas Hoy</h4>
-                <div class="grid grid-cols-3 gap-4 text-sm">
+                <div class="flex items-center gap-3 mb-2">
+                    <i class="fas fa-exclamation-triangle text-red-600 text-xl"></i>
+                    <h4 class="font-bold text-red-800">Ventas Canceladas en el Período</h4>
+                </div>
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
                     <div>
                         <span class="text-gray-600">Total Cancelado:</span>
                         <span class="font-bold text-red-600 ml-2" id="historyCancelledAmount">$0.00</span>
@@ -895,37 +959,39 @@
                         <span class="text-gray-600">Ventas Brutas:</span>
                         <span class="font-bold text-gray-600 ml-2" id="historyGrossSales">$0.00</span>
                     </div>
+                    <div>
+                        <span class="text-gray-600">Ventas Netas:</span>
+                        <span class="font-bold text-green-600 ml-2" id="historyNetSales">$0.00</span>
+                    </div>
                 </div>
             </div>
-
-            <div class="glass-panel p-4 rounded-xl mb-6 flex flex-wrap gap-4 items-center">
-                <div class="flex items-center gap-2">
-                    <label class="text-sm font-medium text-gray-700">Desde:</label>
-                    <input type="date" id="filterDateFrom" class="border border-gray-300 rounded-lg px-3 py-1 text-sm focus:ring-2 focus:ring-brand-500 outline-none">
-                </div>
-                <div class="flex items-center gap-2">
-                    <label class="text-sm font-medium text-gray-700">Hasta:</label>
-                    <input type="date" id="filterDateTo" class="border border-gray-300 rounded-lg px-3 py-1 text-sm focus:ring-2 focus:ring-brand-500 outline-none">
-                </div>
-                <button onclick="filterSales()" class="bg-brand-600 text-white px-4 py-1 rounded-lg text-sm hover:bg-brand-700 transition-colors">
-                    <i class="fas fa-filter mr-1"></i>Filtrar
-                </button>
-                <button onclick="loadTodaySales()" class="bg-gray-200 text-gray-700 px-4 py-1 rounded-lg text-sm hover:bg-gray-300 transition-colors">
-                    Hoy
-                </button>
-            </div>
-
+        
+            <!-- Tabla de ventas -->
             <div class="glass-panel rounded-2xl overflow-hidden">
+                <div class="p-4 border-b border-gray-200 flex justify-between items-center flex-wrap gap-4">
+                    <h3 class="font-bold text-brand-800">Registro de Ventas</h3>
+                    <div class="flex gap-2">
+                        <button onclick="exportToExcel()" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg text-sm transition-colors">
+                            <i class="fas fa-file-excel mr-2"></i>Exportar Excel
+                        </button>
+                        <select id="recordsPerPage" onchange="changePageSize()" class="border border-gray-300 rounded-lg px-3 py-2 text-sm">
+                            <option value="20">20 registros</option>
+                            <option value="50">50 registros</option>
+                            <option value="100">100 registros</option>
+                        </select>
+                    </div>
+                </div>
                 <div class="overflow-x-auto">
                     <table class="w-full text-sm">
                         <thead class="bg-brand-50 text-brand-800">
                             <tr>
+                                <th class="px-4 py-3 text-left w-10"></th>
                                 <th class="px-4 py-3 text-left">Folio</th>
                                 <th class="px-4 py-3 text-left">Fecha/Hora</th>
                                 <th class="px-4 py-3 text-left">Cajero</th>
                                 <th class="px-4 py-3 text-left">Productos</th>
                                 <th class="px-4 py-3 text-center">Tipo IVA</th>
-                                <th class="px-4 py-3 text-left">Método</th>
+                                <th class="px-4 py-3 text-center">Método</th>
                                 <th class="px-4 py-3 text-right">Total</th>
                                 <th class="px-4 py-3 text-center">Estado</th>
                                 <th class="px-4 py-3 text-center admin-only-inline">Acciones</th>
@@ -935,9 +1001,111 @@
                         </tbody>
                     </table>
                 </div>
+                <!-- NUEVO: Paginación -->
+                <div id="pagination" class="p-4 border-t border-gray-200 flex justify-between items-center">
+                    <span class="text-sm text-gray-600" id="paginationInfo">Mostrando 0 de 0 registros</span>
+                    <div class="flex gap-2">
+                        <button onclick="prevPage()" id="btnPrevPage" class="px-3 py-1 border border-gray-300 rounded-lg text-sm hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed" disabled>
+                            <i class="fas fa-chevron-left"></i>
+                        </button>
+                        <span id="currentPage" class="px-3 py-1 text-sm font-medium">1</span>
+                        <button onclick="nextPage()" id="btnNextPage" class="px-3 py-1 border border-gray-300 rounded-lg text-sm hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed" disabled>
+                            <i class="fas fa-chevron-right"></i>
+                        </button>
+                    </div>
+                </div>
             </div>
         </div>
-
+        
+        <!-- NUEVO: Modal de detalle de venta expandido -->
+        <div id="saleDetailModal" class="modal">
+            <div class="bg-white rounded-2xl p-6 w-full max-w-2xl mx-4 shadow-2xl max-h-[90vh] overflow-y-auto">
+                <div class="flex justify-between items-start mb-6">
+                    <div>
+                        <h3 class="text-2xl font-bold text-brand-800">Detalle de Venta</h3>
+                        <p class="text-sm text-gray-500" id="detailSaleFolio">Folio: ---</p>
+                    </div>
+                    <button onclick="closeModal('saleDetailModal')" class="text-gray-400 hover:text-gray-600">
+                        <i class="fas fa-times text-2xl"></i>
+                    </button>
+                </div>
+        
+                <div class="grid grid-cols-2 gap-4 mb-6 text-sm">
+                    <div class="bg-gray-50 p-3 rounded-lg">
+                        <span class="text-gray-600">Fecha:</span>
+                        <span class="font-medium ml-2" id="detailSaleDate">---</span>
+                    </div>
+                    <div class="bg-gray-50 p-3 rounded-lg">
+                        <span class="text-gray-600">Cajero:</span>
+                        <span class="font-medium ml-2" id="detailSaleCashier">---</span>
+                    </div>
+                    <div class="bg-gray-50 p-3 rounded-lg">
+                        <span class="text-gray-600">Método de Pago:</span>
+                        <span class="font-medium ml-2" id="detailSalePayment">---</span>
+                    </div>
+                    <div class="bg-gray-50 p-3 rounded-lg">
+                        <span class="text-gray-600">Estado:</span>
+                        <span class="font-medium ml-2" id="detailSaleStatus">---</span>
+                    </div>
+                </div>
+        
+                <!-- Detalle de pago (si fue efectivo, mostrar cambio) -->
+                <div id="detailPaymentInfo" class="hidden mb-6 p-4 bg-green-50 rounded-lg border border-green-200">
+                    <h4 class="font-bold text-green-800 mb-2"><i class="fas fa-money-bill-wave mr-2"></i>Información de Pago en Efectivo</h4>
+                    <div class="grid grid-cols-3 gap-4 text-sm">
+                        <div>
+                            <span class="text-gray-600">Recibido:</span>
+                            <span class="font-bold text-green-700 block" id="detailCashReceived">$0.00</span>
+                        </div>
+                        <div>
+                            <span class="text-gray-600">Cambio:</span>
+                            <span class="font-bold text-green-700 block" id="detailChange">$0.00</span>
+                        </div>
+                        <div>
+                            <span class="text-gray-600">Total:</span>
+                            <span class="font-bold text-green-700 block" id="detailCashTotal">$0.00</span>
+                        </div>
+                    </div>
+                </div>
+        
+                <!-- Tabla de productos -->
+                <div class="mb-6">
+                    <h4 class="font-bold text-gray-800 mb-3">Productos Vendidos</h4>
+                    <table class="w-full text-sm">
+                        <thead class="bg-gray-50 text-gray-600">
+                            <tr>
+                                <th class="px-3 py-2 text-left">Producto</th>
+                                <th class="px-3 py-2 text-center">Cant</th>
+                                <th class="px-3 py-2 text-right">P.Unit</th>
+                                <th class="px-3 py-2 text-center">IVA</th>
+                                <th class="px-3 py-2 text-right">Subtotal</th>
+                                <th class="px-3 py-2 text-right">Total</th>
+                            </tr>
+                        </thead>
+                        <tbody id="detailProductsTable" class="divide-y divide-gray-100">
+                        </tbody>
+                    </table>
+                </div>
+        
+                <!-- Totales -->
+                <div class="bg-brand-50 p-4 rounded-lg border-2 border-brand-200">
+                    <div class="space-y-2 text-sm">
+                        <div class="flex justify-between">
+                            <span class="text-gray-600">Subtotal:</span>
+                            <span class="font-medium" id="detailSubtotal">$0.00</span>
+                        </div>
+                        <div class="flex justify-between" id="detailIVARow">
+                            <span class="text-gray-600">IVA (16%):</span>
+                            <span class="font-medium text-blue-600" id="detailIVA">$0.00</span>
+                        </div>
+                        <div class="flex justify-between text-lg font-bold border-t border-brand-200 pt-2">
+                            <span class="text-brand-800">TOTAL:</span>
+                            <span class="text-brand-800" id="detailTotal">$0.00</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
         <!-- EXPENSES MODULE - COMPLETAMENTE REESTRUCTURADO -->
         <div id="expenses" class="module hidden fade-in">
             <div class="mb-6 flex justify-between items-center">
@@ -2109,46 +2277,53 @@
         </div>
 
         <div class="space-y-4 mb-6">
-            <div class="flex justify-between items-center p-3 bg-green-50 rounded-lg">
-                <span class="text-green-800">Ventas Reales:</span>
-                <span class="font-bold text-green-900" id="cutTotal">$0.00</span>
+            <div class="flex justify-between items-center p-3 bg-green-50 rounded-lg border border-green-200">
+                <span class="text-green-800 font-medium">Ventas Reales:</span>
+                <span class="font-bold text-green-900 text-xl" id="cutTotal">$0.00</span>
             </div>
+            
             <div class="grid grid-cols-3 gap-2 text-center">
-                <div class="p-2 bg-gray-50 rounded">
-                    <p class="text-xs text-gray-500">Efectivo</p>
+                <div class="p-3 bg-gray-50 rounded-lg border border-gray-200">
+                    <p class="text-xs text-gray-500 mb-1">Efectivo</p>
                     <p class="font-bold text-gray-800" id="cutCash">$0</p>
                 </div>
-                <div class="p-2 bg-gray-50 rounded">
-                    <p class="text-xs text-gray-500">Transfer</p>
+                <div class="p-3 bg-gray-50 rounded-lg border border-gray-200">
+                    <p class="text-xs text-gray-500 mb-1">Transfer</p>
                     <p class="font-bold text-gray-800" id="cutTransfer">$0</p>
                 </div>
-                <div class="p-2 bg-gray-50 rounded">
-                    <p class="text-xs text-gray-500">Tarjeta</p>
+                <div class="p-3 bg-gray-50 rounded-lg border border-gray-200">
+                    <p class="text-xs text-gray-500 mb-1">Tarjeta</p>
                     <p class="font-bold text-gray-800" id="cutCard">$0</p>
                 </div>
             </div>
-            <div class="flex justify-between items-center p-3 bg-blue-50 rounded-lg">
-                <span class="text-blue-800">IVA Generado:</span>
+
+            <div class="flex justify-between items-center p-3 bg-blue-50 rounded-lg border border-blue-200">
+                <span class="text-blue-800 font-medium">IVA Generado:</span>
                 <span class="font-bold text-blue-900" id="cutIVA">$0.00</span>
             </div>
-            <div class="flex justify-between items-center p-3 bg-purple-50 rounded-lg">
-                <span class="text-purple-800">Transacciones:</span>
+
+            <div class="flex justify-between items-center p-3 bg-purple-50 rounded-lg border border-purple-200">
+                <span class="text-purple-800 font-medium">Transacciones:</span>
                 <span class="font-bold text-purple-900" id="cutTransactions">0</span>
             </div>
+
             <div id="cutCancelledSection" class="hidden flex justify-between items-center p-3 bg-red-50 rounded-lg border border-red-200">
-                <span class="text-red-800">Ventas Canceladas:</span>
+                <span class="text-red-800 font-medium">Ventas Canceladas:</span>
                 <span class="font-bold text-red-900" id="cutCancelledAmount">$0.00</span>
             </div>
         </div>
 
         <div class="border-t pt-4">
-            <h4 class="font-bold text-gray-800 mb-2">Desglose de Ventas:</h4>
-            <div id="cutDetails" class="text-sm space-y-1 max-h-40 overflow-y-auto"></div>
+            <h4 class="font-bold text-gray-800 mb-2">Detalle de Ventas:</h4>
+            <div id="cutDetails" class="text-sm space-y-1 max-h-40 overflow-y-auto bg-gray-50 p-3 rounded-lg">
+            </div>
         </div>
 
-        <button onclick="closeModal('cutModal')" class="w-full mt-6 py-3 bg-brand-600 text-white rounded-lg hover:bg-brand-700 transition-colors">
-            Cerrar
-        </button>
+        <div class="mt-6 flex gap-3">
+            <button onclick="closeModal('cutModal')" class="flex-1 py-3 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors font-medium">
+                Cerrar
+            </button>
+        </div>
     </div>
 </div>
 
@@ -3572,279 +3747,549 @@ function confirmMixedPayment() {
         }
     }
 
-    // ============================================
-    // HISTORIAL DE VENTAS
-    // ============================================
-
-    async function loadTodaySales() {
-        try {
-            // Obtener fecha local de México con offset explícito
+            // ============================================
+        // HISTORIAL DE VENTAS - VERSIÓN MEJORADA
+        // ============================================
+    
+        // Variables de paginación
+        let currentSalesData = [];
+        let filteredSalesData = [];
+        let currentPage = 1;
+        let pageSize = 20;
+        let expandedSales = new Set();
+    
+        async function loadTodaySales() {
+            // Obtener fecha de hoy
             const now = new Date();
             const year = now.getFullYear();
             const month = String(now.getMonth() + 1).padStart(2, '0');
             const day = String(now.getDate()).padStart(2, '0');
             
-            // Formato ISO con timezone de México (UTC-6)
-            const todayStart = `${year}-${month}-${day}T00:00:00-06:00`;
-            const todayEnd = `${year}-${month}-${day}T23:59:59-06:00`;
+            // Establecer fechas en los filtros
+            document.getElementById('filterDateFrom').value = `${year}-${month}-${day}`;
+            document.getElementById('filterDateTo').value = `${year}-${month}-${day}`;
             
-            const { data: todaySales } = await supabaseClient
-                .from('sales')
-                .select('*')
-                .gte('created_at', todayStart)
-                .lte('created_at', todayEnd)
-                .eq('cancelled', false)
-                .order('created_at', { ascending: false });
-
-            const { data: todayCancelled } = await supabaseClient
-                .from('sales')
-                .select('*')
-                .gte('created_at', todayStart)
-                .lte('created_at', todayEnd)
-                .eq('cancelled', true);
-
-            const total = todaySales?.reduce((sum, s) => sum + s.total, 0) || 0;
-            const grossTotal = total + (todayCancelled?.reduce((sum, s) => sum + s.total, 0) || 0);
-            const iva = todaySales?.reduce((sum, s) => sum + s.iva, 0) || 0;
+            // Limpiar otros filtros
+            document.getElementById('filterPaymentMethod').value = 'all';
+            document.getElementById('filterIVAType').value = 'all';
+            document.getElementById('filterMinAmount').value = '';
+            document.getElementById('filterMaxAmount').value = '';
+            document.getElementById('filterSearchText').value = '';
             
-            let cash = 0, transfer = 0, card = 0;
-            todaySales?.forEach(s => {
-                if (s.payment_method === 'mixto' && s.payment_details) {
-                    cash += s.payment_details.efectivo || 0;
-                    transfer += s.payment_details.transferencia || 0;
-                    card += s.payment_details.tarjeta || 0;
-                } else {
-                    if (s.payment_method === 'efectivo') cash += s.total;
-                    if (s.payment_method === 'transferencia') transfer += s.total;
-                    if (s.payment_method === 'tarjeta') card += s.total;
+            await applyFilters();
+        }
+    
+        async function applyFilters() {
+            try {
+                const fromDate = document.getElementById('filterDateFrom').value;
+                const toDate = document.getElementById('filterDateTo').value;
+                
+                if (!fromDate || !toDate) {
+                    alert('Selecciona un rango de fechas');
+                    return;
                 }
+    
+                // Construir query base
+                let query = supabaseClient
+                    .from('sales')
+                    .select('*')
+                    .gte('created_at', fromDate + 'T00:00:00')
+                    .lte('created_at', toDate + 'T23:59:59')
+                    .order('created_at', { ascending: false });
+    
+                const { data: allSales, error } = await query;
+                if (error) throw error;
+    
+                currentSalesData = allSales || [];
+                
+                // Aplicar filtros adicionales en memoria
+                filteredSalesData = filterSalesData(currentSalesData);
+                
+                // Actualizar resumen ejecutivo
+                updateSalesSummary(filteredSalesData);
+                
+                // Renderizar tabla con paginación
+                currentPage = 1;
+                renderSalesTable();
+                
+                // Actualizar información de canceladas
+                updateCancelledInfo(currentSalesData);
+                
+            } catch (error) {
+                console.error('Error applying filters:', error);
+                alert('Error al aplicar filtros: ' + error.message);
+            }
+        }
+    
+        function filterSalesData(sales) {
+            const paymentMethod = document.getElementById('filterPaymentMethod').value;
+            const ivaType = document.getElementById('filterIVAType').value;
+            const minAmount = parseFloat(document.getElementById('filterMinAmount').value) || 0;
+            const maxAmount = parseFloat(document.getElementById('filterMaxAmount').value) || Infinity;
+            const searchText = document.getElementById('filterSearchText').value.toLowerCase().trim();
+            const cashierFilter = document.getElementById('filterCashier')?.value || 'all';
+    
+            return sales.filter(sale => {
+                // Filtro por método de pago
+                if (paymentMethod !== 'all' && sale.payment_method !== paymentMethod) return false;
+                
+                // Filtro por tipo de IVA
+                if (ivaType !== 'all') {
+                    const hasIVA0 = (sale.total_iva_0 || 0) > 0;
+                    const hasIVA16 = (sale.total_iva_16 || 0) > 0;
+                    
+                    if (ivaType === '0' && (hasIVA16 || (!hasIVA0 && !hasIVA16))) return false;
+                    if (ivaType === '16' && (hasIVA0 || (!hasIVA0 && !hasIVA16))) return false;
+                    if (ivaType === 'mix' && !(hasIVA0 && hasIVA16)) return false;
+                }
+                
+                // Filtro por monto
+                if (sale.total < minAmount) return false;
+                if (sale.total > maxAmount) return false;
+                
+                // Filtro por cajero (solo admin)
+                if (currentProfile?.role === 'admin' && cashierFilter !== 'all') {
+                    if (sale.user_id !== cashierFilter) return false;
+                }
+                
+                // Filtro por texto (folio o producto)
+                if (searchText) {
+                    const folioMatch = sale.id.toLowerCase().includes(searchText);
+                    const productMatch = sale.items.some(item => 
+                        item.name.toLowerCase().includes(searchText)
+                    );
+                    if (!folioMatch && !productMatch) return false;
+                }
+                
+                // Solo ventas no canceladas para la tabla principal
+                return !sale.cancelled;
             });
-            
-            document.getElementById('historyTotalSales').textContent = formatMoney(total);
-            document.getElementById('historyIVA').textContent = formatMoney(iva);
-            document.getElementById('historyCount').textContent = todaySales?.length || 0;
-            document.getElementById('historyShouldHave').textContent = formatMoney(total);
-            document.getElementById('cashTotal').textContent = 'E: ' + formatMoney(cash);
-            document.getElementById('transferTotal').textContent = 'T: ' + formatMoney(transfer);
-            document.getElementById('cardTotal').textContent = 'C: ' + formatMoney(card);
+        }
+    
+        function updateSalesSummary(sales) {
+            if (sales.length === 0) {
+                document.getElementById('summaryTotalSales').textContent = '$0.00';
+                document.getElementById('summaryCount').textContent = '0';
+                document.getElementById('summaryAverage').textContent = '$0.00';
+                document.getElementById('summaryHighest').textContent = '$0.00';
+                document.getElementById('summaryLowest').textContent = '$0.00';
+                return;
+            }
+    
+            const total = sales.reduce((sum, s) => sum + s.total, 0);
+            const count = sales.length;
+            const average = total / count;
+            const highest = Math.max(...sales.map(s => s.total));
+            const lowest = Math.min(...sales.map(s => s.total));
+    
+            document.getElementById('summaryTotalSales').textContent = formatMoney(total);
+            document.getElementById('summaryCount').textContent = count;
+            document.getElementById('summaryAverage').textContent = formatMoney(average);
+            document.getElementById('summaryHighest').textContent = formatMoney(highest);
+            document.getElementById('summaryLowest').textContent = formatMoney(lowest);
+        }
+    
+        function updateCancelledInfo(allSales) {
+            const cancelled = allSales.filter(s => s.cancelled);
+            const active = allSales.filter(s => !s.cancelled);
             
             const cancelledSection = document.getElementById('historyCancelledSection');
-            if (todayCancelled?.length > 0) {
+            
+            if (cancelled.length > 0) {
+                const cancelledTotal = cancelled.reduce((sum, s) => sum + s.total, 0);
+                const activeTotal = active.reduce((sum, s) => sum + s.total, 0);
+                
                 cancelledSection.classList.remove('hidden');
-                document.getElementById('historyCancelledAmount').textContent = formatMoney(todayCancelled.reduce((sum, s) => sum + s.total, 0));
-                document.getElementById('historyCancelledCount').textContent = todayCancelled.length;
-                document.getElementById('historyGrossSales').textContent = formatMoney(grossTotal);
+                document.getElementById('historyCancelledAmount').textContent = formatMoney(cancelledTotal);
+                document.getElementById('historyCancelledCount').textContent = cancelled.length;
+                document.getElementById('historyGrossSales').textContent = formatMoney(activeTotal + cancelledTotal);
+                document.getElementById('historyNetSales').textContent = formatMoney(activeTotal);
             } else {
                 cancelledSection.classList.add('hidden');
             }
-            
-            renderSalesTable(todaySales || []);
-            
-        } catch (error) {
-            console.error('Error loading sales:', error);
         }
-    }
-
-    function getSaleIVAType(sale) {
-        const hasIVA0 = (sale.total_iva_0 || 0) > 0;
-        const hasIVA16 = (sale.total_iva_16 || 0) > 0;
-        
-        if (hasIVA0 && hasIVA16) {
-            return { type: 'MIXTA', class: 'iva-badge-mix', icon: 'fa-layer-group' };
-        } else if (hasIVA16) {
-            return { type: '16%', class: 'iva-badge-16', icon: 'fa-percentage' };
-        } else {
-            return { type: '0%', class: 'iva-badge-0', icon: 'fa-circle' };
-        }
-    }
-
-    function renderSalesTable(salesList) {
-        const tbody = document.getElementById('salesTableBody');
-        tbody.innerHTML = '';
-        
-        salesList.forEach(sale => {
-            const ivaType = getSaleIVAType(sale);
+    
+        function renderSalesTable() {
+            const tbody = document.getElementById('salesTableBody');
+            const start = (currentPage - 1) * pageSize;
+            const end = start + pageSize;
+            const pageData = filteredSalesData.slice(start, end);
             
-            let paymentDisplay = '';
-            if (sale.payment_method === 'mixto' && sale.payment_details) {
-                const parts = [];
-                if (sale.payment_details.efectivo > 0) parts.push(`Ef: ${formatMoney(sale.payment_details.efectivo)}`);
-                if (sale.payment_details.transferencia > 0) parts.push(`Tr: ${formatMoney(sale.payment_details.transferencia)}`);
-                if (sale.payment_details.tarjeta > 0) parts.push(`Ta: ${formatMoney(sale.payment_details.tarjeta)}`);
-                paymentDisplay = `<span class="px-2 py-1 rounded-full text-xs bg-purple-100 text-purple-700" title="${parts.join(' | ')}">Mixto</span>`;
-            } else {
-                paymentDisplay = `<span class="px-2 py-1 rounded-full text-xs ${getPaymentMethodColor(sale.payment_method)}">${sale.payment_method}</span>`;
-            }
-            
-            const mainRow = document.createElement('tr');
-            mainRow.className = `sale-row hover:bg-gray-50 transition-colors ${sale.cancelled ? 'bg-red-50' : ''}`;
-            mainRow.onclick = () => toggleSaleDetails(sale.id);
-            mainRow.innerHTML = `
-                <td class="px-4 py-3 font-medium ${sale.cancelled ? 'text-red-600 line-through' : 'text-brand-700'}">
-                    ${sale.id.slice(0, 8)}...
-                    ${ivaType.type === 'MIXTA' ? '<i class="fas fa-chevron-down text-xs ml-1 text-gray-400"></i>' : ''}
-                </td>
-                <td class="px-4 py-3 text-gray-600">${new Date(sale.created_at).toLocaleString()}</td>
-                <td class="px-4 py-3 text-sm">${sale.cashier_name || 'N/A'}</td>
-                <td class="px-4 py-3 text-sm">${sale.items.length} productos</td>
-                <td class="px-4 py-3 text-center">
-                    <span class="px-2 py-1 rounded-full text-xs font-bold ${ivaType.class}">
-                        <i class="fas ${ivaType.icon} mr-1"></i>${ivaType.type}
-                    </span>
-                </td>
-                <td class="px-4 py-3">${paymentDisplay}</td>
-                <td class="px-4 py-3 text-right font-bold ${sale.cancelled ? 'text-red-600 line-through' : ''}">${formatMoney(sale.total)}</td>
-                <td class="px-4 py-3 text-center">
-                    ${sale.cancelled ? 
-                        '<span class="px-2 py-1 rounded-full text-xs bg-red-100 text-red-700">Cancelada</span>' : 
-                        '<span class="px-2 py-1 rounded-full text-xs bg-green-100 text-green-700">Activa</span>'
-                    }
-                </td>
-                <td class="px-4 py-3 text-center">
-                    ${!sale.cancelled && currentProfile?.role === 'admin' ? `
-                        <button onclick="event.stopPropagation(); cancelSale('${sale.id}')" class="text-red-500 hover:text-red-700 text-xs bg-red-50 px-2 py-1 rounded transition-colors">
-                            <i class="fas fa-times mr-1"></i>Cancelar
-                        </button>
-                    ` : '<span class="text-xs text-gray-400">-</span>'}
-                </td>
-            `;
-            tbody.appendChild(mainRow);
-            
-            if (ivaType.type === 'MIXTA') {
-                const detailRow = document.createElement('tr');
-                detailRow.id = `sale-detail-${sale.id}`;
-                detailRow.className = 'sale-details';
-                detailRow.innerHTML = `
-                    <td colspan="9" class="px-4 py-3">
-                        <div class="bg-purple-50 rounded-lg p-3 ml-4">
-                            <p class="text-xs font-bold text-purple-800 mb-2">Desglose por tipo de IVA:</p>
-                            <div class="grid grid-cols-2 gap-4 text-sm">
-                                <div class="flex justify-between items-center p-2 bg-white rounded">
-                                    <span class="text-gray-600"><i class="fas fa-circle text-pink-500 mr-2"></i>IVA 0%:</span>
-                                    <span class="font-bold text-pink-700">${formatMoney(sale.total_iva_0 || 0)}</span>
-                                </div>
-                                <div class="flex justify-between items-center p-2 bg-white rounded">
-                                    <span class="text-gray-600"><i class="fas fa-percentage text-blue-500 mr-2"></i>IVA 16%:</span>
-                                    <span class="font-bold text-blue-700">${formatMoney(sale.total_iva_16 || 0)}</span>
-                                </div>
-                            </div>
-                            <div class="mt-2 text-xs text-gray-500">
-                                <p>Subtotal IVA 0%: ${formatMoney(sale.total_iva_0 || 0)}</p>
-                                <p>Subtotal IVA 16%: ${formatMoney((sale.total_iva_16 || 0) / 1.16)} | IVA: ${formatMoney((sale.total_iva_16 || 0) - ((sale.total_iva_16 || 0) / 1.16))}</p>
-                            </div>
-                        </div>
-                    </td>
+            if (pageData.length === 0) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="10" class="px-4 py-8 text-center text-gray-500">
+                            <i class="fas fa-inbox text-4xl mb-2 text-gray-300"></i>
+                            <p>No se encontraron ventas con los filtros aplicados</p>
+                        </td>
+                    </tr>
                 `;
-                tbody.appendChild(detailRow);
+            } else {
+                tbody.innerHTML = pageData.map(sale => {
+                    const ivaType = getSaleIVAType(sale);
+                    const paymentIcon = getPaymentIcon(sale.payment_method);
+                    
+                    let paymentDisplay = '';
+                    if (sale.payment_method === 'mixto' && sale.payment_details) {
+                        const parts = [];
+                        if (sale.payment_details.efectivo > 0) parts.push(`Ef`);
+                        if (sale.payment_details.transferencia > 0) parts.push(`Tr`);
+                        if (sale.payment_details.tarjeta > 0) parts.push(`Ta`);
+                        paymentDisplay = `<span class="px-2 py-1 rounded-full text-xs bg-purple-100 text-purple-700 font-medium" title="Pago mixto">${parts.join('+')}</span>`;
+                    } else {
+                        paymentDisplay = `<span class="px-2 py-1 rounded-full text-xs ${getPaymentMethodColor(sale.payment_method)} font-medium">
+                            ${paymentIcon} ${sale.payment_method}
+                        </span>`;
+                    }
+                    
+                    const productPreview = sale.items.slice(0, 2).map(i => i.name).join(', ');
+                    const moreProducts = sale.items.length > 2 ? ` +${sale.items.length - 2} más` : '';
+                    
+                    return `
+                    <tr class="hover:bg-gray-50 transition-colors border-l-4 ${sale.cancelled ? 'border-red-400 bg-red-50' : 'border-transparent'}">
+                        <td class="px-4 py-3">
+                            <button onclick="toggleSaleDetailRow('${sale.id}')" class="text-gray-400 hover:text-brand-600 transition-colors">
+                                <i class="fas fa-chevron-right" id="icon-${sale.id}"></i>
+                            </button>
+                        </td>
+                        <td class="px-4 py-3 font-medium text-brand-700 cursor-pointer hover:text-brand-900" onclick="openSaleDetailModal('${sale.id}')">
+                            ${sale.id.slice(0, 8)}...
+                        </td>
+                        <td class="px-4 py-3 text-gray-600 text-xs">
+                            ${new Date(sale.created_at).toLocaleDateString()}<br>
+                            <span class="text-gray-400">${new Date(sale.created_at).toLocaleTimeString()}</span>
+                        </td>
+                        <td class="px-4 py-3 text-sm">${sale.cashier_name || 'N/A'}</td>
+                        <td class="px-4 py-3 text-sm text-gray-600 max-w-xs truncate" title="${sale.items.map(i => i.name).join(', ')}">
+                            ${productPreview}${moreProducts}
+                        </td>
+                        <td class="px-4 py-3 text-center">
+                            <span class="px-2 py-1 rounded-full text-xs font-bold ${ivaType.class}">
+                                <i class="fas ${ivaType.icon} mr-1"></i>${ivaType.type}
+                            </span>
+                        </td>
+                        <td class="px-4 py-3 text-center">${paymentDisplay}</td>
+                        <td class="px-4 py-3 text-right font-bold ${sale.cancelled ? 'text-red-600 line-through' : ''}">
+                            ${formatMoney(sale.total)}
+                        </td>
+                        <td class="px-4 py-3 text-center">
+                            ${sale.cancelled ? 
+                                '<span class="px-2 py-1 rounded-full text-xs bg-red-100 text-red-700 font-medium">Cancelada</span>' : 
+                                '<span class="px-2 py-1 rounded-full text-xs bg-green-100 text-green-700 font-medium">Activa</span>'
+                            }
+                        </td>
+                        <td class="px-4 py-3 text-center">
+                            ${!sale.cancelled && currentProfile?.role === 'admin' ? `
+                                <button onclick="event.stopPropagation(); cancelSale('${sale.id}')" class="text-red-500 hover:text-red-700 text-xs bg-red-50 px-2 py-1 rounded transition-colors" title="Cancelar venta">
+                                    <i class="fas fa-times mr-1"></i>Cancelar
+                                </button>
+                            ` : '<span class="text-xs text-gray-400">-</span>'}
+                        </td>
+                    </tr>
+                    <tr id="detail-row-${sale.id}" class="hidden bg-gray-50">
+                        <td colspan="10" class="px-4 py-4">
+                            <div class="ml-8 bg-white rounded-lg p-4 shadow-sm border border-gray-200">
+                                <div class="flex justify-between items-start mb-3">
+                                    <h4 class="font-bold text-gray-800">Detalle de Productos</h4>
+                                    <button onclick="openSaleDetailModal('${sale.id}')" class="text-brand-600 hover:text-brand-800 text-sm">
+                                        <i class="fas fa-expand mr-1"></i>Ver completo
+                                    </button>
+                                </div>
+                                <table class="w-full text-sm">
+                                    <tbody class="divide-y divide-gray-100">
+                                        ${sale.items.map(item => `
+                                            <tr>
+                                                <td class="py-2 font-medium">${item.name}</td>
+                                                <td class="py-2 text-center">x${item.quantity}</td>
+                                                <td class="py-2 text-right">${formatMoney(item.price)}</td>
+                                                <td class="py-2 text-right font-bold">${formatMoney(item.price * item.quantity)}</td>
+                                            </tr>
+                                        `).join('')}
+                                    </tbody>
+                                </table>
+                                ${sale.payment_method === 'efectivo' && sale.payment_details ? `
+                                    <div class="mt-3 pt-3 border-t border-gray-200 text-sm text-green-700 bg-green-50 p-2 rounded">
+                                        <i class="fas fa-money-bill-wave mr-1"></i>
+                                        Pago en efectivo: Recibido ${formatMoney(sale.payment_details.efectivo)} | 
+                                        Cambio ${formatMoney(sale.payment_details.cambio || 0)}
+                                    </div>
+                                ` : ''}
+                            </div>
+                        </td>
+                    </tr>
+                `}).join('');
             }
-        });
-    }
-
-    function toggleSaleDetails(saleId) {
-        const detailRow = document.getElementById(`sale-detail-${saleId}`);
-        if (detailRow) {
-            detailRow.classList.toggle('active');
-            const icon = detailRow.previousElementSibling.querySelector('.fa-chevron-down');
-            if (icon) {
-                icon.classList.toggle('fa-chevron-up');
-                icon.classList.toggle('fa-chevron-down');
+            
+            // Actualizar paginación
+            updatePagination();
+        }
+    
+        function toggleSaleDetailRow(saleId) {
+            const detailRow = document.getElementById(`detail-row-${saleId}`);
+            const icon = document.getElementById(`icon-${saleId}`);
+            
+            if (detailRow.classList.contains('hidden')) {
+                detailRow.classList.remove('hidden');
+                icon.classList.remove('fa-chevron-right');
+                icon.classList.add('fa-chevron-down');
+            } else {
+                detailRow.classList.add('hidden');
+                icon.classList.remove('fa-chevron-down');
+                icon.classList.add('fa-chevron-right');
             }
         }
-    }
-
-    function getPaymentMethodColor(method) {
-        const colors = {
-            'efectivo': 'bg-green-100 text-green-700',
-            'transferencia': 'bg-blue-100 text-blue-700',
-            'tarjeta': 'bg-purple-100 text-purple-700'
-        };
-        return colors[method] || 'bg-gray-100 text-gray-700';
-    }
-
-    async function cancelSale(saleId) {
-        if (!confirm('¿Cancelar esta venta? Se restaurará el stock.')) return;
-        
-        try {
-            const { data: sale } = await supabaseClient
-                .from('sales')
-                .select('*')
-                .eq('id', saleId)
-                .single();
-
+    
+        function openSaleDetailModal(saleId) {
+            const sale = currentSalesData.find(s => s.id === saleId);
             if (!sale) return;
-
-            for (const item of sale.items) {
-                if (!item.isCustom) {
-                    const { data: product } = await supabaseClient
-                        .from('products')
-                        .select('stock')
-                        .eq('id', item.id)
-                        .single();
-                    
-                    if (product) {
-                        await supabaseClient
+            
+            document.getElementById('detailSaleFolio').textContent = `Folio: ${sale.id}`;
+            document.getElementById('detailSaleDate').textContent = new Date(sale.created_at).toLocaleString('es-MX');
+            document.getElementById('detailSaleCashier').textContent = sale.cashier_name || 'N/A';
+            document.getElementById('detailSalePayment').textContent = sale.payment_method.toUpperCase();
+            document.getElementById('detailSaleStatus').innerHTML = sale.cancelled ? 
+                '<span class="text-red-600 font-bold">CANCELADA</span>' : 
+                '<span class="text-green-600 font-bold">ACTIVA</span>';
+            
+            // Información de pago en efectivo
+            const paymentInfo = document.getElementById('detailPaymentInfo');
+            if (sale.payment_method === 'efectivo' && sale.payment_details) {
+                paymentInfo.classList.remove('hidden');
+                document.getElementById('detailCashReceived').textContent = formatMoney(sale.payment_details.efectivo);
+                document.getElementById('detailChange').textContent = formatMoney(sale.payment_details.cambio || 0);
+                document.getElementById('detailCashTotal').textContent = formatMoney(sale.total);
+            } else {
+                paymentInfo.classList.add('hidden');
+            }
+            
+            // Tabla de productos con desglose de IVA
+            const tbody = document.getElementById('detailProductsTable');
+            tbody.innerHTML = sale.items.map(item => {
+                const itemTotal = item.price * item.quantity;
+                let subtotal = itemTotal;
+                let ivaAmount = 0;
+                
+                if (item.hasIVA) {
+                    subtotal = itemTotal / 1.16;
+                    ivaAmount = itemTotal - subtotal;
+                }
+                
+                return `
+                    <tr>
+                        <td class="px-3 py-2 font-medium">${item.name}</td>
+                        <td class="px-3 py-2 text-center">${item.quantity}</td>
+                        <td class="px-3 py-2 text-right">${formatMoney(item.price)}</td>
+                        <td class="px-3 py-2 text-center">
+                            ${item.hasIVA ? '<span class="text-blue-600"><i class="fas fa-check"></i></span>' : '-'}
+                        </td>
+                        <td class="px-3 py-2 text-right">${formatMoney(subtotal)}</td>
+                        <td class="px-3 py-2 text-right font-bold">${formatMoney(itemTotal)}</td>
+                    </tr>
+                `;
+            }).join('');
+            
+            // Totales
+            document.getElementById('detailSubtotal').textContent = formatMoney(sale.subtotal);
+            document.getElementById('detailIVA').textContent = formatMoney(sale.iva);
+            document.getElementById('detailTotal').textContent = formatMoney(sale.total);
+            
+            openModal('saleDetailModal');
+        }
+    
+        function updatePagination() {
+            const totalRecords = filteredSalesData.length;
+            const totalPages = Math.ceil(totalRecords / pageSize);
+            const start = (currentPage - 1) * pageSize + 1;
+            const end = Math.min(currentPage * pageSize, totalRecords);
+            
+            document.getElementById('paginationInfo').textContent = 
+                totalRecords > 0 ? `Mostrando ${start}-${end} de ${totalRecords} registros` : 'Sin registros';
+            document.getElementById('currentPage').textContent = `${currentPage} de ${totalPages || 1}`;
+            
+            document.getElementById('btnPrevPage').disabled = currentPage <= 1;
+            document.getElementById('btnNextPage').disabled = currentPage >= totalPages || totalPages === 0;
+        }
+    
+        function prevPage() {
+            if (currentPage > 1) {
+                currentPage--;
+                renderSalesTable();
+                document.getElementById('salesTableBody').scrollIntoView({ behavior: 'smooth' });
+            }
+        }
+    
+        function nextPage() {
+            const totalPages = Math.ceil(filteredSalesData.length / pageSize);
+            if (currentPage < totalPages) {
+                currentPage++;
+                renderSalesTable();
+                document.getElementById('salesTableBody').scrollIntoView({ behavior: 'smooth' });
+            }
+        }
+    
+        function changePageSize() {
+            pageSize = parseInt(document.getElementById('recordsPerPage').value);
+            currentPage = 1;
+            renderSalesTable();
+        }
+    
+        function resetFilters() {
+            document.getElementById('filterDateFrom').value = '';
+            document.getElementById('filterDateTo').value = '';
+            document.getElementById('filterPaymentMethod').value = 'all';
+            document.getElementById('filterIVAType').value = 'all';
+            document.getElementById('filterMinAmount').value = '';
+            document.getElementById('filterMaxAmount').value = '';
+            document.getElementById('filterSearchText').value = '';
+            
+            if (document.getElementById('filterCashier')) {
+                document.getElementById('filterCashier').value = 'all';
+            }
+            
+            loadTodaySales();
+        }
+    
+        function exportToExcel() {
+            if (filteredSalesData.length === 0) {
+                alert('No hay datos para exportar');
+                return;
+            }
+    
+            const fromDate = document.getElementById('filterDateFrom').value;
+            const toDate = document.getElementById('filterDateTo').value;
+            
+            let csv = 'Fecha,Hora,Folio,Cajero,Productos,Tipo IVA,Método Pago,Subtotal,IVA,Total,Estado\n';
+            
+            filteredSalesData.forEach(sale => {
+                const date = new Date(sale.created_at);
+                const ivaType = getSaleIVAType(sale).type;
+                const products = sale.items.map(i => `${i.name}(${i.quantity})`).join('; ');
+                
+                csv += `"${date.toLocaleDateString('es-MX')}","${date.toLocaleTimeString('es-MX')}","${sale.id}","${sale.cashier_name || 'N/A'}","${products}","${ivaType}","${sale.payment_method}",${sale.subtotal},${sale.iva},${sale.total},${sale.cancelled ? 'Cancelada' : 'Activa'}\n`;
+            });
+            
+            // Agregar resumen al final
+            const total = filteredSalesData.reduce((sum, s) => sum + s.total, 0);
+            csv += `\n"RESUMEN","","","","","","",${filteredSalesData.reduce((sum, s) => sum + s.subtotal, 0)},${filteredSalesData.reduce((sum, s) => sum + s.iva, 0)},${total},""\n`;
+            
+            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = `Ventas_${fromDate}_a_${toDate}.csv`;
+            link.click();
+        }
+    
+        function getSaleIVAType(sale) {
+            const hasIVA0 = (sale.total_iva_0 || 0) > 0;
+            const hasIVA16 = (sale.total_iva_16 || 0) > 0;
+            
+            if (hasIVA0 && hasIVA16) {
+                return { type: 'MIXTA', class: 'iva-badge-mix', icon: 'fa-layer-group' };
+            } else if (hasIVA16) {
+                return { type: '16%', class: 'iva-badge-16', icon: 'fa-percentage' };
+            } else {
+                return { type: '0%', class: 'iva-badge-0', icon: 'fa-circle' };
+            }
+        }
+    
+        function getPaymentIcon(method) {
+            const icons = {
+                'efectivo': 'fa-money-bill-wave',
+                'transferencia': 'fa-mobile-alt',
+                'tarjeta': 'fa-credit-card',
+                'mixto': 'fa-calculator'
+            };
+            return icons[method] || 'fa-question';
+        }
+    
+        function getPaymentMethodColor(method) {
+            const colors = {
+                'efectivo': 'bg-green-100 text-green-700',
+                'transferencia': 'bg-blue-100 text-blue-700',
+                'tarjeta': 'bg-purple-100 text-purple-700',
+                'mixto': 'bg-orange-100 text-orange-700'
+            };
+            return colors[method] || 'bg-gray-100 text-gray-700';
+        }
+    
+        async function cancelSale(saleId) {
+            if (!confirm('¿Cancelar esta venta? Se restaurará el stock de los productos.')) return;
+            
+            try {
+                const { data: sale } = await supabaseClient
+                    .from('sales')
+                    .select('*')
+                    .eq('id', saleId)
+                    .single();
+    
+                if (!sale) {
+                    alert('Venta no encontrada');
+                    return;
+                }
+    
+                // Restaurar stock
+                for (const item of sale.items) {
+                    if (!item.isCustom && item.id) {
+                        const { data: product } = await supabaseClient
                             .from('products')
-                            .update({ stock: product.stock + item.quantity })
-                            .eq('id', item.id);
+                            .select('stock')
+                            .eq('id', item.id)
+                            .single();
+                        
+                        if (product) {
+                            await supabaseClient
+                                .from('products')
+                                .update({ stock: product.stock + item.quantity })
+                                .eq('id', item.id);
+                        }
                     }
                 }
+    
+                // Marcar venta como cancelada
+                await supabaseClient
+                    .from('sales')
+                    .update({ 
+                        cancelled: true, 
+                        cancelled_at: new Date().toISOString(),
+                        cancelled_by: currentProfile.full_name || currentProfile.username
+                    })
+                    .eq('id', saleId);
+    
+                // Recargar datos
+                await applyFilters();
+                
+                // Actualizar dashboard si está visible
+                if (!document.getElementById('dashboard').classList.contains('hidden')) {
+                    await updateDashboard();
+                }
+                
+                alert('Venta cancelada correctamente. El stock ha sido restaurado.');
+                
+            } catch (error) {
+                console.error('Error cancelling sale:', error);
+                alert('Error al cancelar la venta: ' + error.message);
             }
-
-            await supabaseClient
-                .from('sales')
-                .update({ 
-                    cancelled: true, 
-                    cancelled_at: new Date().toISOString(),
-                    cancelled_by: currentProfile.full_name 
-                })
-                .eq('id', saleId);
-
-            await loadTodaySales();
-            await updateDashboard();
-            alert('Venta cancelada correctamente');
-            
-        } catch (error) {
-            alert('Error al cancelar: ' + error.message);
         }
-    }
-
-    async function filterSales() {
-        const from = document.getElementById('filterDateFrom').value;
-        const to = document.getElementById('filterDateTo').value;
-        
-        if (!from || !to) return;
-        
-        try {
-            const { data } = await supabaseClient
-                .from('sales')
-                .select('*')
-                .gte('created_at', from)
-                .lte('created_at', to + 'T23:59:59')
-                .order('created_at', { ascending: false });
-            
-            renderSalesTable(data || []);
-        } catch (error) {
-            console.error('Error filtering sales:', error);
-        }
-    }
-
-    function generateDailyCut() {
-        loadTodaySales();
-        const today = new Date();
-        document.getElementById('cutDate').textContent = today.toLocaleDateString('es-MX', {weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'});
-        
-        const todayStr = new Date().toISOString().split('T')[0];
-        supabaseClient
-            .from('sales')
-            .select('*')
-            .gte('created_at', todayStr)
-            .eq('cancelled', false)
-            .then(({ data: todaySales }) => {
-                const total = todaySales?.reduce((sum, s) => sum + s.total, 0) || 0;
-                const iva = todaySales?.reduce((sum, s) => sum + s.iva, 0) || 0;
+    
+        function generateDailyCut() {
+            // Establecer fecha de hoy y aplicar filtros
+            loadTodaySales().then(() => {
+                // Mostrar modal de corte con los datos ya filtrados
+                const today = new Date();
+                document.getElementById('cutDate').textContent = today.toLocaleDateString('es-MX', {
+                    weekday: 'long', 
+                    year: 'numeric', 
+                    month: 'long', 
+                    day: 'numeric'
+                });
+                
+                // Calcular totales del día
+                const activeSales = filteredSalesData;
+                const total = activeSales.reduce((sum, s) => sum + s.total, 0);
+                const iva = activeSales.reduce((sum, s) => sum + s.iva, 0);
                 
                 let cash = 0, transfer = 0, card = 0;
-                todaySales?.forEach(s => {
+                activeSales.forEach(s => {
                     if (s.payment_method === 'mixto' && s.payment_details) {
                         cash += s.payment_details.efectivo || 0;
                         transfer += s.payment_details.transferencia || 0;
@@ -3861,26 +4306,43 @@ function confirmMixedPayment() {
                 document.getElementById('cutTransfer').textContent = formatMoney(transfer);
                 document.getElementById('cutCard').textContent = formatMoney(card);
                 document.getElementById('cutIVA').textContent = formatMoney(iva);
-                document.getElementById('cutTransactions').textContent = todaySales?.length || 0;
+                document.getElementById('cutTransactions').textContent = activeSales.length;
                 
-                return supabaseClient
-                    .from('sales')
-                    .select('*')
-                    .gte('created_at', todayStr)
-                    .eq('cancelled', true);
-            })
-            .then(({ data: cancelledSales }) => {
-                if (cancelledSales?.length > 0) {
-                    document.getElementById('cutCancelledSection').classList.remove('hidden');
-                    document.getElementById('cutCancelledAmount').textContent = formatMoney(cancelledSales.reduce((sum, s) => sum + s.total, 0));
-                } else {
-                    document.getElementById('cutCancelledSection').classList.add('hidden');
+                // Detalle de ventas
+                const cutDetails = document.getElementById('cutDetails');
+                cutDetails.innerHTML = activeSales.slice(0, 10).map(s => `
+                    <div class="flex justify-between py-1 border-b border-gray-100">
+                        <span class="text-gray-600">${s.id.slice(0, 8)}... - ${s.items.length} items</span>
+                        <span class="font-medium">${formatMoney(s.total)}</span>
+                    </div>
+                `).join('');
+                
+                if (activeSales.length > 10) {
+                    cutDetails.innerHTML += `
+                        <div class="text-center text-gray-500 text-xs py-2">
+                            ... y ${activeSales.length - 10} ventas más
+                        </div>
+                    `;
                 }
+                
+                // Verificar canceladas
+                const allToday = currentSalesData;
+                const cancelled = allToday.filter(s => s.cancelled);
+                const cancelledSection = document.getElementById('cutCancelledSection');
+                
+                if (cancelled.length > 0) {
+                    cancelledSection.classList.remove('hidden');
+                    document.getElementById('cutCancelledAmount').textContent = formatMoney(
+                        cancelled.reduce((sum, s) => sum + s.total, 0)
+                    );
+                } else {
+                    cancelledSection.classList.add('hidden');
+                }
+                
+                openModal('cutModal');
             });
+        }
         
-        openModal('cutModal');
-    }
-
     // ============================================
     // GASTOS - COMPLETAMENTE REESTRUCTURADO CON ITEMS
     // ============================================
