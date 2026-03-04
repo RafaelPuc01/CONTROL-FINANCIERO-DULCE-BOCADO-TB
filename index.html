@@ -2503,6 +2503,11 @@
     let selectedWeekForInvoice = null;
 
     // ============================================
+    // NUEVO: Variable global para movimientos filtrados
+    // ============================================
+    window.movimientosDelDia = [];
+
+    // ============================================
     // PWA - SERVICE WORKER & INSTALL
     // ============================================
     
@@ -4079,7 +4084,7 @@ function confirmMixedPayment() {
             }
         }
     
-        // Nueva función para renderizar la tabla combinada
+            // Nueva función para renderizar la tabla combinada
         function renderizarMovimientosTabla(movimientos) {
             const tbody = document.getElementById('salesTableBody');
             
@@ -4133,20 +4138,31 @@ function confirmMixedPayment() {
                 const montoClass = esVenta ? 'text-green-600' : esGasto ? 'text-red-600' : 'text-gray-500 line-through';
                 const signo = esVenta ? '+' : esGasto ? '-' : '';
                 
-                // Acciones
+                // Acciones - CORREGIDO PARA CANCELAR
                 let acciones = '<span class="text-gray-400">-</span>';
-                if (esVenta && !esCancelada && currentProfile?.role === 'admin') {
+                
+                if (esVenta && !esCancelada) {
+                    // Solo admin puede cancelar, cajero no
+                    if (currentProfile?.role === 'admin') {
+                        acciones = `
+                            <button onclick="cancelSale('${m.id}')" class="text-red-500 hover:text-red-700 text-xs bg-red-50 hover:bg-red-100 px-2 py-1 rounded transition-colors font-bold border border-red-200">
+                                <i class="fas fa-times mr-1"></i>Cancelar
+                            </button>
+                        `;
+                    } else {
+                        acciones = '<span class="text-xs text-gray-400" title="Solo administradores pueden cancelar">🔒</span>';
+                    }
+                } else if (esGasto && (m.user_id === currentUser?.id || currentProfile?.role === 'admin')) {
                     acciones = `
-                        <button onclick="event.stopPropagation(); cancelSale('${m.id}')" class="text-red-500 hover:text-red-700 text-xs bg-red-50 px-2 py-1 rounded transition-colors font-bold">
-                            <i class="fas fa-times mr-1"></i>Cancelar
+                        <button onclick="viewExpenseDetail('${m.id}')" class="text-blue-500 hover:text-blue-700 mr-2 text-xs bg-blue-50 px-2 py-1 rounded transition-colors">
+                            <i class="fas fa-eye"></i> Ver
+                        </button>
+                        <button onclick="deleteExpense('${m.id}')" class="text-red-500 hover:text-red-700 text-xs bg-red-50 px-2 py-1 rounded transition-colors">
+                            <i class="fas fa-trash"></i>
                         </button>
                     `;
-                } else if (esGasto && (m.user_id === currentUser.id || currentProfile?.role === 'admin')) {
-                    acciones = `
-                        <button onclick="event.stopPropagation(); viewExpenseDetail('${m.id}')" class="text-blue-500 hover:text-blue-700 mr-2 text-xs">
-                            <i class="fas fa-eye"></i>
-                        </button>
-                    `;
+                } else if (esCancelada) {
+                    acciones = '<span class="text-xs text-red-400 italic">Cancelada</span>';
                 }
                 
                 return `
@@ -4170,15 +4186,15 @@ function confirmMixedPayment() {
                         </td>
                         <td class="px-4 py-3 text-center">
                             ${esCancelada ? 
-                                '<span class="px-2 py-1 rounded-full text-xs bg-red-200 text-red-800 font-bold">Cancelada</span>' : 
-                                '<span class="px-2 py-1 rounded-full text-xs bg-green-100 text-green-700 font-bold">Activa</span>'
+                                '<span class="px-2 py-1 rounded-full text-xs bg-red-200 text-red-800 font-bold"><i class="fas fa-ban mr-1"></i>Cancelada</span>' : 
+                                '<span class="px-2 py-1 rounded-full text-xs bg-green-100 text-green-700 font-bold"><i class="fas fa-check mr-1"></i>Activa</span>'
                             }
                         </td>
                         <td class="px-4 py-3 text-center">${acciones}</td>
                     </tr>
                 `;
             }).join('');
-        }
+        }    
     
         // Filtros rápidos de movimientos
         function filtrarMovimientos(tipo) {
@@ -4300,6 +4316,78 @@ function confirmMixedPayment() {
     
         function scrollToTop() {
             document.querySelector('#salesHistory').scrollIntoView({ behavior: 'smooth' });
+        }
+        // ============================================
+        // FUNCIÓN PARA CANCELAR VENTAS (RESTAURADA)
+        // ============================================
+    
+        async function cancelSale(saleId) {
+            if (!confirm('¿Estás seguro de cancelar esta venta?\n\nSe restaurará el inventario y la venta se marcará como cancelada.\n\nEsta acción no se puede deshacer.')) {
+                return;
+            }
+            
+            try {
+                // Obtener datos de la venta
+                const { data: sale, error: saleError } = await supabaseClient
+                    .from('sales')
+                    .select('*')
+                    .eq('id', saleId)
+                    .single();
+    
+                if (saleError) throw saleError;
+                if (!sale) {
+                    alert('Venta no encontrada');
+                    return;
+                }
+    
+                // Restaurar stock de productos
+                for (const item of sale.items) {
+                    // Ignorar productos personalizados (no tienen ID real)
+                    if (item.id && !item.id.startsWith('custom_')) {
+                        const { data: product } = await supabaseClient
+                            .from('products')
+                            .select('stock')
+                            .eq('id', item.id)
+                            .single();
+                        
+                        if (product) {
+                            const newStock = product.stock + item.quantity;
+                            await supabaseClient
+                                .from('products')
+                                .update({ stock: newStock })
+                                .eq('id', item.id);
+                        }
+                    }
+                }
+    
+                // Marcar venta como cancelada
+                const { error: updateError } = await supabaseClient
+                    .from('sales')
+                    .update({ 
+                        cancelled: true, 
+                        cancelled_at: new Date().toISOString(),
+                        cancelled_by: currentProfile?.full_name || currentProfile?.username || 'Usuario',
+                        cancellation_reason: 'Cancelación manual desde historial'
+                    })
+                    .eq('id', saleId);
+    
+                if (updateError) throw updateError;
+    
+                // Recargar datos
+                await loadTodaySales();
+                await updateDashboard();
+                
+                // Si estamos en el POS, recargar productos también
+                if (document.getElementById('pos').classList.contains('hidden') === false) {
+                    await loadProducts();
+                }
+                
+                alert('✅ Venta cancelada correctamente\n\nEl stock ha sido restaurado y el monto se descontó del corte del día.');
+                
+            } catch (error) {
+                console.error('Error al cancelar venta:', error);
+                alert('❌ Error al cancelar la venta: ' + error.message);
+            }
         }
     
     // ============================================
