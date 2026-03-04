@@ -3889,419 +3889,419 @@ function confirmMixedPayment() {
     }
 
         // ============================================
-    // HISTORIAL DE VENTAS - VERSIÓN MEJORADA
-    // ============================================
-
-    async function loadTodaySales() {
-        try {
-            // Obtener fecha local de México con offset explícito
-            const now = new Date();
-            const year = now.getFullYear();
-            const month = String(now.getMonth() + 1).padStart(2, '0');
-            const day = String(now.getDate()).padStart(2, '0');
-            
-            // Formato ISO con timezone de México (UTC-6)
-            const todayStart = `${year}-${month}-${day}T00:00:00-06:00`;
-            const todayEnd = `${year}-${month}-${day}T23:59:59-06:00`;
-            
-            // Cargar datos en paralelo para mejor performance
-            const [ventasHoy, gastosHoy, nominaHoy, canceladasHoy] = await Promise.all([
-                // Ventas activas
-                supabaseClient
-                    .from('sales')
-                    .select('*')
-                    .gte('created_at', todayStart)
-                    .lte('created_at', todayEnd)
-                    .eq('cancelled', false)
-                    .order('created_at', { ascending: false }),
+        // HISTORIAL DE VENTAS - VERSIÓN MEJORADA
+        // ============================================
+    
+        async function loadTodaySales() {
+            try {
+                // Obtener fecha local de México con offset explícito
+                const now = new Date();
+                const year = now.getFullYear();
+                const month = String(now.getMonth() + 1).padStart(2, '0');
+                const day = String(now.getDate()).padStart(2, '0');
                 
-                // Gastos del día
-                supabaseClient
-                    .from('expenses')
-                    .select('*')
-                    .gte('created_at', todayStart)
-                    .lte('created_at', todayEnd)
-                    .order('created_at', { ascending: false }),
+                // Formato ISO con timezone de México (UTC-6)
+                const todayStart = `${year}-${month}-${day}T00:00:00-06:00`;
+                const todayEnd = `${year}-${month}-${day}T23:59:59-06:00`;
                 
-                // Nómina del día
-                supabaseClient
-                    .from('nomina')
-                    .select('*')
-                    .gte('created_at', todayStart)
-                    .lte('created_at', todayEnd),
-                
-                // Ventas canceladas
-                supabaseClient
-                    .from('sales')
-                    .select('*')
-                    .gte('created_at', todayStart)
-                    .lte('created_at', todayEnd)
-                    .eq('cancelled', true)
-            ]);
-
-            const ventas = ventasHoy.data || [];
-            const gastos = gastosHoy.data || [];
-            const nomina = nominaHoy.data || [];
-            const canceladas = canceladasHoy.data || [];
-
-            // ========== CALCULAR TODOS LOS TOTALES ==========
-            
-            // Totales de ventas por método
-            let ventasEfectivo = 0, ventasTransfer = 0, ventasCard = 0;
-            let opsEfectivo = 0, opsTransfer = 0, opsCard = 0;
-            let totalIVA = 0;
-            
-            ventas.forEach(v => {
-                totalIVA += v.iva || 0;
-                
-                if (v.payment_method === 'mixto' && v.payment_details) {
-                    const ef = v.payment_details.efectivo || 0;
-                    const tr = v.payment_details.transferencia || 0;
-                    const ta = v.payment_details.tarjeta || 0;
+                // Cargar datos en paralelo para mejor performance
+                const [ventasHoy, gastosHoy, nominaHoy, canceladasHoy] = await Promise.all([
+                    // Ventas activas
+                    supabaseClient
+                        .from('sales')
+                        .select('*')
+                        .gte('created_at', todayStart)
+                        .lte('created_at', todayEnd)
+                        .eq('cancelled', false)
+                        .order('created_at', { ascending: false }),
                     
-                    ventasEfectivo += ef;
-                    ventasTransfer += tr;
-                    ventasCard += ta;
+                    // Gastos del día
+                    supabaseClient
+                        .from('expenses')
+                        .select('*')
+                        .gte('created_at', todayStart)
+                        .lte('created_at', todayEnd)
+                        .order('created_at', { ascending: false }),
                     
-                    if (ef > 0) opsEfectivo++;
-                    if (tr > 0) opsTransfer++;
-                    if (ta > 0) opsCard++;
-                } else {
-                    if (v.payment_method === 'efectivo') {
-                        ventasEfectivo += v.total;
-                        opsEfectivo++;
-                    } else if (v.payment_method === 'transferencia') {
-                        ventasTransfer += v.total;
-                        opsTransfer++;
-                    } else if (v.payment_method === 'tarjeta') {
-                        ventasCard += v.total;
-                        opsCard++;
+                    // Nómina del día
+                    supabaseClient
+                        .from('nomina')
+                        .select('*')
+                        .gte('created_at', todayStart)
+                        .lte('created_at', todayEnd),
+                    
+                    // Ventas canceladas
+                    supabaseClient
+                        .from('sales')
+                        .select('*')
+                        .gte('created_at', todayStart)
+                        .lte('created_at', todayEnd)
+                        .eq('cancelled', true)
+                ]);
+    
+                const ventas = ventasHoy.data || [];
+                const gastos = gastosHoy.data || [];
+                const nomina = nominaHoy.data || [];
+                const canceladas = canceladasHoy.data || [];
+    
+                // ========== CALCULAR TODOS LOS TOTALES ==========
+                
+                // Totales de ventas por método
+                let ventasEfectivo = 0, ventasTransfer = 0, ventasCard = 0;
+                let opsEfectivo = 0, opsTransfer = 0, opsCard = 0;
+                let totalIVA = 0;
+                
+                ventas.forEach(v => {
+                    totalIVA += v.iva || 0;
+                    
+                    if (v.payment_method === 'mixto' && v.payment_details) {
+                        const ef = v.payment_details.efectivo || 0;
+                        const tr = v.payment_details.transferencia || 0;
+                        const ta = v.payment_details.tarjeta || 0;
+                        
+                        ventasEfectivo += ef;
+                        ventasTransfer += tr;
+                        ventasCard += ta;
+                        
+                        if (ef > 0) opsEfectivo++;
+                        if (tr > 0) opsTransfer++;
+                        if (ta > 0) opsCard++;
+                    } else {
+                        if (v.payment_method === 'efectivo') {
+                            ventasEfectivo += v.total;
+                            opsEfectivo++;
+                        } else if (v.payment_method === 'transferencia') {
+                            ventasTransfer += v.total;
+                            opsTransfer++;
+                        } else if (v.payment_method === 'tarjeta') {
+                            ventasCard += v.total;
+                            opsCard++;
+                        }
                     }
+                });
+    
+                const totalVentas = ventasEfectivo + ventasTransfer + ventasCard;
+                const ticketPromedio = ventas.length > 0 ? totalVentas / ventas.length : 0;
+    
+                // Totales de egresos por método
+                let gastosEfectivo = 0, gastosTransfer = 0, gastosTarjeta = 0;
+                let nominaTotal = 0;
+                
+                gastos.forEach(g => {
+                    if (g.method === 'efectivo') gastosEfectivo += g.amount;
+                    else if (g.method === 'transferencia') gastosTransfer += g.amount;
+                    else if (g.method === 'tarjeta') gastosTarjeta += g.amount;
+                });
+                
+                nomina.forEach(n => {
+                    nominaTotal += n.total;
+                    // La nómina se registra como gasto, pero la separamos para claridad
+                    if (n.payment_method === 'efectivo') gastosEfectivo += n.total;
+                    else if (n.payment_method === 'transferencia') gastosTransfer += n.total;
+                    else if (n.payment_method === 'tarjeta') gastosTarjeta += n.total;
+                });
+    
+                const totalEgresos = gastosEfectivo + gastosTransfer + gastosTarjeta;
+                const saldoNetoEfectivo = ventasEfectivo - gastosEfectivo;
+    
+                // ========== ACTUALIZAR UI - RESUMEN DE VENTAS ==========
+                
+                document.getElementById('historyTotalSales').textContent = formatMoney(totalVentas);
+                document.getElementById('historyCount').textContent = ventas.length;
+                document.getElementById('ticketPromedio').textContent = formatMoney(ticketPromedio);
+                document.getElementById('historyIVA').textContent = formatMoney(totalIVA);
+                document.getElementById('lastUpdate').textContent = new Date().toLocaleTimeString('es-MX');
+    
+                // ========== ACTUALIZAR UI - ARQUEO POR MÉTODO ==========
+                
+                document.getElementById('cashTotal').textContent = formatMoney(ventasEfectivo);
+                document.getElementById('cashCount').textContent = `${opsEfectivo} ops`;
+                document.getElementById('transferTotal').textContent = formatMoney(ventasTransfer);
+                document.getElementById('transferCount').textContent = `${opsTransfer} ops`;
+                document.getElementById('cardTotal').textContent = formatMoney(ventasCard);
+                document.getElementById('cardCount').textContent = `${opsCard} ops`;
+    
+                // ========== ACTUALIZAR UI - INGRESOS VS EGRESOS ==========
+                
+                document.getElementById('ingresoEfectivo').textContent = formatMoney(ventasEfectivo);
+                document.getElementById('ingresoTransfer').textContent = formatMoney(ventasTransfer);
+                document.getElementById('ingresoCard').textContent = formatMoney(ventasCard);
+                document.getElementById('totalIngresos').textContent = formatMoney(totalVentas);
+    
+                document.getElementById('egresoEfectivo').textContent = formatMoney(gastosEfectivo);
+                document.getElementById('egresoTransfer').textContent = formatMoney(gastosTransfer);
+                document.getElementById('egresoNomina').textContent = formatMoney(gastosTarjeta + nominaTotal); // Simplificado
+                document.getElementById('totalEgresos').textContent = formatMoney(totalEgresos);
+    
+                // ========== ACTUALIZAR UI - SALDO NETO ==========
+                
+                document.getElementById('saldoNeto').textContent = formatMoney(saldoNetoEfectivo);
+                
+                // Barra de balance visual
+                const maxValor = Math.max(totalVentas, totalEgresos, saldoNetoEfectivo) || 1;
+                const porcentajeBalance = Math.min((saldoNetoEfectivo / maxValor) * 100, 100);
+                document.getElementById('balanceBar').style.width = `${Math.max(porcentajeBalance, 10)}%`;
+    
+                // ========== VENTAS CANCELADAS ==========
+                
+                const totalCancelado = canceladas.reduce((sum, c) => sum + c.total, 0);
+                const grossSales = totalVentas + totalCancelado;
+                const porcentajeCancel = grossSales > 0 ? ((totalCancelado / grossSales) * 100).toFixed(1) : 0;
+                
+                const cancelledSection = document.getElementById('historyCancelledSection');
+                if (canceladas.length > 0) {
+                    cancelledSection.classList.remove('hidden');
+                    document.getElementById('historyCancelledAmount').textContent = formatMoney(totalCancelado);
+                    document.getElementById('historyCancelledCount').textContent = canceladas.length;
+                    document.getElementById('historyGrossSales').textContent = formatMoney(grossSales);
+                    document.getElementById('porcentajeCancelacion').textContent = `${porcentajeCancel}%`;
+                } else {
+                    cancelledSection.classList.add('hidden');
+                }
+    
+                // ========== COMBINAR Y MOSTRAR MOVIMIENTOS ==========
+                
+                const todosLosMovimientos = [
+                    ...ventas.map(v => ({...v, tipo: 'venta', hora: new Date(v.created_at)})),
+                    ...gastos.map(g => ({...g, tipo: 'gasto', hora: new Date(g.created_at), total: g.amount, payment_method: g.method})),
+                    ...canceladas.map(c => ({...c, tipo: 'cancelada', hora: new Date(c.created_at)}))
+                ].sort((a, b) => b.hora - a.hora);
+    
+                document.getElementById('totalMovimientos').textContent = `${todosLosMovimientos.length} ops`;
+                document.getElementById('resumenTabla').textContent = `Mostrando ${todosLosMovimientos.length} movimientos del día`;
+                
+                renderizarMovimientosTabla(todosLosMovimientos);
+                
+                // Guardar global para filtros
+                window.movimientosDelDia = todosLosMovimientos;
+    
+            } catch (error) {
+                console.error('Error loading today sales:', error);
+            }
+        }
+    
+        // Nueva función para renderizar la tabla combinada
+        function renderizarMovimientosTabla(movimientos) {
+            const tbody = document.getElementById('salesTableBody');
+            
+            if (movimientos.length === 0) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="8" class="px-4 py-8 text-center text-gray-500">
+                            <i class="fas fa-inbox text-4xl mb-2 text-gray-300"></i>
+                            <p>No hay movimientos registrados hoy</p>
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+    
+            tbody.innerHTML = movimientos.map(m => {
+                const hora = m.hora.toLocaleTimeString('es-MX', {hour: '2-digit', minute: '2-digit'});
+                const esVenta = m.tipo === 'venta';
+                const esGasto = m.tipo === 'gasto';
+                const esCancelada = m.tipo === 'cancelada';
+                
+                // Colores y estilos según tipo
+                const rowClass = esCancelada ? 'bg-red-50' : esGasto ? 'bg-orange-50' : 'hover:bg-gray-50';
+                const icono = esVenta ? 'fa-shopping-cart text-green-500' : 
+                             esGasto ? 'fa-wallet text-red-500' : 
+                             'fa-times-circle text-red-600';
+                const colorBadge = esVenta ? 'bg-green-100 text-green-700' : 
+                                  esGasto ? 'bg-red-100 text-red-700' : 
+                                  'bg-red-200 text-red-800';
+                const textoTipo = esVenta ? 'Venta' : esGasto ? 'Gasto' : 'Cancelada';
+                
+                // Método de pago con color
+                const metodoColors = {
+                    'efectivo': 'bg-green-100 text-green-700',
+                    'transferencia': 'bg-blue-100 text-blue-700',
+                    'tarjeta': 'bg-purple-100 text-purple-700',
+                    'mixto': 'bg-orange-100 text-orange-700'
+                };
+                const metodoClass = metodoColors[m.payment_method] || 'bg-gray-100 text-gray-700';
+                const metodoText = m.payment_method ? m.payment_method.charAt(0).toUpperCase() + m.payment_method.slice(1) : 'N/A';
+                
+                // Concepto
+                let concepto = '';
+                if (esVenta || esCancelada) {
+                    concepto = m.items ? m.items.map(i => i.name).slice(0, 2).join(', ') + (m.items.length > 2 ? '...' : '') : 'Venta';
+                } else {
+                    concepto = m.concept || m.provider || 'Gasto';
+                }
+                
+                // Monto con signo
+                const montoClass = esVenta ? 'text-green-600' : esGasto ? 'text-red-600' : 'text-gray-500 line-through';
+                const signo = esVenta ? '+' : esGasto ? '-' : '';
+                
+                // Acciones
+                let acciones = '<span class="text-gray-400">-</span>';
+                if (esVenta && !esCancelada && currentProfile?.role === 'admin') {
+                    acciones = `
+                        <button onclick="event.stopPropagation(); cancelSale('${m.id}')" class="text-red-500 hover:text-red-700 text-xs bg-red-50 px-2 py-1 rounded transition-colors font-bold">
+                            <i class="fas fa-times mr-1"></i>Cancelar
+                        </button>
+                    `;
+                } else if (esGasto && (m.user_id === currentUser.id || currentProfile?.role === 'admin')) {
+                    acciones = `
+                        <button onclick="event.stopPropagation(); viewExpenseDetail('${m.id}')" class="text-blue-500 hover:text-blue-700 mr-2 text-xs">
+                            <i class="fas fa-eye"></i>
+                        </button>
+                    `;
+                }
+                
+                return `
+                    <tr class="${rowClass} transition-colors border-l-4 ${esVenta ? 'border-green-400' : esGasto ? 'border-red-400' : 'border-gray-400'}">
+                        <td class="px-4 py-3 font-medium text-gray-700">${hora}</td>
+                        <td class="px-4 py-3 font-mono text-xs text-gray-500">${m.id.slice(0, 8)}</td>
+                        <td class="px-4 py-3">
+                            <div class="flex items-center gap-2">
+                                <i class="fas ${icono}"></i>
+                                <span class="text-sm text-gray-800 font-medium truncate max-w-[150px]" title="${concepto}">${concepto}</span>
+                            </div>
+                        </td>
+                        <td class="px-4 py-3 text-center">
+                            <span class="px-2 py-1 rounded-full text-xs font-bold ${colorBadge}">${textoTipo}</span>
+                        </td>
+                        <td class="px-4 py-3 text-center">
+                            <span class="px-2 py-1 rounded-full text-xs font-bold ${metodoClass}">${metodoText}</span>
+                        </td>
+                        <td class="px-4 py-3 text-right font-bold ${montoClass}">
+                            ${signo}${formatMoney(m.total)}
+                        </td>
+                        <td class="px-4 py-3 text-center">
+                            ${esCancelada ? 
+                                '<span class="px-2 py-1 rounded-full text-xs bg-red-200 text-red-800 font-bold">Cancelada</span>' : 
+                                '<span class="px-2 py-1 rounded-full text-xs bg-green-100 text-green-700 font-bold">Activa</span>'
+                            }
+                        </td>
+                        <td class="px-4 py-3 text-center">${acciones}</td>
+                    </tr>
+                `;
+            }).join('');
+        }
+    
+        // Filtros rápidos de movimientos
+        function filtrarMovimientos(tipo) {
+            // Actualizar botones activos
+            const botones = ['Todos', 'Ventas', 'Gastos', 'Canceladas'];
+            botones.forEach(b => {
+                const btn = document.getElementById(`btnFilter${b}`);
+                if (b.toLowerCase() === tipo) {
+                    btn.classList.remove('bg-gray-200', 'text-gray-700');
+                    btn.classList.add('bg-brand-600', 'text-white');
+                } else {
+                    btn.classList.remove('bg-brand-600', 'text-white');
+                    btn.classList.add('bg-gray-200', 'text-gray-700');
                 }
             });
-
-            const totalVentas = ventasEfectivo + ventasTransfer + ventasCard;
-            const ticketPromedio = ventas.length > 0 ? totalVentas / ventas.length : 0;
-
-            // Totales de egresos por método
-            let gastosEfectivo = 0, gastosTransfer = 0, gastosTarjeta = 0;
-            let nominaTotal = 0;
+    
+            if (!window.movimientosDelDia) return;
             
-            gastos.forEach(g => {
-                if (g.method === 'efectivo') gastosEfectivo += g.amount;
-                else if (g.method === 'transferencia') gastosTransfer += g.amount;
-                else if (g.method === 'tarjeta') gastosTarjeta += g.amount;
-            });
+            let filtrados = window.movimientosDelDia;
             
-            nomina.forEach(n => {
-                nominaTotal += n.total;
-                // La nómina se registra como gasto, pero la separamos para claridad
-                if (n.payment_method === 'efectivo') gastosEfectivo += n.total;
-                else if (n.payment_method === 'transferencia') gastosTransfer += n.total;
-                else if (n.payment_method === 'tarjeta') gastosTarjeta += n.total;
-            });
-
-            const totalEgresos = gastosEfectivo + gastosTransfer + gastosTarjeta;
-            const saldoNetoEfectivo = ventasEfectivo - gastosEfectivo;
-
-            // ========== ACTUALIZAR UI - RESUMEN DE VENTAS ==========
+            if (tipo === 'ventas') {
+                filtrados = filtrados.filter(m => m.tipo === 'venta');
+            } else if (tipo === 'gastos') {
+                filtrados = filtrados.filter(m => m.tipo === 'gasto');
+            } else if (tipo === 'canceladas') {
+                filtrados = filtrados.filter(m => m.tipo === 'cancelada');
+            }
             
-            document.getElementById('historyTotalSales').textContent = formatMoney(totalVentas);
-            document.getElementById('historyCount').textContent = ventas.length;
-            document.getElementById('ticketPromedio').textContent = formatMoney(ticketPromedio);
-            document.getElementById('historyIVA').textContent = formatMoney(totalIVA);
-            document.getElementById('lastUpdate').textContent = new Date().toLocaleTimeString('es-MX');
-
-            // ========== ACTUALIZAR UI - ARQUEO POR MÉTODO ==========
+            renderizarMovimientosTabla(filtrados);
+            document.getElementById('resumenTabla').textContent = 
+                tipo === 'todos' ? `Mostrando ${filtrados.length} movimientos` : 
+                `Mostrando ${filtrados.length} ${tipo}`;
+        }
+    
+        // Verificar cuadre de caja
+        function verificarCuadre() {
+            const efectivoFisico = parseFloat(document.getElementById('efectivoFisico').value) || 0;
+            const saldoNeto = parseFloat(document.getElementById('saldoNeto').textContent.replace(/[$,]/g, '')) || 0;
             
-            document.getElementById('cashTotal').textContent = formatMoney(ventasEfectivo);
-            document.getElementById('cashCount').textContent = `${opsEfectivo} ops`;
-            document.getElementById('transferTotal').textContent = formatMoney(ventasTransfer);
-            document.getElementById('transferCount').textContent = `${opsTransfer} ops`;
-            document.getElementById('cardTotal').textContent = formatMoney(ventasCard);
-            document.getElementById('cardCount').textContent = `${opsCard} ops`;
-
-            // ========== ACTUALIZAR UI - INGRESOS VS EGRESOS ==========
+            const diferencia = efectivoFisico - saldoNeto;
+            const alertDiv = document.getElementById('cuadreAlert');
+            const statusDiv = document.getElementById('saldoStatus');
             
-            document.getElementById('ingresoEfectivo').textContent = formatMoney(ventasEfectivo);
-            document.getElementById('ingresoTransfer').textContent = formatMoney(ventasTransfer);
-            document.getElementById('ingresoCard').textContent = formatMoney(ventasCard);
-            document.getElementById('totalIngresos').textContent = formatMoney(totalVentas);
-
-            document.getElementById('egresoEfectivo').textContent = formatMoney(gastosEfectivo);
-            document.getElementById('egresoTransfer').textContent = formatMoney(gastosTransfer);
-            document.getElementById('egresoNomina').textContent = formatMoney(gastosTarjeta + nominaTotal); // Simplificado
-            document.getElementById('totalEgresos').textContent = formatMoney(totalEgresos);
-
-            // ========== ACTUALIZAR UI - SALDO NETO ==========
+            alertDiv.classList.remove('hidden');
             
-            document.getElementById('saldoNeto').textContent = formatMoney(saldoNetoEfectivo);
-            
-            // Barra de balance visual
-            const maxValor = Math.max(totalVentas, totalEgresos, saldoNetoEfectivo) || 1;
-            const porcentajeBalance = Math.min((saldoNetoEfectivo / maxValor) * 100, 100);
-            document.getElementById('balanceBar').style.width = `${Math.max(porcentajeBalance, 10)}%`;
-
-            // ========== VENTAS CANCELADAS ==========
-            
-            const totalCancelado = canceladas.reduce((sum, c) => sum + c.total, 0);
-            const grossSales = totalVentas + totalCancelado;
-            const porcentajeCancel = grossSales > 0 ? ((totalCancelado / grossSales) * 100).toFixed(1) : 0;
-            
-            const cancelledSection = document.getElementById('historyCancelledSection');
-            if (canceladas.length > 0) {
-                cancelledSection.classList.remove('hidden');
-                document.getElementById('historyCancelledAmount').textContent = formatMoney(totalCancelado);
-                document.getElementById('historyCancelledCount').textContent = canceladas.length;
-                document.getElementById('historyGrossSales').textContent = formatMoney(grossSales);
-                document.getElementById('porcentajeCancelacion').textContent = `${porcentajeCancel}%`;
+            if (Math.abs(diferencia) < 0.01) {
+                // Cuadre perfecto
+                alertDiv.className = 'p-3 rounded-lg text-center font-bold text-sm bg-green-100 text-green-800 border-2 border-green-300';
+                alertDiv.innerHTML = '<i class="fas fa-check-circle mr-2"></i>¡CUADRE PERFECTO! La caja cuadra correctamente.';
+                
+                statusDiv.innerHTML = '<span class="px-2 py-1 rounded-full bg-green-100 text-green-700 text-xs font-bold"><i class="fas fa-check-circle mr-1"></i>Cuadre verificado</span>';
+            } else if (diferencia > 0) {
+                // Sobrante
+                alertDiv.className = 'p-3 rounded-lg text-center font-bold text-sm bg-blue-100 text-blue-800 border-2 border-blue-300';
+                alertDiv.innerHTML = `<i class="fas fa-plus-circle mr-2"></i>SOBRANTE: ${formatMoney(diferencia)}`;
+                
+                statusDiv.innerHTML = '<span class="px-2 py-1 rounded-full bg-blue-100 text-blue-700 text-xs font-bold"><i class="fas fa-exclamation-circle mr-1"></i>Sobrante detectado</span>';
             } else {
-                cancelledSection.classList.add('hidden');
+                // Faltante
+                alertDiv.className = 'p-3 rounded-lg text-center font-bold text-sm bg-red-100 text-red-800 border-2 border-red-300';
+                alertDiv.innerHTML = `<i class="fas fa-exclamation-triangle mr-2"></i>FALTANTE: ${formatMoney(Math.abs(diferencia))}`;
+                
+                statusDiv.innerHTML = '<span class="px-2 py-1 rounded-full bg-red-100 text-red-700 text-xs font-bold"><i class="fas fa-exclamation-triangle mr-1"></i>Faltante detectado</span>';
             }
-
-            // ========== COMBINAR Y MOSTRAR MOVIMIENTOS ==========
-            
-            const todosLosMovimientos = [
-                ...ventas.map(v => ({...v, tipo: 'venta', hora: new Date(v.created_at)})),
-                ...gastos.map(g => ({...g, tipo: 'gasto', hora: new Date(g.created_at), total: g.amount, payment_method: g.method})),
-                ...canceladas.map(c => ({...c, tipo: 'cancelada', hora: new Date(c.created_at)}))
-            ].sort((a, b) => b.hora - a.hora);
-
-            document.getElementById('totalMovimientos').textContent = `${todosLosMovimientos.length} ops`;
-            document.getElementById('resumenTabla').textContent = `Mostrando ${todosLosMovimientos.length} movimientos del día`;
-            
-            renderizarMovimientosTabla(todosLosMovimientos);
-            
-            // Guardar global para filtros
-            window.movimientosDelDia = todosLosMovimientos;
-
-        } catch (error) {
-            console.error('Error loading today sales:', error);
         }
-    }
-
-    // Nueva función para renderizar la tabla combinada
-    function renderizarMovimientosTabla(movimientos) {
-        const tbody = document.getElementById('salesTableBody');
-        
-        if (movimientos.length === 0) {
-            tbody.innerHTML = `
-                <tr>
-                    <td colspan="8" class="px-4 py-8 text-center text-gray-500">
-                        <i class="fas fa-inbox text-4xl mb-2 text-gray-300"></i>
-                        <p>No hay movimientos registrados hoy</p>
-                    </td>
-                </tr>
-            `;
-            return;
-        }
-
-        tbody.innerHTML = movimientos.map(m => {
-            const hora = m.hora.toLocaleTimeString('es-MX', {hour: '2-digit', minute: '2-digit'});
-            const esVenta = m.tipo === 'venta';
-            const esGasto = m.tipo === 'gasto';
-            const esCancelada = m.tipo === 'cancelada';
-            
-            // Colores y estilos según tipo
-            const rowClass = esCancelada ? 'bg-red-50' : esGasto ? 'bg-orange-50' : 'hover:bg-gray-50';
-            const icono = esVenta ? 'fa-shopping-cart text-green-500' : 
-                         esGasto ? 'fa-wallet text-red-500' : 
-                         'fa-times-circle text-red-600';
-            const colorBadge = esVenta ? 'bg-green-100 text-green-700' : 
-                              esGasto ? 'bg-red-100 text-red-700' : 
-                              'bg-red-200 text-red-800';
-            const textoTipo = esVenta ? 'Venta' : esGasto ? 'Gasto' : 'Cancelada';
-            
-            // Método de pago con color
-            const metodoColors = {
-                'efectivo': 'bg-green-100 text-green-700',
-                'transferencia': 'bg-blue-100 text-blue-700',
-                'tarjeta': 'bg-purple-100 text-purple-700',
-                'mixto': 'bg-orange-100 text-orange-700'
-            };
-            const metodoClass = metodoColors[m.payment_method] || 'bg-gray-100 text-gray-700';
-            const metodoText = m.payment_method ? m.payment_method.charAt(0).toUpperCase() + m.payment_method.slice(1) : 'N/A';
-            
-            // Concepto
-            let concepto = '';
-            if (esVenta || esCancelada) {
-                concepto = m.items ? m.items.map(i => i.name).slice(0, 2).join(', ') + (m.items.length > 2 ? '...' : '') : 'Venta';
-            } else {
-                concepto = m.concept || m.provider || 'Gasto';
-            }
-            
-            // Monto con signo
-            const montoClass = esVenta ? 'text-green-600' : esGasto ? 'text-red-600' : 'text-gray-500 line-through';
-            const signo = esVenta ? '+' : esGasto ? '-' : '';
-            
-            // Acciones
-            let acciones = '<span class="text-gray-400">-</span>';
-            if (esVenta && !esCancelada && currentProfile?.role === 'admin') {
-                acciones = `
-                    <button onclick="event.stopPropagation(); cancelSale('${m.id}')" class="text-red-500 hover:text-red-700 text-xs bg-red-50 px-2 py-1 rounded transition-colors font-bold">
-                        <i class="fas fa-times mr-1"></i>Cancelar
-                    </button>
-                `;
-            } else if (esGasto && (m.user_id === currentUser.id || currentProfile?.role === 'admin')) {
-                acciones = `
-                    <button onclick="event.stopPropagation(); viewExpenseDetail('${m.id}')" class="text-blue-500 hover:text-blue-700 mr-2 text-xs">
-                        <i class="fas fa-eye"></i>
-                    </button>
-                `;
-            }
-            
-            return `
-                <tr class="${rowClass} transition-colors border-l-4 ${esVenta ? 'border-green-400' : esGasto ? 'border-red-400' : 'border-gray-400'}">
-                    <td class="px-4 py-3 font-medium text-gray-700">${hora}</td>
-                    <td class="px-4 py-3 font-mono text-xs text-gray-500">${m.id.slice(0, 8)}</td>
-                    <td class="px-4 py-3">
-                        <div class="flex items-center gap-2">
-                            <i class="fas ${icono}"></i>
-                            <span class="text-sm text-gray-800 font-medium truncate max-w-[150px]" title="${concepto}">${concepto}</span>
-                        </div>
-                    </td>
-                    <td class="px-4 py-3 text-center">
-                        <span class="px-2 py-1 rounded-full text-xs font-bold ${colorBadge}">${textoTipo}</span>
-                    </td>
-                    <td class="px-4 py-3 text-center">
-                        <span class="px-2 py-1 rounded-full text-xs font-bold ${metodoClass}">${metodoText}</span>
-                    </td>
-                    <td class="px-4 py-3 text-right font-bold ${montoClass}">
-                        ${signo}${formatMoney(m.total)}
-                    </td>
-                    <td class="px-4 py-3 text-center">
-                        ${esCancelada ? 
-                            '<span class="px-2 py-1 rounded-full text-xs bg-red-200 text-red-800 font-bold">Cancelada</span>' : 
-                            '<span class="px-2 py-1 rounded-full text-xs bg-green-100 text-green-700 font-bold">Activa</span>'
-                        }
-                    </td>
-                    <td class="px-4 py-3 text-center">${acciones}</td>
-                </tr>
-            `;
-        }).join('');
-    }
-
-    // Filtros rápidos de movimientos
-    function filtrarMovimientos(tipo) {
-        // Actualizar botones activos
-        const botones = ['Todos', 'Ventas', 'Gastos', 'Canceladas'];
-        botones.forEach(b => {
-            const btn = document.getElementById(`btnFilter${b}`);
-            if (b.toLowerCase() === tipo) {
-                btn.classList.remove('bg-gray-200', 'text-gray-700');
-                btn.classList.add('bg-brand-600', 'text-white');
-            } else {
-                btn.classList.remove('bg-brand-600', 'text-white');
-                btn.classList.add('bg-gray-200', 'text-gray-700');
-            }
-        });
-
-        if (!window.movimientosDelDia) return;
-        
-        let filtrados = window.movimientosDelDia;
-        
-        if (tipo === 'ventas') {
-            filtrados = filtrados.filter(m => m.tipo === 'venta');
-        } else if (tipo === 'gastos') {
-            filtrados = filtrados.filter(m => m.tipo === 'gasto');
-        } else if (tipo === 'canceladas') {
-            filtrados = filtrados.filter(m => m.tipo === 'cancelada');
-        }
-        
-        renderizarMovimientosTabla(filtrados);
-        document.getElementById('resumenTabla').textContent = 
-            tipo === 'todos' ? `Mostrando ${filtrados.length} movimientos` : 
-            `Mostrando ${filtrados.length} ${tipo}`;
-    }
-
-    // Verificar cuadre de caja
-    function verificarCuadre() {
-        const efectivoFisico = parseFloat(document.getElementById('efectivoFisico').value) || 0;
-        const saldoNeto = parseFloat(document.getElementById('saldoNeto').textContent.replace(/[$,]/g, '')) || 0;
-        
-        const diferencia = efectivoFisico - saldoNeto;
-        const alertDiv = document.getElementById('cuadreAlert');
-        const statusDiv = document.getElementById('saldoStatus');
-        
-        alertDiv.classList.remove('hidden');
-        
-        if (Math.abs(diferencia) < 0.01) {
-            // Cuadre perfecto
-            alertDiv.className = 'p-3 rounded-lg text-center font-bold text-sm bg-green-100 text-green-800 border-2 border-green-300';
-            alertDiv.innerHTML = '<i class="fas fa-check-circle mr-2"></i>¡CUADRE PERFECTO! La caja cuadra correctamente.';
-            
-            statusDiv.innerHTML = '<span class="px-2 py-1 rounded-full bg-green-100 text-green-700 text-xs font-bold"><i class="fas fa-check-circle mr-1"></i>Cuadre verificado</span>';
-        } else if (diferencia > 0) {
-            // Sobrante
-            alertDiv.className = 'p-3 rounded-lg text-center font-bold text-sm bg-blue-100 text-blue-800 border-2 border-blue-300';
-            alertDiv.innerHTML = `<i class="fas fa-plus-circle mr-2"></i>SOBRANTE: ${formatMoney(diferencia)}`;
-            
-            statusDiv.innerHTML = '<span class="px-2 py-1 rounded-full bg-blue-100 text-blue-700 text-xs font-bold"><i class="fas fa-exclamation-circle mr-1"></i>Sobrante detectado</span>';
-        } else {
-            // Faltante
-            alertDiv.className = 'p-3 rounded-lg text-center font-bold text-sm bg-red-100 text-red-800 border-2 border-red-300';
-            alertDiv.innerHTML = `<i class="fas fa-exclamation-triangle mr-2"></i>FALTANTE: ${formatMoney(Math.abs(diferencia))}`;
-            
-            statusDiv.innerHTML = '<span class="px-2 py-1 rounded-full bg-red-100 text-red-700 text-xs font-bold"><i class="fas fa-exclamation-triangle mr-1"></i>Faltante detectado</span>';
-        }
-    }
-
-    function confirmarEfectivoFisico() {
-        verificarCuadre();
-        // Opcional: guardar en localStorage o enviar a supervisor
-        const valor = document.getElementById('efectivoFisico').value;
-        if (valor) {
-            alert(`Efectivo físico registrado: ${formatMoney(parseFloat(valor))}\n\n${document.getElementById('cuadreAlert').textContent}`);
-        }
-    }
-
-    // Funciones de exportación (stubs para implementar)
-    function exportarExcel() {
-        if (!window.movimientosDelDia || window.movimientosDelDia.length === 0) {
-            alert('No hay movimientos para exportar');
-            return;
-        }
-        
-        // Crear CSV simple
-        let csv = 'Hora,Tipo,Concepto,Metodo,Monto,Estado\n';
-        window.movimientosDelDia.forEach(m => {
-            const hora = m.hora.toLocaleTimeString('es-MX');
-            const tipo = m.tipo;
-            const concepto = m.items ? m.items.map(i => i.name).join('; ') : (m.concept || 'N/A');
-            const metodo = m.payment_method || 'N/A';
-            const monto = m.total;
-            const estado = m.tipo === 'cancelada' ? 'Cancelada' : 'Activa';
-            csv += `"${hora}","${tipo}","${concepto}","${metodo}",${monto},"${estado}"\n`;
-        });
-        
-        const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-        const link = document.createElement('a');
-        link.href = URL.createObjectURL(blob);
-        link.download = `Corte_Caja_${new Date().toISOString().split('T')[0]}.csv`;
-        link.click();
-    }
-
-    function exportarPDF() {
-        alert('Función PDF en desarrollo.\n\nPara imprimir, usa el botón "Imprimir" del navegador (Ctrl+P) con la página de "Arqueo de Caja" abierta.');
-    }
-
-    function generarArqueo() {
-        // Abrir modal o sección de arqueo detallado
-        const efectivoFisico = prompt('Ingresa el efectivo físico que tienes en caja:');
-        if (efectivoFisico !== null) {
-            document.getElementById('efectivoFisico').value = efectivoFisico;
+    
+        function confirmarEfectivoFisico() {
             verificarCuadre();
-            document.getElementById('efectivoFisico').scrollIntoView({ behavior: 'smooth', block: 'center' });
+            // Opcional: guardar en localStorage o enviar a supervisor
+            const valor = document.getElementById('efectivoFisico').value;
+            if (valor) {
+                alert(`Efectivo físico registrado: ${formatMoney(parseFloat(valor))}\n\n${document.getElementById('cuadreAlert').textContent}`);
+            }
         }
-    }
-
-    function imprimirCorte() {
-        window.print();
-    }
-
-    function scrollToTop() {
-        document.querySelector('#salesHistory').scrollIntoView({ behavior: 'smooth' });
-    }
+    
+        // Funciones de exportación (stubs para implementar)
+        function exportarExcel() {
+            if (!window.movimientosDelDia || window.movimientosDelDia.length === 0) {
+                alert('No hay movimientos para exportar');
+                return;
+            }
+            
+            // Crear CSV simple
+            let csv = 'Hora,Tipo,Concepto,Metodo,Monto,Estado\n';
+            window.movimientosDelDia.forEach(m => {
+                const hora = m.hora.toLocaleTimeString('es-MX');
+                const tipo = m.tipo;
+                const concepto = m.items ? m.items.map(i => i.name).join('; ') : (m.concept || 'N/A');
+                const metodo = m.payment_method || 'N/A';
+                const monto = m.total;
+                const estado = m.tipo === 'cancelada' ? 'Cancelada' : 'Activa';
+                csv += `"${hora}","${tipo}","${concepto}","${metodo}",${monto},"${estado}"\n`;
+            });
+            
+            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = `Corte_Caja_${new Date().toISOString().split('T')[0]}.csv`;
+            link.click();
+        }
+    
+        function exportarPDF() {
+            alert('Función PDF en desarrollo.\n\nPara imprimir, usa el botón "Imprimir" del navegador (Ctrl+P) con la página de "Arqueo de Caja" abierta.');
+        }
+    
+        function generarArqueo() {
+            // Abrir modal o sección de arqueo detallado
+            const efectivoFisico = prompt('Ingresa el efectivo físico que tienes en caja:');
+            if (efectivoFisico !== null) {
+                document.getElementById('efectivoFisico').value = efectivoFisico;
+                verificarCuadre();
+                document.getElementById('efectivoFisico').scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
+        }
+    
+        function imprimirCorte() {
+            window.print();
+        }
+    
+        function scrollToTop() {
+            document.querySelector('#salesHistory').scrollIntoView({ behavior: 'smooth' });
+        }
     
     // ============================================
     // GASTOS - COMPLETAMENTE REESTRUCTURADO CON ITEMS
