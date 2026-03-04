@@ -4317,8 +4317,9 @@ function confirmMixedPayment() {
         function scrollToTop() {
             document.querySelector('#salesHistory').scrollIntoView({ behavior: 'smooth' });
         }
+
         // ============================================
-        // FUNCIÓN PARA CANCELAR VENTAS (RESTAURADA)
+        // FUNCIÓN PARA CANCELAR VENTAS (CORREGIDA)
         // ============================================
     
         async function cancelSale(saleId) {
@@ -4360,14 +4361,14 @@ function confirmMixedPayment() {
                     }
                 }
     
-                // Marcar venta como cancelada
+                // Marcar venta como cancelada (SIN cancellation_reason)
                 const { error: updateError } = await supabaseClient
                     .from('sales')
                     .update({ 
                         cancelled: true, 
                         cancelled_at: new Date().toISOString(),
-                        cancelled_by: currentProfile?.full_name || currentProfile?.username || 'Usuario',
-                        cancellation_reason: 'Cancelación manual desde historial'
+                        cancelled_by: currentProfile?.full_name || currentProfile?.username || 'Usuario'
+                        // ELIMINADO: cancellation_reason
                     })
                     .eq('id', saleId);
     
