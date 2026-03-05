@@ -4647,6 +4647,201 @@ function confirmMixedPayment() {
                 alert('❌ Error al cancelar la venta: ' + error.message);
             }
         }
+
+            // ============================================
+            // FUNCIÓN PARA FILTRAR POR RANGO DE FECHAS
+            // ============================================
+            
+            async function filterSales() {
+                const fromDate = document.getElementById('filterDateFrom').value;
+                const toDate = document.getElementById('filterDateTo').value;
+                
+                if (!fromDate || !toDate) {
+                    alert('Por favor selecciona ambas fechas');
+                    return;
+                }
+                
+                if (new Date(fromDate) > new Date(toDate)) {
+                    alert('La fecha "Desde" no puede ser mayor que la fecha "Hasta"');
+                    return;
+                }
+                
+                try {
+                    // Formato ISO con timezone de México (UTC-6)
+                    const dateFromStart = `${fromDate}T00:00:00-06:00`;
+                    const dateToEnd = `${toDate}T23:59:59-06:00`;
+                    
+                    // Cargar datos en paralelo
+                    const [ventas, gastos, nomina, canceladas] = await Promise.all([
+                        supabaseClient
+                            .from('sales')
+                            .select('*')
+                            .gte('created_at', dateFromStart)
+                            .lte('created_at', dateToEnd)
+                            .eq('cancelled', false)
+                            .order('created_at', { ascending: false }),
+                        
+                        supabaseClient
+                            .from('expenses')
+                            .select('*')
+                            .gte('created_at', dateFromStart)
+                            .lte('created_at', dateToEnd)
+                            .order('created_at', { ascending: false }),
+                        
+                        supabaseClient
+                            .from('nomina')
+                            .select('*')
+                            .gte('created_at', dateFromStart)
+                            .lte('created_at', dateToEnd),
+                        
+                        supabaseClient
+                            .from('sales')
+                            .select('*')
+                            .gte('created_at', dateFromStart)
+                            .lte('created_at', dateToEnd)
+                            .eq('cancelled', true)
+                    ]);
+                    
+                    // Procesar y mostrar datos filtrados
+                    await processFilteredData({
+                        ventas: ventas.data || [],
+                        gastos: gastos.data || [],
+                        nomina: nomina.data || [],
+                        canceladas: canceladas.data || []
+                    }, fromDate, toDate);
+                    
+                } catch (error) {
+                    console.error('Error filtering sales:', error);
+                    alert('Error al filtrar: ' + error.message);
+                }
+            }
+            
+            // Procesar datos filtrados (similar a loadTodaySales pero con fechas variables)
+            async function processFilteredData(data, fromDate, toDate) {
+                const { ventas, gastos, nomina, canceladas } = data;
+                
+                // Totales de ventas por método
+                let ventasEfectivo = 0, ventasTransfer = 0, ventasCard = 0;
+                let opsEfectivo = 0, opsTransfer = 0, opsCard = 0;
+                let totalIVA = 0;
+                
+                ventas.forEach(v => {
+                    totalIVA += v.iva || 0;
+                    
+                    if (v.payment_method === 'mixto' && v.payment_details) {
+                        const ef = v.payment_details.efectivo || 0;
+                        const tr = v.payment_details.transferencia || 0;
+                        const ta = v.payment_details.tarjeta || 0;
+                        
+                        ventasEfectivo += ef;
+                        ventasTransfer += tr;
+                        ventasCard += ta;
+                        
+                        if (ef > 0) opsEfectivo++;
+                        if (tr > 0) opsTransfer++;
+                        if (ta > 0) opsCard++;
+                    } else {
+                        if (v.payment_method === 'efectivo') {
+                            ventasEfectivo += v.total;
+                            opsEfectivo++;
+                        } else if (v.payment_method === 'transferencia') {
+                            ventasTransfer += v.total;
+                            opsTransfer++;
+                        } else if (v.payment_method === 'tarjeta') {
+                            ventasCard += v.total;
+                            opsCard++;
+                        }
+                    }
+                });
+                
+                const totalVentas = ventasEfectivo + ventasTransfer + ventasCard;
+                const ticketPromedio = ventas.length > 0 ? totalVentas / ventas.length : 0;
+                
+                // Actualizar UI de resumen
+                document.getElementById('historyTotalSales').textContent = formatMoney(totalVentas);
+                document.getElementById('historyCount').textContent = ventas.length;
+                document.getElementById('ticketPromedio').textContent = formatMoney(ticketPromedio);
+                document.getElementById('historyIVA').textContent = formatMoney(totalIVA);
+                document.getElementById('lastUpdate').textContent = `${fromDate} al ${toDate}`;
+                
+                // Actualizar arqueo
+                document.getElementById('cashTotal').textContent = formatMoney(ventasEfectivo);
+                document.getElementById('cashCount').textContent = `${opsEfectivo} ops`;
+                document.getElementById('transferTotal').textContent = formatMoney(ventasTransfer);
+                document.getElementById('transferCount').textContent = `${opsTransfer} ops`;
+                document.getElementById('cardTotal').textContent = formatMoney(ventasCard);
+                document.getElementById('cardCount').textContent = `${opsCard} ops`;
+                
+                // Calcular egresos
+                let gastosEfectivo = 0, gastosTransfer = 0, gastosTarjeta = 0;
+                let nominaTotal = 0;
+                
+                gastos.forEach(g => {
+                    if (g.method === 'efectivo') gastosEfectivo += g.amount;
+                    else if (g.method === 'transferencia') gastosTransfer += g.amount;
+                    else if (g.method === 'tarjeta') gastosTarjeta += g.amount;
+                });
+                
+                nomina.forEach(n => {
+                    nominaTotal += n.total;
+                    if (n.payment_method === 'efectivo') gastosEfectivo += n.total;
+                    else if (n.payment_method === 'transferencia') gastosTransfer += n.total;
+                    else if (n.payment_method === 'tarjeta') gastosTarjeta += n.total;
+                });
+                
+                const totalEgresos = gastosEfectivo + gastosTransfer + gastosTarjeta;
+                const saldoNetoEfectivo = ventasEfectivo - gastosEfectivo;
+                
+                // Actualizar ingresos/egresos
+                document.getElementById('ingresoEfectivo').textContent = formatMoney(ventasEfectivo);
+                document.getElementById('ingresoTransfer').textContent = formatMoney(ventasTransfer);
+                document.getElementById('ingresoCard').textContent = formatMoney(ventasCard);
+                document.getElementById('totalIngresos').textContent = formatMoney(totalVentas);
+                
+                document.getElementById('egresoEfectivo').textContent = formatMoney(gastosEfectivo);
+                document.getElementById('egresoTransfer').textContent = formatMoney(gastosTransfer);
+                document.getElementById('egresoNomina').textContent = formatMoney(gastosTarjeta + nominaTotal);
+                document.getElementById('totalEgresos').textContent = formatMoney(totalEgresos);
+                
+                document.getElementById('saldoNeto').textContent = formatMoney(saldoNetoEfectivo);
+                
+                // Ventas canceladas
+                const totalCancelado = canceladas.reduce((sum, c) => sum + c.total, 0);
+                const grossSales = totalVentas + totalCancelado;
+                const porcentajeCancel = grossSales > 0 ? ((totalCancelado / grossSales) * 100).toFixed(1) : 0;
+                
+                const cancelledSection = document.getElementById('historyCancelledSection');
+                if (canceladas.length > 0) {
+                    cancelledSection.classList.remove('hidden');
+                    document.getElementById('historyCancelledAmount').textContent = formatMoney(totalCancelado);
+                    document.getElementById('historyCancelledCount').textContent = canceladas.length;
+                    document.getElementById('historyGrossSales').textContent = formatMoney(grossSales);
+                    document.getElementById('porcentajeCancelacion').textContent = `${porcentajeCancel}%`;
+                } else {
+                    cancelledSection.classList.add('hidden');
+                }
+                
+                // Combinar y mostrar movimientos
+                const todosLosMovimientos = [
+                    ...ventas.map(v => ({...v, tipo: 'venta', hora: new Date(v.created_at)})),
+                    ...gastos.map(g => ({...g, tipo: 'gasto', hora: new Date(g.created_at), total: g.amount, payment_method: g.method})),
+                    ...canceladas.map(c => ({...c, tipo: 'cancelada', hora: new Date(c.created_at)}))
+                ].sort((a, b) => b.hora - a.hora);
+                
+                document.getElementById('totalMovimientos').textContent = `${todosLosMovimientos.length} ops`;
+                document.getElementById('resumenTabla').textContent = `Mostrando ${todosLosMovimientos.length} movimientos del ${fromDate} al ${toDate}`;
+                
+                renderizarMovimientosTabla(todosLosMovimientos);
+                window.movimientosDelDia = todosLosMovimientos;
+                
+                // Resetear filtros de tipo
+                document.querySelectorAll('[id^="btnFilter"]').forEach(btn => {
+                    btn.classList.remove('bg-brand-600', 'text-white');
+                    btn.classList.add('bg-gray-200', 'text-gray-700');
+                });
+                document.getElementById('btnFilterTodos').classList.remove('bg-gray-200', 'text-gray-700');
+                document.getElementById('btnFilterTodos').classList.add('bg-brand-600', 'text-white');
+            }
     
     // ============================================
     // GASTOS - COMPLETAMENTE REESTRUCTURADO CON HOY E HISTÓRICO
