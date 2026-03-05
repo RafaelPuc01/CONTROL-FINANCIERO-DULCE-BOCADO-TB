@@ -1416,47 +1416,158 @@
             </div>
         </div>
     </div>
-        <!-- Products Module -->
-        <!-- Products Module -->
+        <!-- ============================================ -->
+        <!-- PRODUCTS MODULE - VERSIÓN PROFESIONAL        -->
+        <!-- ============================================ -->
         <div id="products" class="module hidden fade-in">
+            
+            <!-- ========== ENCABEZADO ========== -->
             <div class="mb-6 flex justify-between items-center">
                 <div>
                     <h1 class="text-3xl font-serif font-bold text-brand-900 mb-2">Catálogo de Productos</h1>
-                    <p class="text-gray-600">Precios con IVA ya incluyen el 16%</p>
+                    <p class="text-gray-600">Gestión de inventario en tiempo real</p>
                 </div>
                 <button onclick="openProductModal()" class="bg-brand-600 hover:bg-brand-700 text-white px-6 py-2 rounded-lg transition-colors shadow-lg admin-only-inline" id="btnNewProduct">
                     <i class="fas fa-plus mr-2"></i>Nuevo Producto
                 </button>
             </div>
         
-            <!-- NUEVO: Caja de búsqueda de productos -->
-            <div class="glass-panel p-4 rounded-xl mb-6">
-                <div class="search-container" style="margin-bottom: 0;">
-                    <i class="fas fa-search search-icon"></i>
-                    <input type="text" id="productSearchTable" class="search-input" placeholder="Buscar productos por nombre o categoría..." oninput="filterProductsTable(this.value)">
+            <!-- ========== DASHBOARD DE INVENTARIO ========== -->
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+                <!-- Total productos -->
+                <div class="glass-panel p-4 rounded-xl border-l-4 border-blue-500 bg-gradient-to-br from-blue-50 to-white">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-xs text-gray-500 uppercase font-bold">Total Productos</p>
+                            <h4 class="text-2xl font-bold text-blue-600" id="totalProducts">0</h4>
+                        </div>
+                        <div class="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center text-blue-600">
+                            <i class="fas fa-boxes text-xl"></i>
+                        </div>
+                    </div>
+                </div>
+        
+                <!-- Stock bajo -->
+                <div class="glass-panel p-4 rounded-xl border-l-4 border-orange-500 bg-gradient-to-br from-orange-50 to-white">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-xs text-gray-500 uppercase font-bold">Stock Bajo</p>
+                            <h4 class="text-2xl font-bold text-orange-600" id="lowStockCount">0</h4>
+                            <p class="text-xs text-orange-400">&lt; 5 unidades</p>
+                        </div>
+                        <div class="w-12 h-12 bg-orange-100 rounded-full flex items-center justify-center text-orange-600">
+                            <i class="fas fa-exclamation-triangle text-xl"></i>
+                        </div>
+                    </div>
+                </div>
+        
+                <!-- Agotados -->
+                <div class="glass-panel p-4 rounded-xl border-l-4 border-red-500 bg-gradient-to-br from-red-50 to-white">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-xs text-gray-500 uppercase font-bold">Agotados</p>
+                            <h4 class="text-2xl font-bold text-red-600" id="outOfStockCount">0</h4>
+                            <p class="text-xs text-red-400">Reordenar ya</p>
+                        </div>
+                        <div class="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center text-red-600 animate-pulse">
+                            <i class="fas fa-times-circle text-xl"></i>
+                        </div>
+                    </div>
+                </div>
+        
+                <!-- Valor inventario -->
+                <div class="glass-panel p-4 rounded-xl border-l-4 border-green-500 bg-gradient-to-br from-green-50 to-white">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-xs text-gray-500 uppercase font-bold">Valor Inventario</p>
+                            <h4 class="text-xl font-bold text-green-600" id="inventoryValue">$0.00</h4>
+                        </div>
+                        <div class="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center text-green-600">
+                            <i class="fas fa-dollar-sign text-xl"></i>
+                        </div>
+                    </div>
                 </div>
             </div>
         
-            <div class="glass-panel rounded-2xl overflow-hidden">
+            <!-- ========== BARRA DE HERRAMIENTAS ========== -->
+            <div class="glass-panel p-4 rounded-xl mb-6">
+                <div class="flex flex-wrap gap-4 items-center justify-between">
+                    <!-- Búsqueda -->
+                    <div class="flex-1 min-w-[250px]">
+                        <div class="relative">
+                            <i class="fas fa-search absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
+                            <input type="text" id="productSearchTable" 
+                                   class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-transparent outline-none"
+                                   placeholder="Buscar por nombre..."
+                                   oninput="filterProductsTable(this.value)">
+                        </div>
+                    </div>
+        
+                    <!-- Filtros rápidos -->
+                    <div class="flex gap-2 overflow-x-auto pb-1">
+                        <button onclick="filterProductsTableByCategory('all')" id="btnFilterAll" class="filter-chip active px-4 py-2 bg-brand-600 text-white rounded-full text-sm font-medium transition-all whitespace-nowrap">
+                            <i class="fas fa-th-large mr-1"></i>Todos
+                        </button>
+                        <button onclick="filterProductsTableByCategory('pasteles')" id="btnFilterPasteles" class="filter-chip px-4 py-2 bg-white text-gray-700 border border-gray-300 rounded-full text-sm font-medium hover:bg-gray-50 transition-all whitespace-nowrap">
+                            🎂 Pasteles
+                        </button>
+                        <button onclick="filterProductsTableByCategory('postres')" id="btnFilterPostres" class="filter-chip px-4 py-2 bg-white text-gray-700 border border-gray-300 rounded-full text-sm font-medium hover:bg-gray-50 transition-all whitespace-nowrap">
+                            🧁 Postres
+                        </button>
+                        <button onclick="filterProductsTableByCategory('decoracion')" id="btnFilterDecoracion" class="filter-chip px-4 py-2 bg-white text-gray-700 border border-gray-300 rounded-full text-sm font-medium hover:bg-gray-50 transition-all whitespace-nowrap">
+                            🎨 Decoración
+                        </button>
+                        <button onclick="filterProductsTableByCategory('herramientas')" id="btnFilterHerramientas" class="filter-chip px-4 py-2 bg-white text-gray-700 border border-gray-300 rounded-full text-sm font-medium hover:bg-gray-50 transition-all whitespace-nowrap">
+                            👨‍🍳 Herramientas
+                        </button>
+                        <button onclick="filterProductsTableByStock('low')" id="btnFilterLowStock" class="filter-chip px-4 py-2 bg-orange-100 text-orange-700 border border-orange-300 rounded-full text-sm font-medium hover:bg-orange-200 transition-all whitespace-nowrap">
+                            ⚠️ Stock Bajo
+                        </button>
+                        <button onclick="filterProductsTableByStock('out')" id="btnFilterOutStock" class="filter-chip px-4 py-2 bg-red-100 text-red-700 border border-red-300 rounded-full text-sm font-medium hover:bg-red-200 transition-all whitespace-nowrap">
+                            🔴 Agotados
+                        </button>
+                    </div>
+                </div>
+            </div>
+        
+            <!-- ========== TABLA DE PRODUCTOS ========== -->
+            <div class="glass-panel rounded-2xl overflow-hidden shadow-lg">
                 <div class="overflow-x-auto">
                     <table class="w-full text-sm">
-                        <thead class="bg-brand-50 text-brand-800">
+                        <thead class="bg-brand-50 text-brand-800 sticky top-0">
                             <tr>
-                                <th class="px-4 py-3 text-left">Nombre</th>
-                                <th class="px-4 py-3 text-left">Categoría</th>
-                                <th class="px-4 py-3 text-center">Stock</th>
-                                <th class="px-4 py-3 text-center">IVA Incluido</th>
-                                <th class="px-4 py-3 text-right">Precio Final</th>
-                                <th class="px-4 py-3 text-center">Estado</th>
-                                <th class="px-4 py-3 text-center">Acciones</th>
+                                <th class="px-4 py-3 text-left font-semibold">Producto</th>
+                                <th class="px-4 py-3 text-left font-semibold">Categoría</th>
+                                <th class="px-4 py-3 text-center font-semibold">Stock</th>
+                                <th class="px-4 py-3 text-center font-semibold">IVA</th>
+                                <th class="px-4 py-3 text-right font-semibold">Precio</th>
+                                <th class="px-4 py-3 text-center font-semibold">Estado</th>
+                                <th class="px-4 py-3 text-center font-semibold">Acciones</th>
                             </tr>
                         </thead>
                         <tbody id="productsTableBody" class="divide-y divide-gray-100">
+                            <!-- Se llena dinámicamente -->
                         </tbody>
                     </table>
                 </div>
+                
+                <!-- Empty state -->
+                <div id="productsEmptyState" class="hidden p-8 text-center text-gray-400">
+                    <i class="fas fa-search text-4xl mb-3 text-gray-300"></i>
+                    <p class="text-lg">No se encontraron productos</p>
+                    <p class="text-sm">Intenta con otra búsqueda o filtro</p>
+                </div>
+            </div>
+        
+            <!-- ========== PAGINACIÓN (opcional, para futuro) ========== -->
+            <div class="mt-4 flex justify-between items-center text-sm text-gray-600">
+                <span id="productsShowing">Mostrando 0 productos</span>
+                <div class="flex gap-2">
+                    <!-- Aquí irían botones de paginación si se implementa -->
+                </div>
             </div>
         </div>
+        <!-- ========== FIN PRODUCTS MODULE ========== -->
 
         <!-- Bank Module -->
         <div id="bank" class="module hidden fade-in admin-only-content">
@@ -2343,34 +2454,130 @@
     </div>
 </div>
 
-<!-- Modal Stock -->
-<div id="stockModal" class="modal">
-    <div class="bg-white rounded-2xl p-6 w-full max-w-sm mx-4 shadow-2xl">
-        <h3 class="text-xl font-bold text-brand-800 mb-4">Ajustar Stock</h3>
-        <input type="hidden" id="stockProdId">
-        <div class="text-center mb-6">
-            <div class="text-4xl mb-2" id="stockProdImage">📦</div>
-            <h4 class="font-bold text-lg text-gray-800" id="stockProdName">Producto</h4>
-            <p class="text-sm text-gray-500" id="stockProdCurrent">Stock actual: 0</p>
-        </div>
-        
-        <div class="flex items-center justify-center gap-4 mb-6">
-            <button onclick="adjustStockPreview(-1)" class="w-10 h-10 rounded-full bg-gray-200 hover:bg-gray-300 flex items-center justify-center text-gray-700 font-bold text-lg">-</button>
-            <input type="number" id="stockNewValue" class="stock-input-cashier text-xl" value="0" min="0">
-            <button onclick="adjustStockPreview(1)" class="w-10 h-10 rounded-full bg-gray-200 hover:bg-gray-300 flex items-center justify-center text-gray-700 font-bold text-lg">+</button>
-        </div>
-        
-        <div class="bg-blue-50 p-3 rounded-lg mb-4 text-center">
-            <p class="text-xs text-blue-600">Nuevo stock: <span id="stockPreview" class="font-bold text-lg">0</span></p>
-        </div>
-        
-        <div class="flex gap-3">
-            <button onclick="closeModal('stockModal')" class="flex-1 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">Cancelar</button>
-            <button onclick="saveStockAdjustment()" class="flex-1 py-2 bg-brand-600 text-white rounded-lg hover:bg-brand-700 transition-colors">Guardar Cambio</button>
+    <!-- ============================================ -->
+    <!-- MODAL DE AJUSTE DE STOCK - VERSIÓN CAJERO    -->
+    <!-- ============================================ -->
+    <div id="stockModal" class="modal">
+        <div class="bg-white rounded-2xl p-6 w-full max-w-md mx-4 shadow-2xl">
+            
+            <!-- Header con imagen -->
+            <div class="text-center mb-6">
+                <div class="w-20 h-20 bg-brand-100 rounded-full mx-auto mb-3 flex items-center justify-center text-4xl">
+                    <span id="stockProdImage">📦</span>
+                </div>
+                <h3 class="text-xl font-bold text-brand-800" id="stockProdName">Producto</h3>
+                <p class="text-sm text-gray-500">Ajuste de inventario</p>
+            </div>
+    
+            <!-- Stock actual -->
+            <div class="bg-gray-50 rounded-xl p-4 mb-6 text-center">
+                <p class="text-xs text-gray-500 uppercase mb-1">Stock Actual</p>
+                <p class="text-4xl font-bold text-gray-800" id="stockCurrentBig">0</p>
+            </div>
+    
+            <!-- Tipo de operación -->
+            <div class="grid grid-cols-2 gap-3 mb-4">
+                <button onclick="setStockOperation('remove')" id="btnStockRemove" class="py-3 rounded-xl border-2 border-gray-300 text-gray-600 font-medium transition-all flex items-center justify-center gap-2">
+                    <i class="fas fa-minus-circle text-red-500"></i>
+                    Salida
+                </button>
+                <button onclick="setStockOperation('add')" id="btnStockAdd" class="py-3 rounded-xl border-2 border-green-500 bg-green-50 text-green-700 font-medium transition-all flex items-center justify-center gap-2">
+                    <i class="fas fa-plus-circle"></i>
+                    Entrada
+                </button>
+            </div>
+            <input type="hidden" id="stockOperation" value="add">
+            <input type="hidden" id="stockProdId">
+    
+            <!-- Cantidad -->
+            <div class="mb-4">
+                <label class="block text-sm font-medium text-gray-700 mb-2 text-center">Cantidad</label>
+                <div class="flex items-center justify-center gap-2 mb-3">
+                    <button onclick="adjustStockAmount(-10)" class="w-12 h-10 rounded-lg bg-gray-200 hover:bg-gray-300 text-gray-700 text-xs font-bold transition-colors">-10</button>
+                    <button onclick="adjustStockAmount(-1)" class="w-12 h-10 rounded-lg bg-gray-200 hover:bg-gray-300 text-gray-700 text-lg font-bold transition-colors">-</button>
+                    <input type="number" id="stockAmount" value="1" min="1" 
+                           class="w-20 h-12 text-center text-2xl font-bold border-2 border-brand-300 rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-brand-500 outline-none"
+                           oninput="updateStockPreview()">
+                    <button onclick="adjustStockAmount(1)" class="w-12 h-10 rounded-lg bg-gray-200 hover:bg-gray-300 text-gray-700 text-lg font-bold transition-colors">+</button>
+                    <button onclick="adjustStockAmount(10)" class="w-12 h-10 rounded-lg bg-gray-200 hover:bg-gray-300 text-gray-700 text-xs font-bold transition-colors">+10</button>
+                </div>
+            </div>
+    
+            <!-- Preview del resultado -->
+            <div class="bg-blue-50 rounded-xl p-4 mb-4 text-center border-2 border-blue-200">
+                <p class="text-xs text-blue-600 mb-1">Nuevo stock será:</p>
+                <p class="text-3xl font-bold text-blue-800" id="stockPreviewBig">0</p>
+                <p class="text-xs text-blue-500 mt-1" id="stockCalculation">0 + 1 = 1</p>
+            </div>
+    
+            <!-- Motivo -->
+            <div class="mb-6">
+                <input type="text" id="stockReason" placeholder="Motivo del ajuste (opcional)" 
+                       class="w-full border border-gray-300 rounded-lg px-4 py-2 text-sm focus:ring-2 focus:ring-brand-500 outline-none">
+            </div>
+    
+            <!-- Botones -->
+            <div class="flex gap-3">
+                <button onclick="closeModal('stockModal')" class="flex-1 py-3 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors font-medium text-gray-700">
+                    Cancelar
+                </button>
+                <button onclick="saveStockAdjustment()" class="flex-1 py-3 bg-brand-600 text-white rounded-lg hover:bg-brand-700 transition-colors font-medium shadow-lg flex items-center justify-center gap-2">
+                    <i class="fas fa-check"></i>
+                    Guardar
+                </button>
+            </div>
         </div>
     </div>
-</div>
-
+    <!-- ========== FIN MODAL STOCK ========== -->
+    
+    <!-- ============================================ -->
+    <!-- MODAL DETALLE DE PRODUCTO                    -->
+    <!-- ============================================ -->
+    <div id="productDetailModal" class="modal">
+        <div class="bg-white rounded-2xl p-6 w-full max-w-lg mx-4 shadow-2xl max-h-[90vh] overflow-y-auto">
+            <div class="flex justify-between items-start mb-4">
+                <div>
+                    <h3 class="text-2xl font-bold text-brand-800" id="detailProdName">Producto</h3>
+                    <p class="text-sm text-gray-500" id="detailProdCategory">Categoría</p>
+                </div>
+                <button onclick="closeModal('productDetailModal')" class="text-gray-400 hover:text-gray-600 w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-100">
+                    <i class="fas fa-times text-xl"></i>
+                </button>
+            </div>
+    
+            <div class="text-center mb-6">
+                <div class="w-24 h-24 bg-brand-100 rounded-full mx-auto mb-3 flex items-center justify-center text-6xl" id="detailProdImage">
+                    📦
+                </div>
+                <p class="text-3xl font-bold text-brand-800" id="detailProdPrice">$0.00</p>
+                <p class="text-sm text-gray-500" id="detailProdIVA">Sin IVA</p>
+            </div>
+    
+            <div class="grid grid-cols-2 gap-4 mb-6">
+                <div class="bg-gray-50 rounded-xl p-4 text-center">
+                    <p class="text-xs text-gray-500 uppercase mb-1">Stock Actual</p>
+                    <p class="text-2xl font-bold" id="detailProdStock">0</p>
+                </div>
+                <div class="bg-gray-50 rounded-xl p-4 text-center">
+                    <p class="text-xs text-gray-500 uppercase mb-1">Estado</p>
+                    <p class="text-sm font-bold" id="detailProdStatus">Activo</p>
+                </div>
+            </div>
+    
+            <!-- Historial de movimientos (si existe) -->
+            <div id="detailProdMovements" class="hidden">
+                <h4 class="font-bold text-gray-800 mb-3">Últimos movimientos</h4>
+                <div class="space-y-2 max-h-40 overflow-y-auto" id="detailProdMovementsList">
+                    <!-- Se llena dinámicamente -->
+                </div>
+            </div>
+    
+            <button onclick="closeModal('productDetailModal')" class="w-full py-3 bg-gray-200 hover:bg-gray-300 rounded-lg transition-colors font-medium">
+                Cerrar
+            </button>
+        </div>
+    </div>
+    
 <!-- Modal Empleado -->
 <div id="employeeModal" class="modal">
     <div class="bg-white rounded-2xl p-6 w-full max-w-md mx-4 shadow-2xl">
@@ -5415,174 +5622,482 @@ function confirmMixedPayment() {
         };
         return colors[area] || 'bg-gray-100 text-gray-700';
     }
+    
     // ============================================
-    // PRODUCTOS
+    // PRODUCTOS - VERSIÓN PROFESIONAL COMPLETA
     // ============================================
-
+    
+    let currentStockProduct = null;
+    let currentStockOperation = 'add';
+    let currentProductFilter = 'all';
+    let currentStockFilter = null;
+    
+    // ========== CARGA PRINCIPAL ==========
+    
     async function loadProductsTable() {
         try {
             const { data, error } = await supabaseClient
                 .from('products')
                 .select('*')
+                .order('stock', { ascending: true }) // Stock bajo primero
                 .order('name');
             
             if (error) throw error;
             products = data || [];
             
-            // Limpiar el campo de búsqueda si existe
+            // Actualizar estadísticas
+            updateProductStats(products);
+            
+            // Limpiar búsqueda
             const searchInput = document.getElementById('productSearchTable');
-            if (searchInput) {
-                searchInput.value = '';
-            }
+            if (searchInput) searchInput.value = '';
+            
+            // Resetear filtros visuales
+            resetFilterChips();
             
             renderProductsTableBody(products);
             
+            // Controlar visibilidad de botón nuevo
             const btnNewProduct = document.getElementById('btnNewProduct');
             if (btnNewProduct) {
                 btnNewProduct.style.display = currentProfile?.role === 'admin' ? 'inline-flex' : 'none';
             }
             
         } catch (error) {
-            console.error('Error loading products table:', error);
+            console.error('Error loading products:', error);
+            showNotification('Error al cargar productos', 'error');
         }
     }
-
-    // ============================================
-    // FILTRO DE PRODUCTOS EN TABLA
-    // ============================================
-
+    
+    // ========== ESTADÍSTICAS ==========
+    
+    function updateProductStats(productsList) {
+        const total = productsList.length;
+        const lowStock = productsList.filter(p => p.stock > 0 && p.stock <= 5).length;
+        const outOfStock = productsList.filter(p => p.stock === 0).length;
+        const inventoryValue = productsList.reduce((sum, p) => sum + (p.price * p.stock), 0);
+        
+        // Animar números
+        animateValue('totalProducts', 0, total, 500);
+        animateValue('lowStockCount', 0, lowStock, 500);
+        animateValue('outOfStockCount', 0, outOfStock, 500);
+        
+        document.getElementById('inventoryValue').textContent = formatMoney(inventoryValue);
+        document.getElementById('productsShowing').textContent = `Mostrando ${productsList.length} productos`;
+    }
+    
+    function animateValue(id, start, end, duration) {
+        const obj = document.getElementById(id);
+        if (!obj) return;
+        
+        // Si es el valor de inventario, no animar (es string)
+        if (id === 'inventoryValue') return;
+        
+        let startTimestamp = null;
+        const step = (timestamp) => {
+            if (!startTimestamp) startTimestamp = timestamp;
+            const progress = Math.min((timestamp - startTimestamp) / duration, 1);
+            obj.innerHTML = Math.floor(progress * (end - start) + start);
+            if (progress < 1) {
+                window.requestAnimationFrame(step);
+            }
+        };
+        window.requestAnimationFrame(step);
+    }
+    
+    // ========== FILTROS ==========
+    
+    function resetFilterChips() {
+        document.querySelectorAll('.filter-chip').forEach(btn => {
+            btn.classList.remove('bg-brand-600', 'text-white', 'active');
+            btn.classList.add('bg-white', 'text-gray-700', 'border', 'border-gray-300');
+        });
+        document.getElementById('btnFilterAll').classList.remove('bg-white', 'text-gray-700', 'border', 'border-gray-300');
+        document.getElementById('btnFilterAll').classList.add('bg-brand-600', 'text-white', 'active');
+        
+        currentProductFilter = 'all';
+        currentStockFilter = null;
+    }
+    
+    function filterProductsTableByCategory(category) {
+        // Actualizar UI de botones
+        document.querySelectorAll('.filter-chip').forEach(btn => {
+            btn.classList.remove('bg-brand-600', 'text-white', 'active', 'bg-orange-100', 'text-orange-700', 'bg-red-100', 'text-red-700');
+            btn.classList.add('bg-white', 'text-gray-700', 'border', 'border-gray-300');
+        });
+        
+        const activeBtn = document.getElementById('btnFilter' + category.charAt(0).toUpperCase() + category.slice(1));
+        if (activeBtn) {
+            activeBtn.classList.remove('bg-white', 'text-gray-700', 'border', 'border-gray-300');
+            activeBtn.classList.add('bg-brand-600', 'text-white', 'active');
+        }
+        
+        currentProductFilter = category;
+        currentStockFilter = null;
+        
+        applyFilters();
+    }
+    
+    function filterProductsTableByStock(type) {
+        // Actualizar UI
+        document.querySelectorAll('.filter-chip').forEach(btn => {
+            btn.classList.remove('bg-brand-600', 'text-white', 'active');
+            btn.classList.add('bg-white', 'text-gray-700', 'border', 'border-gray-300');
+        });
+        
+        const btnId = type === 'low' ? 'btnFilterLowStock' : 'btnFilterOutStock';
+        const activeBtn = document.getElementById(btnId);
+        activeBtn.classList.remove('bg-white', 'text-gray-700', 'border', 'border-gray-300');
+        activeBtn.classList.add('active');
+        
+        currentStockFilter = type;
+        
+        applyFilters();
+    }
+    
     function filterProductsTable(searchTerm) {
         const term = searchTerm.toLowerCase().trim();
         
         if (!term) {
-            // Si no hay término de búsqueda, mostrar todos los productos
-            renderProductsTableBody(products);
+            applyFilters();
             return;
         }
         
-        // Filtrar productos que coincidan con el término de búsqueda
-        const filteredProducts = products.filter(p => 
+        const filtered = products.filter(p => 
             p.name.toLowerCase().includes(term) || 
             p.category.toLowerCase().includes(term)
         );
         
-        // Renderizar solo los productos filtrados
-        renderProductsTableBody(filteredProducts);
+        renderProductsTableBody(filtered);
     }
-
-    // Función auxiliar para renderizar el tbody (reutilizable)
+    
+    function applyFilters() {
+        let filtered = products;
+        
+        // Filtro por categoría
+        if (currentProductFilter !== 'all') {
+            filtered = filtered.filter(p => p.category === currentProductFilter);
+        }
+        
+        // Filtro por stock
+        if (currentStockFilter === 'low') {
+            filtered = filtered.filter(p => p.stock > 0 && p.stock <= 5);
+        } else if (currentStockFilter === 'out') {
+            filtered = filtered.filter(p => p.stock === 0);
+        }
+        
+        renderProductsTableBody(filtered);
+    }
+    
+    // ========== RENDERIZADO ==========
+    
     function renderProductsTableBody(productsToRender) {
         const tbody = document.getElementById('productsTableBody');
+        const emptyState = document.getElementById('productsEmptyState');
         const isAdmin = currentProfile?.role === 'admin';
         
         if (productsToRender.length === 0) {
-            tbody.innerHTML = `
-                <tr>
-                    <td colspan="7" class="px-4 py-8 text-center text-gray-500">
-                        <i class="fas fa-search text-3xl mb-2 text-gray-300"></i>
-                        <p>No se encontraron productos</p>
-                    </td>
-                </tr>
-            `;
+            tbody.innerHTML = '';
+            emptyState.classList.remove('hidden');
+            document.getElementById('productsShowing').textContent = '0 productos encontrados';
             return;
         }
         
+        emptyState.classList.add('hidden');
+        document.getElementById('productsShowing').textContent = `Mostrando ${productsToRender.length} productos`;
+        
         tbody.innerHTML = productsToRender.map(p => {
-            const editButton = isAdmin ? `
-                <button onclick="editProduct('${p.id}')" class="text-blue-500 hover:text-blue-700 mr-3 btn-action" title="Editar producto">
-                    <i class="fas fa-edit"></i>
-                </button>
-            ` : '';
+            const stockBadge = getStockBadge(p.stock);
+            const ivaBadge = p.has_iva ? 
+                `<span class="px-2 py-1 rounded-full text-xs bg-blue-100 text-blue-700 font-medium">IVA 16%</span>` : 
+                `<span class="px-2 py-1 rounded-full text-xs bg-gray-100 text-gray-500">Sin IVA</span>`;
             
-            const stockButton = !isAdmin ? `
-                <button onclick="openStockModal('${p.id}')" class="text-green-500 hover:text-green-700 mr-3 btn-action" title="Ajustar stock">
-                    <i class="fas fa-boxes"></i>
-                </button>
-            ` : '';
+            const statusBadge = p.is_active !== false ? 
+                `<span class="px-2 py-1 rounded-full text-xs bg-green-100 text-green-700">Activo</span>` :
+                `<span class="px-2 py-1 rounded-full text-xs bg-gray-100 text-gray-500">Inactivo</span>`;
             
-            const deleteButton = isAdmin ? `
-                <button onclick="deleteProduct('${p.id}')" class="text-red-500 hover:text-red-700 btn-action" title="Eliminar producto">
-                    <i class="fas fa-trash"></i>
-                </button>
-            ` : '';
+            // Acciones según rol
+            let actions = '';
+            if (isAdmin) {
+                actions = `
+                    <div class="flex justify-center gap-1">
+                        <button onclick="viewProductDetail('${p.id}')" class="w-8 h-8 rounded-full bg-gray-100 text-gray-600 hover:bg-gray-200 flex items-center justify-center transition-all" title="Ver detalle">
+                            <i class="fas fa-eye text-sm"></i>
+                        </button>
+                        <button onclick="editProduct('${p.id}')" class="w-8 h-8 rounded-full bg-blue-50 text-blue-600 hover:bg-blue-100 flex items-center justify-center transition-all" title="Editar">
+                            <i class="fas fa-edit text-sm"></i>
+                        </button>
+                        <button onclick="openStockModal('${p.id}')" class="w-8 h-8 rounded-full bg-green-50 text-green-600 hover:bg-green-100 flex items-center justify-center transition-all" title="Ajustar stock">
+                            <i class="fas fa-boxes text-sm"></i>
+                        </button>
+                        <button onclick="duplicateProduct('${p.id}')" class="w-8 h-8 rounded-full bg-purple-50 text-purple-600 hover:bg-purple-100 flex items-center justify-center transition-all" title="Duplicar">
+                            <i class="fas fa-copy text-sm"></i>
+                        </button>
+                        <button onclick="deleteProduct('${p.id}')" class="w-8 h-8 rounded-full bg-red-50 text-red-600 hover:bg-red-100 flex items-center justify-center transition-all" title="Eliminar">
+                            <i class="fas fa-trash text-sm"></i>
+                        </button>
+                    </div>
+                `;
+            } else {
+                // Cajero: solo ver detalle y ajustar stock (botón prominente)
+                actions = `
+                    <div class="flex justify-center gap-2">
+                        <button onclick="viewProductDetail('${p.id}')" class="w-8 h-8 rounded-full bg-gray-100 text-gray-600 hover:bg-gray-200 flex items-center justify-center transition-all" title="Ver detalle">
+                            <i class="fas fa-eye text-sm"></i>
+                        </button>
+                        <button onclick="openStockModal('${p.id}')" 
+                                class="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg text-sm font-medium transition-all transform hover:scale-105 shadow-sm flex items-center gap-2">
+                            <i class="fas fa-plus-minus"></i>
+                            Ajustar Stock
+                        </button>
+                    </div>
+                `;
+            }
+            
+            // Fila con color de fondo según stock
+            const rowClass = p.stock === 0 ? 'bg-red-50' : p.stock <= 5 ? 'bg-orange-50' : 'hover:bg-gray-50';
             
             return `
-            <tr class="hover:bg-gray-50 transition-colors">
-                <td class="px-4 py-3 font-medium">${p.name}</td>
-                <td class="px-4 py-3 capitalize">${p.category}</td>
-                <td class="px-4 py-3 text-center">
-                    <span class="${p.stock < 5 ? 'text-red-600 font-bold' : 'text-gray-700'}">${p.stock}</span>
+            <tr class="${rowClass} transition-colors">
+                <td class="px-4 py-3">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center text-lg">
+                            ${p.image || '📦'}
+                        </div>
+                        <div>
+                            <p class="font-medium text-gray-800">${p.name}</p>
+                            ${p.stock === 0 ? '<p class="text-xs text-red-500 font-bold">¡Reordenar!</p>' : ''}
+                        </div>
+                    </div>
                 </td>
-                <td class="px-4 py-3 text-center">
-                    ${p.has_iva ? '<span class="text-blue-600 font-medium">Sí (16%)</span>' : '<span class="text-gray-400">No</span>'}
-                </td>
-                <td class="px-4 py-3 text-right font-bold">${formatMoney(p.price)}</td>
-                <td class="px-4 py-3 text-center">
-                    <span class="px-2 py-1 rounded-full text-xs ${p.stock > 0 ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}">
-                        ${p.stock > 0 ? 'Activo' : 'Agotado'}
-                    </span>
-                </td>
-                <td class="px-4 py-3 text-center">
-                    ${editButton}${stockButton}${deleteButton}
-                </td>
+                <td class="px-4 py-3 capitalize text-gray-600">${p.category}</td>
+                <td class="px-4 py-3 text-center">${stockBadge}</td>
+                <td class="px-4 py-3 text-center">${ivaBadge}</td>
+                <td class="px-4 py-3 text-right font-bold text-gray-800">${formatMoney(p.price)}</td>
+                <td class="px-4 py-3 text-center">${statusBadge}</td>
+                <td class="px-4 py-3">${actions}</td>
             </tr>
-        `}).join('');
+            `;
+        }).join('');
     }
-
+    
+    function getStockBadge(stock) {
+        if (stock === 0) {
+            return `<span class="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs bg-red-500 text-white font-bold animate-pulse">
+                        <i class="fas fa-times-circle"></i> AGOTADO
+                    </span>`;
+        } else if (stock <= 5) {
+            return `<span class="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs bg-orange-500 text-white font-bold">
+                        <i class="fas fa-exclamation-triangle"></i> ${stock} CRÍTICO
+                    </span>`;
+        } else if (stock <= 10) {
+            return `<span class="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs bg-yellow-400 text-yellow-900 font-medium">
+                        ${stock} Bajo
+                    </span>`;
+        } else if (stock <= 20) {
+            return `<span class="px-2 py-1 rounded-full text-xs bg-green-100 text-green-700 font-medium">
+                        ${stock}
+                    </span>`;
+        } else {
+            return `<span class="px-2 py-1 rounded-full text-xs bg-blue-100 text-blue-700 font-medium">
+                        ${stock} Óptimo
+                    </span>`;
+        }
+    }
+    
+    // ========== DETALLE DE PRODUCTO ==========
+    
+    async function viewProductDetail(productId) {
+        const product = products.find(p => p.id === productId);
+        if (!product) return;
+        
+        document.getElementById('detailProdName').textContent = product.name;
+        document.getElementById('detailProdCategory').textContent = product.category;
+        document.getElementById('detailProdImage').textContent = product.image || '📦';
+        document.getElementById('detailProdPrice').textContent = formatMoney(product.price);
+        document.getElementById('detailProdIVA').textContent = product.has_iva ? 'IVA 16% incluido' : 'Sin IVA';
+        document.getElementById('detailProdStock').textContent = product.stock;
+        document.getElementById('detailProdStock').className = 'text-2xl font-bold ' + 
+            (product.stock === 0 ? 'text-red-600' : product.stock <= 5 ? 'text-orange-600' : 'text-green-600');
+        document.getElementById('detailProdStatus').textContent = product.is_active !== false ? 'Activo' : 'Inactivo';
+        document.getElementById('detailProdStatus').className = 'text-sm font-bold ' + 
+            (product.is_active !== false ? 'text-green-600' : 'text-gray-500');
+        
+        // Intentar cargar movimientos (si existe la tabla)
+        try {
+            const { data: movements } = await supabaseClient
+                .from('inventory_movements')
+                .select('*')
+                .eq('product_id', productId)
+                .order('created_at', { ascending: false })
+                .limit(5);
+            
+            const movementsDiv = document.getElementById('detailProdMovements');
+            const movementsList = document.getElementById('detailProdMovementsList');
+            
+            if (movements && movements.length > 0) {
+                movementsDiv.classList.remove('hidden');
+                movementsList.innerHTML = movements.map(m => `
+                    <div class="flex justify-between items-center p-2 bg-gray-50 rounded text-xs">
+                        <div>
+                            <span class="${m.type === 'add' ? 'text-green-600' : 'text-red-600'} font-bold">
+                                ${m.type === 'add' ? '+' : '-'}${m.quantity}
+                            </span>
+                            <span class="text-gray-600 ml-2">${m.reason || 'Ajuste manual'}</span>
+                        </div>
+                        <span class="text-gray-400">${new Date(m.created_at).toLocaleDateString()}</span>
+                    </div>
+                `).join('');
+            } else {
+                movementsDiv.classList.add('hidden');
+            }
+        } catch (e) {
+            document.getElementById('detailProdMovements').classList.add('hidden');
+        }
+        
+        openModal('productDetailModal');
+    }
+    
+    // ========== MODAL DE STOCK ==========
+    
     function openStockModal(productId) {
         const product = products.find(p => p.id === productId);
         if (!product) return;
         
+        currentStockProduct = product;
+        currentStockOperation = 'add';
+        
         document.getElementById('stockProdId').value = product.id;
         document.getElementById('stockProdName').textContent = product.name;
         document.getElementById('stockProdImage').textContent = product.image || '📦';
-        document.getElementById('stockProdCurrent').textContent = `Stock actual: ${product.stock}`;
-        document.getElementById('stockNewValue').value = product.stock;
-        document.getElementById('stockPreview').textContent = product.stock;
+        document.getElementById('stockCurrentBig').textContent = product.stock;
+        document.getElementById('stockAmount').value = '1';
+        document.getElementById('stockReason').value = '';
+        
+        setStockOperation('add');
         
         openModal('stockModal');
     }
-
-    function adjustStockPreview(change) {
-        const input = document.getElementById('stockNewValue');
-        let value = parseInt(input.value) || 0;
-        value += change;
-        if (value < 0) value = 0;
-        input.value = value;
-        document.getElementById('stockPreview').textContent = value;
+    
+    function setStockOperation(operation) {
+        currentStockOperation = operation;
+        document.getElementById('stockOperation').value = operation;
+        
+        const btnAdd = document.getElementById('btnStockAdd');
+        const btnRemove = document.getElementById('btnStockRemove');
+        
+        if (operation === 'add') {
+            btnAdd.classList.add('border-green-500', 'bg-green-50', 'text-green-700');
+            btnAdd.classList.remove('border-gray-300', 'text-gray-600');
+            btnRemove.classList.remove('border-red-500', 'bg-red-50', 'text-red-700');
+            btnRemove.classList.add('border-gray-300', 'text-gray-600');
+        } else {
+            btnRemove.classList.add('border-red-500', 'bg-red-50', 'text-red-700');
+            btnRemove.classList.remove('border-gray-300', 'text-gray-600');
+            btnAdd.classList.remove('border-green-500', 'bg-green-50', 'text-green-700');
+            btnAdd.classList.add('border-gray-300', 'text-gray-600');
+        }
+        
+        updateStockPreview();
     }
-
+    
+    function adjustStockAmount(change) {
+        const input = document.getElementById('stockAmount');
+        let value = parseInt(input.value) || 0;
+        value = Math.max(1, value + change);
+        input.value = value;
+        updateStockPreview();
+    }
+    
+    function updateStockPreview() {
+        const amount = parseInt(document.getElementById('stockAmount').value) || 0;
+        const current = currentStockProduct?.stock || 0;
+        let newStock;
+        let calculationText;
+        
+        if (currentStockOperation === 'add') {
+            newStock = current + amount;
+            calculationText = `${current} + ${amount} = ${newStock}`;
+        } else {
+            newStock = Math.max(0, current - amount);
+            calculationText = `${current} - ${amount} = ${newStock}`;
+        }
+        
+        const previewEl = document.getElementById('stockPreviewBig');
+        previewEl.textContent = newStock;
+        
+        // Color según resultado
+        previewEl.className = 'text-3xl font-bold ' + 
+            (newStock === 0 ? 'text-red-600' : 
+             newStock <= 5 ? 'text-orange-600' : 
+             newStock <= 10 ? 'text-yellow-600' : 'text-blue-800');
+        
+        document.getElementById('stockCalculation').textContent = calculationText;
+    }
+    
     async function saveStockAdjustment() {
         const productId = document.getElementById('stockProdId').value;
-        const newStock = parseInt(document.getElementById('stockNewValue').value) || 0;
+        const amount = parseInt(document.getElementById('stockAmount').value) || 0;
+        const reason = document.getElementById('stockReason').value;
         
-        if (newStock < 0) {
-            alert('El stock no puede ser negativo');
+        if (amount <= 0) {
+            showNotification('La cantidad debe ser mayor a 0', 'error');
             return;
         }
         
+        const product = products.find(p => p.id === productId);
+        let newStock;
+        
+        if (currentStockOperation === 'add') {
+            newStock = product.stock + amount;
+        } else {
+            if (amount > product.stock) {
+                showNotification('No puedes remover más stock del disponible', 'error');
+                return;
+            }
+            newStock = product.stock - amount;
+        }
+        
         try {
-            const { error } = await supabaseClient
-                .from('products')
-                .update({ stock: newStock })
-                .eq('id', productId);
+            // Guardar movimiento (opcional, para auditoría)
+            await supabaseClient
+                .from('inventory_movements')
+                .insert([{
+                    product_id: productId,
+                    product_name: product.name,
+                    type: currentStockOperation,
+                    quantity: amount,
+                    previous_stock: product.stock,
+                    new_stock: newStock,
+                    reason: reason || 'Ajuste manual',
+                    user_id: currentUser.id,
+                    user_name: currentProfile.full_name
+                }]);
             
-            if (error) throw error;
+            // Actualizar producto
+            await supabaseClient
+                .from('products')
+                .update({ stock: newStock, updated_at: new Date().toISOString() })
+                .eq('id', productId);
             
             closeModal('stockModal');
             await loadProductsTable();
-            await loadProducts();
+            await loadProducts(); // Para actualizar POS también
             
-            alert('Stock actualizado correctamente');
+            const actionText = currentStockOperation === 'add' ? 'aumentado' : 'disminuido';
+            showNotification(`✅ Stock ${actionText}: ${product.name} ahora tiene ${newStock} unidades`, 'success');
             
         } catch (error) {
-            alert('Error al actualizar stock: ' + error.message);
+            console.error('Error updating stock:', error);
+            showNotification('Error al actualizar stock: ' + error.message, 'error');
         }
     }
-
+    
+    // ========== CRUD PRODUCTOS (Admin) ==========
+    
     function openProductModal() {
         if (currentProfile?.role !== 'admin') {
-            alert('No tienes permisos para crear productos');
+            showNotification('No tienes permisos para crear productos', 'error');
             return;
         }
         
@@ -5595,10 +6110,10 @@ function confirmMixedPayment() {
         document.getElementById('prodIVA').checked = false;
         openModal('productModal');
     }
-
+    
     function editProduct(id) {
         if (currentProfile?.role !== 'admin') {
-            alert('No tienes permisos para editar productos');
+            showNotification('No tienes permisos para editar productos', 'error');
             return;
         }
         
@@ -5614,22 +6129,22 @@ function confirmMixedPayment() {
         document.getElementById('prodIVA').checked = product.has_iva;
         openModal('productModal');
     }
-
+    
     async function saveProduct() {
         if (currentProfile?.role !== 'admin') {
-            alert('No tienes permisos para guardar productos');
+            showNotification('No tienes permisos para guardar productos', 'error');
             return;
         }
         
         const id = document.getElementById('prodId').value;
-        const name = document.getElementById('prodName').value;
+        const name = document.getElementById('prodName').value.trim();
         const category = document.getElementById('prodCategory').value;
         const price = parseFloat(document.getElementById('prodPrice').value);
         const stock = parseInt(document.getElementById('prodStock').value) || 0;
         const hasIVA = document.getElementById('prodIVA').checked;
         
-        if (!name || !price) {
-            alert('Complete los campos obligatorios');
+        if (!name || !price || price <= 0) {
+            showNotification('Complete los campos obligatorios correctamente', 'error');
             return;
         }
         
@@ -5639,16 +6154,17 @@ function confirmMixedPayment() {
             price,
             stock,
             has_iva: hasIVA,
-            image: category === 'pasteles' ? '🎂' : 
-                   category === 'postres' ? '🧁' : 
-                   category === 'decoracion' ? '🎨' : '👨‍🍳'
+            image: getCategoryEmoji(category),
+            is_active: true
         };
         
         try {
             if (id) {
                 await supabaseClient.from('products').update(productData).eq('id', id);
+                showNotification('Producto actualizado correctamente', 'success');
             } else {
                 await supabaseClient.from('products').insert([productData]);
+                showNotification('Producto creado correctamente', 'success');
             }
             
             closeModal('productModal');
@@ -5656,44 +6172,73 @@ function confirmMixedPayment() {
             await loadProducts();
             
         } catch (error) {
-            alert('Error al guardar producto: ' + error.message);
+            console.error('Error saving product:', error);
+            showNotification('Error al guardar: ' + error.message, 'error');
         }
     }
-
+    
+    function getCategoryEmoji(category) {
+        const emojis = {
+            'pasteles': '🎂',
+            'postres': '🧁',
+            'decoracion': '🎨',
+            'herramientas': '👨‍🍳'
+        };
+        return emojis[category] || '📦';
+    }
+    
+    async function duplicateProduct(productId) {
+        if (currentProfile?.role !== 'admin') return;
+        
+        const product = products.find(p => p.id === productId);
+        if (!product) return;
+        
+        const newName = prompt('Nombre del nuevo producto:', product.name + ' (Copia)');
+        if (!newName || newName.trim() === '') return;
+        
+        try {
+            await supabaseClient.from('products').insert([{
+                name: newName.trim(),
+                category: product.category,
+                price: product.price,
+                stock: 0,
+                has_iva: product.has_iva,
+                image: product.image,
+                is_active: true
+            }]);
+            
+            await loadProductsTable();
+            showNotification('Producto duplicado correctamente', 'success');
+            
+        } catch (error) {
+            showNotification('Error al duplicar: ' + error.message, 'error');
+        }
+    }
+    
     async function deleteProduct(id) {
         if (currentProfile?.role !== 'admin') {
-            alert('No tienes permisos para eliminar productos');
+            showNotification('No tienes permisos para eliminar productos', 'error');
             return;
         }
         
-        if (!confirm('¿Eliminar este producto?')) return;
+        const product = products.find(p => p.id === id);
+        if (!confirm(`¿Eliminar permanentemente "${product.name}"?\n\nEsta acción no se puede deshacer.`)) {
+            return;
+        }
         
         try {
-            console.log('Intentando eliminar producto:', id);
+            // Opción 1: Eliminación física
+            await supabaseClient.from('products').delete().eq('id', id);
             
-            // OPCIÓN A: Eliminación física (BORRADO REAL)
-            const { data, error } = await supabaseClient
-                .from('products')
-                .delete()
-                .eq('id', id)
-                .select(); // Devuelve el registro eliminado para confirmar
+            // Opción 2: Soft delete (desactivar)
+            // await supabaseClient.from('products').update({ is_active: false }).eq('id', id);
             
-            if (error) {
-                console.error('Error de Supabase:', error);
-                throw error;
-            }
-            
-            console.log('Producto eliminado:', data);
-            
-            // Recargar tablas
             await loadProductsTable();
-            await loadProducts();
-            
-            alert('Producto eliminado correctamente');
+            showNotification('Producto eliminado correctamente', 'success');
             
         } catch (error) {
-            console.error('Error completo:', error);
-            alert('Error al eliminar: ' + error.message);
+            console.error('Error deleting product:', error);
+            showNotification('Error al eliminar: ' + error.message, 'error');
         }
     }
     
