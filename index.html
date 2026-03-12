@@ -1822,47 +1822,454 @@
             </div>
         </div>
 
-        <!-- Employees Module -->
+        <!-- ============================================ -->
+        <!-- EMPLOYEES MODULE - VERSIÓN PROFESIONAL       -->
+        <!-- ============================================ -->
         <div id="employees" class="module hidden fade-in admin-only-content">
-            <div class="mb-6 flex justify-between items-center">
+            
+            <!-- ENCABEZADO -->
+            <div class="mb-6 flex flex-wrap justify-between items-center gap-4">
                 <div>
-                    <h1 class="text-3xl font-serif font-bold text-brand-900 mb-2">Empleados</h1>
-                    <p class="text-gray-600">Personal de Dulce Bocado</p>
+                    <h1 class="text-3xl font-serif font-bold text-brand-900 mb-2">Control de Personal</h1>
+                    <p class="text-gray-600">Gestión completa de empleados, contratos y documentación</p>
                 </div>
-                <button onclick="openEmployeeModal()" class="bg-brand-600 hover:bg-brand-700 text-white px-6 py-2 rounded-lg transition-colors shadow-lg">
-                    <i class="fas fa-plus mr-2"></i>Agregar Empleado
-                </button>
+                <div class="flex gap-3">
+                    <button onclick="openEmployeeModal()" class="bg-brand-600 hover:bg-brand-700 text-white px-6 py-2 rounded-lg transition-colors shadow-lg flex items-center">
+                        <i class="fas fa-user-plus mr-2"></i>Nuevo Empleado
+                    </button>
+                    <button onclick="openEmployeeReport()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors shadow-lg flex items-center">
+                        <i class="fas fa-file-alt mr-2"></i>Reporte
+                    </button>
+                </div>
             </div>
-
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div class="glass-panel p-6 rounded-2xl">
-                    <div class="flex items-center gap-3 mb-4">
-                        <div class="w-10 h-10 bg-orange-100 rounded-full flex items-center justify-center text-orange-600">
-                            <i class="fas fa-bread-slice"></i>
+        
+            <!-- DASHBOARD DE PERSONAL -->
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+                <div class="glass-panel p-4 rounded-xl border-l-4 border-green-500 bg-gradient-to-br from-green-50 to-white">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-xs text-gray-500 uppercase font-bold">Personal Activo</p>
+                            <h4 class="text-2xl font-bold text-green-600" id="totalActiveEmployees">0</h4>
                         </div>
-                        <div class="flex-1">
-                            <h3 class="text-lg font-bold text-gray-800">Producción</h3>
-                            <p class="text-xs text-gray-500" id="countProduction">0 empleados</p>
+                        <div class="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center text-green-600">
+                            <i class="fas fa-user-check text-xl"></i>
                         </div>
                     </div>
-                    <div id="productionEmployees" class="space-y-3"></div>
                 </div>
-
-                <div class="glass-panel p-6 rounded-2xl">
-                    <div class="flex items-center gap-3 mb-4">
-                        <div class="w-10 h-10 bg-pink-100 rounded-full flex items-center justify-center text-pink-600">
-                            <i class="fas fa-headset"></i>
+                
+                <div class="glass-panel p-4 rounded-xl border-l-4 border-blue-500 bg-gradient-to-br from-blue-50 to-white">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-xs text-gray-500 uppercase font-bold">En Vacaciones</p>
+                            <h4 class="text-2xl font-bold text-blue-600" id="totalOnVacation">0</h4>
                         </div>
-                        <div class="flex-1">
-                            <h3 class="text-lg font-bold text-gray-800">Atención a Clientes</h3>
-                            <p class="text-xs text-gray-500" id="countService">0 empleados</p>
+                        <div class="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center text-blue-600">
+                            <i class="fas fa-umbrella-beach text-xl"></i>
                         </div>
                     </div>
-                    <div id="serviceEmployees" class="space-y-3"></div>
+                </div>
+                
+                <div class="glass-panel p-4 rounded-xl border-l-4 border-orange-500 bg-gradient-to-br from-orange-50 to-white">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-xs text-gray-500 uppercase font-bold">Con Adeudos</p>
+                            <h4 class="text-2xl font-bold text-orange-600" id="totalWithLoans">0</h4>
+                        </div>
+                        <div class="w-12 h-12 bg-orange-100 rounded-full flex items-center justify-center text-orange-600">
+                            <i class="fas fa-hand-holding-usd text-xl"></i>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="glass-panel p-4 rounded-xl border-l-4 border-purple-500 bg-gradient-to-br from-purple-50 to-white">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-xs text-gray-500 uppercase font-bold">Antigüedad Promedio</p>
+                            <h4 class="text-2xl font-bold text-purple-600" id="avgSeniority">0 años</h4>
+                        </div>
+                        <div class="w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center text-purple-600">
+                            <i class="fas fa-hourglass-half text-xl"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        
+            <!-- BARRA DE HERRAMIENTAS -->
+            <div class="glass-panel p-4 rounded-xl mb-6">
+                <div class="flex flex-wrap gap-4 items-center justify-between">
+                    <!-- Búsqueda -->
+                    <div class="flex-1 min-w-[250px]">
+                        <div class="relative">
+                            <i class="fas fa-search absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
+                            <input type="text" id="employeeSearch" 
+                                   class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-transparent outline-none"
+                                   placeholder="Buscar por nombre, RFC, CURP..."
+                                   oninput="filterEmployees(this.value)">
+                        </div>
+                    </div>
+        
+                    <!-- Filtros -->
+                    <div class="flex gap-2 flex-wrap">
+                        <select id="employeeFilterArea" onchange="filterEmployeesByArea()" class="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-brand-500 outline-none">
+                            <option value="all">Todas las áreas</option>
+                            <option value="produccion">Producción</option>
+                            <option value="atencion">Atención a Clientes</option>
+                            <option value="administrativo">Administrativo</option>
+                            <option value="logistica">Logística/Almacén</option>
+                        </select>
+                        
+                        <select id="employeeFilterStatus" onchange="filterEmployeesByStatus()" class="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-brand-500 outline-none">
+                            <option value="all">Todos los estados</option>
+                            <option value="active">Activo</option>
+                            <option value="vacation">De Vacaciones</option>
+                            <option value="sick">Incapacitado</option>
+                            <option value="inactive">Baja</option>
+                        </select>
+                        
+                        <button onclick="clearEmployeeFilters()" class="text-sm text-gray-500 hover:text-gray-700 underline px-3">
+                            Limpiar
+                        </button>
+                    </div>
+                </div>
+            </div>
+        
+            <!-- TABS DE NAVEGACIÓN -->
+            <div class="mb-6">
+                <div class="flex gap-2 border-b border-gray-200">
+                    <button onclick="showEmployeeTab('list')" id="tabList" class="px-6 py-3 font-medium text-brand-600 border-b-2 border-brand-600 bg-brand-50 rounded-t-lg">
+                        <i class="fas fa-list mr-2"></i>Lista de Personal
+                    </button>
+                    <button onclick="showEmployeeTab('loans')" id="tabLoans" class="px-6 py-3 font-medium text-gray-500 hover:text-brand-600 border-b-2 border-transparent hover:bg-gray-50 rounded-t-lg">
+                        <i class="fas fa-hand-holding-usd mr-2"></i>Adelantos y Préstamos
+                        <span id="loanBadge" class="ml-2 px-2 py-0.5 bg-orange-500 text-white text-xs rounded-full hidden">0</span>
+                    </button>
+                    <button onclick="showEmployeeTab('vacations')" id="tabVacations" class="px-6 py-3 font-medium text-gray-500 hover:text-brand-600 border-b-2 border-transparent hover:bg-gray-50 rounded-t-lg">
+                        <i class="fas fa-umbrella-beach mr-2"></i>Vacaciones
+                        <span id="vacationBadge" class="ml-2 px-2 py-0.5 bg-blue-500 text-white text-xs rounded-full hidden">0</span>
+                    </button>
+                    <button onclick="showEmployeeTab('imss')" id="tabImss" class="px-6 py-3 font-medium text-gray-500 hover:text-brand-600 border-b-2 border-transparent hover:bg-gray-50 rounded-t-lg">
+                        <i class="fas fa-hospital mr-2"></i>Simulación IMSS
+                    </button>
+                </div>
+            </div>
+        
+            <!-- CONTENIDO TAB: LISTA DE PERSONAL -->
+            <div id="employeeTabList" class="employee-tab-content">
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" id="employeesGrid">
+                    <!-- Se llena dinámicamente -->
+                </div>
+                <div id="employeesEmptyState" class="hidden p-8 text-center text-gray-400">
+                    <i class="fas fa-users-slash text-4xl mb-3 text-gray-300"></i>
+                    <p class="text-lg">No se encontraron empleados</p>
+                </div>
+            </div>
+        
+            <!-- CONTENIDO TAB: ADELANTOS Y PRÉSTAMOS -->
+            <div id="employeeTabLoans" class="employee-tab-content hidden">
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    <!-- Formulario de nuevo préstamo -->
+                    <div class="glass-panel p-6 rounded-2xl">
+                        <h3 class="text-lg font-bold text-brand-800 mb-4">Registrar Adelanto/Préstamo</h3>
+                        <div class="space-y-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Empleado *</label>
+                                <select id="loanEmployee" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-brand-500 outline-none">
+                                    <option value="">Seleccionar empleado...</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Monto *</label>
+                                <div class="relative">
+                                    <span class="absolute left-3 top-2 text-gray-500">$</span>
+                                    <input type="number" id="loanAmount" class="w-full border border-gray-300 rounded-lg pl-8 pr-3 py-2 focus:ring-2 focus:ring-brand-500 outline-none" placeholder="0.00" step="0.01">
+                                </div>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Tipo *</label>
+                                <select id="loanType" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-brand-500 outline-none">
+                                    <option value="advance">Adelanto de nómina</option>
+                                    <option value="loan">Préstamo personal</option>
+                                    <option value="uniform">Uniforme/equipo</option>
+                                    <option value="other">Otro</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Descuento por nómina</label>
+                                <div class="flex items-center gap-2">
+                                    <input type="number" id="loanWeeklyDiscount" class="w-24 border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-brand-500 outline-none" placeholder="0" min="1">
+                                    <span class="text-sm text-gray-500">semanas para pagar</span>
+                                </div>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Motivo/Descripción</label>
+                                <textarea id="loanReason" rows="2" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-brand-500 outline-none" placeholder="Ej: Adelanto para gastos médicos..."></textarea>
+                            </div>
+                            <button onclick="saveEmployeeLoan()" class="w-full bg-orange-500 hover:bg-orange-600 text-white py-2 rounded-lg transition-colors font-medium">
+                                <i class="fas fa-save mr-2"></i>Registrar Préstamo
+                            </button>
+                        </div>
+                    </div>
+        
+                    <!-- Lista de préstamos activos -->
+                    <div class="lg:col-span-2 glass-panel rounded-2xl overflow-hidden">
+                        <div class="p-4 border-b border-gray-200 bg-gradient-to-r from-orange-50 to-white">
+                            <h3 class="font-bold text-orange-800 flex items-center">
+                                <i class="fas fa-list-alt mr-2"></i>
+                                Préstamos Activos
+                            </h3>
+                        </div>
+                        <div class="overflow-x-auto max-h-[500px] overflow-y-auto">
+                            <table class="w-full text-sm">
+                                <thead class="bg-orange-50 text-orange-800 sticky top-0">
+                                    <tr>
+                                        <th class="px-4 py-3 text-left">Empleado</th>
+                                        <th class="px-4 py-3 text-left">Tipo</th>
+                                        <th class="px-4 py-3 text-right">Monto</th>
+                                        <th class="px-4 py-3 text-right">Saldo</th>
+                                        <th class="px-4 py-3 text-center">Semanas</th>
+                                        <th class="px-4 py-3 text-center">Estado</th>
+                                        <th class="px-4 py-3 text-center">Acciones</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="loansTableBody" class="divide-y divide-gray-100">
+                                    <!-- Se llena dinámicamente -->
+                                </tbody>
+                            </table>
+                        </div>
+                        <div id="loansEmptyState" class="hidden p-8 text-center text-gray-400">
+                            <i class="fas fa-check-circle text-4xl mb-2 text-green-300"></i>
+                            <p>No hay préstamos activos</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        
+            <!-- CONTENIDO TAB: VACACIONES -->
+            <div id="employeeTabVacations" class="employee-tab-content hidden">
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    <!-- Solicitud de vacaciones -->
+                    <div class="glass-panel p-6 rounded-2xl">
+                        <h3 class="text-lg font-bold text-brand-800 mb-4">Solicitar Vacaciones</h3>
+                        <div class="space-y-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Empleado *</label>
+                                <select id="vacationEmployee" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-brand-500 outline-none">
+                                    <option value="">Seleccionar empleado...</option>
+                                </select>
+                            </div>
+                            <div id="vacationInfo" class="hidden p-3 bg-blue-50 rounded-lg text-sm">
+                                <p class="text-blue-800 font-medium mb-1">Días disponibles: <span id="vacationAvailableDays" class="text-xl font-bold">0</span></p>
+                                <p class="text-blue-600 text-xs">Antigüedad: <span id="vacationSeniority"></span></p>
+                            </div>
+                            <div class="grid grid-cols-2 gap-3">
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Fecha inicio *</label>
+                                    <input type="date" id="vacationStartDate" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-brand-500 outline-none">
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Fecha fin *</label>
+                                    <input type="date" id="vacationEndDate" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-brand-500 outline-none">
+                                </div>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Días solicitados</label>
+                                <input type="number" id="vacationDays" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-brand-500 outline-none" readonly>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Observaciones</label>
+                                <textarea id="vacationNotes" rows="2" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-brand-500 outline-none" placeholder="Ej: Vacaciones de verano..."></textarea>
+                            </div>
+                            <button onclick="requestVacation()" class="w-full bg-blue-500 hover:bg-blue-600 text-white py-2 rounded-lg transition-colors font-medium">
+                                <i class="fas fa-paper-plane mr-2"></i>Solicitar Vacaciones
+                            </button>
+                        </div>
+                    </div>
+        
+                    <!-- Calendario y solicitudes -->
+                    <div class="lg:col-span-2 space-y-6">
+                        <!-- Solicitudes pendientes -->
+                        <div class="glass-panel rounded-2xl overflow-hidden">
+                            <div class="p-4 border-b border-gray-200 bg-gradient-to-r from-blue-50 to-white">
+                                <h3 class="font-bold text-blue-800 flex items-center">
+                                    <i class="fas fa-clock mr-2"></i>
+                                    Solicitudes Pendientes
+                                </h3>
+                            </div>
+                            <div class="overflow-x-auto max-h-[250px] overflow-y-auto">
+                                <table class="w-full text-sm">
+                                    <thead class="bg-blue-50 text-blue-800 sticky top-0">
+                                        <tr>
+                                            <th class="px-4 py-3 text-left">Empleado</th>
+                                            <th class="px-4 py-3 text-center">Período</th>
+                                            <th class="px-4 py-3 text-center">Días</th>
+                                            <th class="px-4 py-3 text-center">Estado</th>
+                                            <th class="px-4 py-3 text-center">Acciones</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="vacationRequestsTableBody" class="divide-y divide-gray-100">
+                                        <!-- Se llena dinámicamente -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+        
+                        <!-- Personal de vacaciones actual -->
+                        <div class="glass-panel rounded-2xl overflow-hidden">
+                            <div class="p-4 border-b border-gray-200 bg-gradient-to-r from-green-50 to-white">
+                                <h3 class="font-bold text-green-800 flex items-center">
+                                    <i class="fas fa-umbrella-beach mr-2"></i>
+                                    Actualmente de Vacaciones
+                                </h3>
+                            </div>
+                            <div id="currentVacationsList" class="p-4 grid grid-cols-1 md:grid-cols-2 gap-3">
+                                <!-- Se llena dinámicamente -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        
+            <!-- CONTENIDO TAB: SIMULACIÓN IMSS -->
+            <div id="employeeTabImss" class="employee-tab-content hidden">
+                <div class="mb-6 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+                    <div class="flex items-start gap-3">
+                        <i class="fas fa-info-circle text-yellow-600 text-xl mt-0.5"></i>
+                        <div>
+                            <h4 class="font-bold text-yellow-800">Simulación de Cuotas IMSS</h4>
+                            <p class="text-sm text-yellow-700 mt-1">
+                                Los empleados <strong>no están dados de alta en IMSS</strong>. Esta sección muestra el cálculo estimado 
+                                de cuotas obrero-patronales <strong>si estuvieran dados de alta</strong>, para fines informativos y 
+                                planificación fiscal.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+        
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <!-- Calculadora IMSS -->
+                    <div class="glass-panel p-6 rounded-2xl">
+                        <h3 class="text-lg font-bold text-brand-800 mb-4">Calculadora de Cuotas</h3>
+                        <div class="space-y-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Salario Base de Cotización (SBC)</label>
+                                <div class="relative">
+                                    <span class="absolute left-3 top-2 text-gray-500">$</span>
+                                    <input type="number" id="imssSBC" class="w-full border border-gray-300 rounded-lg pl-8 pr-3 py-2 focus:ring-2 focus:ring-brand-500 outline-none" placeholder="0.00" oninput="calculateIMSS()">
+                                </div>
+                                <p class="text-xs text-gray-500 mt-1">Generalmente es el salario diario integrado</p>
+                            </div>
+                            
+                            <div class="p-4 bg-gray-50 rounded-lg space-y-3">
+                                <h4 class="font-bold text-gray-800 text-sm mb-3">Cuotas Patronales (lo que pagaría el patrón):</h4>
+                                
+                                <div class="flex justify-between text-sm">
+                                    <span class="text-gray-600">Cuota fija (20.40% del SBC):</span>
+                                    <span class="font-bold text-red-600" id="imssCuotaFija">$0.00</span>
+                                </div>
+                                <div class="flex justify-between text-sm">
+                                    <span class="text-gray-600">Excedente (1.10% del excedente de 3 SMG):</span>
+                                    <span class="font-bold text-red-600" id="imssExcedente">$0.00</span>
+                                </div>
+                                <div class="flex justify-between text-sm">
+                                    <span class="text-gray-600">Prestaciones en dinero (0.70%):</span>
+                                    <span class="font-bold text-red-600" id="imssPrestaciones">$0.00</span>
+                                </div>
+                                <div class="flex justify-between text-sm">
+                                    <span class="text-gray-600">Gastos médicos (1.05%):</span>
+                                    <span class="font-bold text-red-600" id="imssGastosMedicos">$0.00</span>
+                                </div>
+                                <div class="flex justify-between text-sm">
+                                    <span class="text-gray-600">Riesgo de trabajo (variable):</span>
+                                    <span class="font-bold text-red-600" id="imssRiesgo">$0.00</span>
+                                </div>
+                                <div class="flex justify-between text-sm">
+                                    <span class="text-gray-600">Invalidez y vida (1.75%):</span>
+                                    <span class="font-bold text-red-600" id="imssInvalidez">$0.00</span>
+                                </div>
+                                <div class="flex justify-between text-sm">
+                                    <span class="text-gray-600">Guardería (1.00%):</span>
+                                    <span class="font-bold text-red-600" id="imssGuarderia">$0.00</span>
+                                </div>
+                                <div class="flex justify-between text-sm">
+                                    <span class="text-gray-600">Retiro (2.00%):</span>
+                                    <span class="font-bold text-red-600" id="imssRetiro">$0.00</span>
+                                </div>
+                                <div class="flex justify-between text-sm">
+                                    <span class="text-gray-600">Cesantía y vejez (3.15%):</span>
+                                    <span class="font-bold text-red-600" id="imssCesantia">$0.00</span>
+                                </div>
+                                <div class="flex justify-between text-sm">
+                                    <span class="text-gray-600">Infonavit (5.00%):</span>
+                                    <span class="font-bold text-red-600" id="imssInfonavit">$0.00</span>
+                                </div>
+                                
+                                <div class="border-t pt-3 mt-3">
+                                    <div class="flex justify-between font-bold text-lg">
+                                        <span class="text-gray-800">Total Cuotas Patronales:</span>
+                                        <span class="text-red-700" id="imssTotalPatron">$0.00</span>
+                                    </div>
+                                    <p class="text-xs text-gray-500 mt-1">Aproximadamente el <span id="imssPorcentajeTotal">0%</span> del SBC mensual</p>
+                                </div>
+                            </div>
+        
+                            <div class="p-4 bg-blue-50 rounded-lg">
+                                <h4 class="font-bold text-blue-800 text-sm mb-3">Cuotas Obreras (descuento al empleado):</h4>
+                                <div class="flex justify-between text-sm mb-2">
+                                    <span class="text-blue-600">Cuota fija (0.625%):</span>
+                                    <span class="font-bold text-blue-800" id="imssCuotaObrera">$0.00</span>
+                                </div>
+                                <div class="flex justify-between text-sm mb-2">
+                                    <span class="text-blue-600">Excedente (0.40%):</span>
+                                    <span class="font-bold text-blue-800" id="imssExcedenteObrera">$0.00</span>
+                                </div>
+                                <div class="flex justify-between text-sm mb-2">
+                                    <span class="text-blue-600">Prestaciones (0.25%):</span>
+                                    <span class="font-bold text-blue-800" id="imssPrestacionesObrera">$0.00</span>
+                                </div>
+                                <div class="flex justify-between text-sm mb-2">
+                                    <span class="text-blue-600">Invalidez y vida (0.625%):</span>
+                                    <span class="font-bold text-blue-800" id="imssInvalidezObrera">$0.00</span>
+                                </div>
+                                <div class="flex justify-between text-sm mb-2">
+                                    <span class="text-blue-600">Cesantía y vejez (1.125%):</span>
+                                    <span class="font-bold text-blue-800" id="imssCesantiaObrera">$0.00</span>
+                                </div>
+                                <div class="flex justify-between font-bold text-lg border-t border-blue-200 pt-2">
+                                    <span class="text-blue-900">Total Descuento al Empleado:</span>
+                                    <span class="text-blue-900" id="imssTotalObrero">$0.00</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+        
+                    <!-- Tabla de empleados con cálculo IMSS -->
+                    <div class="glass-panel rounded-2xl overflow-hidden">
+                        <div class="p-4 border-b border-gray-200 bg-gradient-to-r from-green-50 to-white">
+                            <h3 class="font-bold text-green-800 flex items-center">
+                                <i class="fas fa-calculator mr-2"></i>
+                                Estimación por Empleado (si estuvieran dados de alta)
+                            </h3>
+                        </div>
+                        <div class="overflow-x-auto max-h-[600px] overflow-y-auto">
+                            <table class="w-full text-sm">
+                                <thead class="bg-green-50 text-green-800 sticky top-0">
+                                    <tr>
+                                        <th class="px-4 py-3 text-left">Empleado</th>
+                                        <th class="px-4 py-3 text-right">SBC Diario</th>
+                                        <th class="px-4 py-3 text-right">Cuota Patronal</th>
+                                        <th class="px-4 py-3 text-right">Descuento Empleado</th>
+                                        <th class="px-4 py-3 text-right">Costo Total</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="imssTableBody" class="divide-y divide-gray-100">
+                                    <!-- Se llena dinámicamente -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
-
         <!-- NOMINA MODULE - AHORA CON IMPACTO EN BANCOS -->
         <div id="nomina" class="module hidden fade-in admin-only-content">
             <div class="mb-6 flex justify-between items-center">
@@ -2545,34 +2952,515 @@
         </div>
     </div>
     
-<!-- Modal Empleado -->
-<div id="employeeModal" class="modal">
-    <div class="bg-white rounded-2xl p-6 w-full max-w-md mx-4 shadow-2xl">
-        <h3 class="text-xl font-bold text-brand-800 mb-4">Agregar Empleado</h3>
-        <div class="space-y-4">
-            <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">Nombre Completo *</label>
-                <input type="text" id="empName" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-brand-500 outline-none">
+    <!-- ============================================ -->
+    <!-- MODAL EMPLEADO - VERSIÓN COMPLETA            -->
+    <!-- ============================================ -->
+    <div id="employeeModal" class="modal">
+        <div class="bg-white rounded-2xl p-6 w-full max-w-4xl mx-4 shadow-2xl max-h-[90vh] overflow-y-auto">
+            <div class="flex justify-between items-start mb-6">
+                <div>
+                    <h3 class="text-2xl font-bold text-brand-800" id="employeeModalTitle">Nuevo Empleado</h3>
+                    <p class="text-sm text-gray-500" id="employeeModalSubtitle">Complete la información del personal</p>
+                </div>
+                <button onclick="closeModal('employeeModal')" class="text-gray-400 hover:text-gray-600 w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-100">
+                    <i class="fas fa-times text-xl"></i>
+                </button>
             </div>
-            <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">Área *</label>
-                <select id="empArea" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-brand-500 outline-none">
-                    <option value="produccion">Producción</option>
-                    <option value="atencion">Atención a Clientes</option>
-                </select>
+    
+            <input type="hidden" id="empId">
+            
+            <!-- Tabs del modal -->
+            <div class="flex gap-2 border-b border-gray-200 mb-6">
+                <button onclick="showEmployeeFormTab('general')" id="empTabGeneral" class="px-4 py-2 font-medium text-brand-600 border-b-2 border-brand-600">General</button>
+                <button onclick="showEmployeeFormTab('laboral')" id="empTabLaboral" class="px-4 py-2 font-medium text-gray-500 hover:text-brand-600 border-b-2 border-transparent">Datos Laborales</button>
+                <button onclick="showEmployeeFormTab('documentos')" id="empTabDocumentos" class="px-4 py-2 font-medium text-gray-500 hover:text-brand-600 border-b-2 border-transparent">Documentos</button>
+                <button onclick="showEmployeeFormTab('contacto')" id="empTabContacto" class="px-4 py-2 font-medium text-gray-500 hover:text-brand-600 border-b-2 border-transparent">Contacto</button>
             </div>
-            <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">Puesto/Rol *</label>
-                <input type="text" id="empRole" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-brand-500 outline-none">
+    
+            <!-- TAB: GENERAL -->
+            <div id="empFormGeneral" class="employee-form-tab">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <!-- Foto de perfil -->
+                    <div class="md:col-span-2 flex items-center gap-6 mb-4">
+                        <div class="relative">
+                            <div id="empPhotoPreview" class="w-24 h-24 rounded-full bg-gray-200 flex items-center justify-center text-4xl overflow-hidden border-4 border-brand-100">
+                                <span id="empPhotoPlaceholder">👤</span>
+                                <img id="empPhotoImg" class="w-full h-full object-cover hidden">
+                            </div>
+                            <button onclick="document.getElementById('empPhotoInput').click()" class="absolute -bottom-1 -right-1 w-8 h-8 bg-brand-500 text-white rounded-full flex items-center justify-center hover:bg-brand-600 shadow-md">
+                                <i class="fas fa-camera text-xs"></i>
+                            </button>
+                            <input type="file" id="empPhotoInput" accept="image/*" class="hidden" onchange="previewEmployeePhoto(this)">
+                        </div>
+                        <div>
+                            <h4 class="font-bold text-gray-800">Foto de perfil</h4>
+                            <p class="text-sm text-gray-500">Opcional. Tamaño máximo 2MB.</p>
+                        </div>
+                    </div>
+    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Nombre Completo *</label>
+                        <input type="text" id="empName" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-brand-500 outline-none" placeholder="Ej: María Elena González Pérez">
+                    </div>
+    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">RFC *</label>
+                        <input type="text" id="empRFC" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-brand-500 outline-none uppercase" placeholder="Ej: GOMP800515ABC" maxlength="13" oninput="validateRFC(this)">
+                        <p id="empRFCError" class="text-xs text-red-500 hidden mt-1">RFC inválido</p>
+                    </div>
+    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">CURP *</label>
+                        <input type="text" id="empCURP" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-brand-500 outline-none uppercase" placeholder="Ej: GOMP800515MDFRZN08" maxlength="18" oninput="validateCURP(this)">
+                        <p id="empCURPError" class="text-xs text-red-500 hidden mt-1">CURP inválido</p>
+                    </div>
+    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">NSS (Número de Seguro Social)</label>
+                        <input type="text" id="empNSS" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-brand-500 outline-none" placeholder="Ej: 12345678901" maxlength="11">
+                        <p class="text-xs text-gray-500 mt-1">11 dígitos. Dejar vacío si no tiene.</p>
+                    </div>
+    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Fecha de Nacimiento</label>
+                        <input type="date" id="empBirthDate" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-brand-500 outline-none">
+                    </div>
+    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Género</label>
+                        <select id="empGender" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-brand-500 outline-none">
+                            <option value="">Seleccionar...</option>
+                            <option value="M">Masculino</option>
+                            <option value="F">Femenino</option>
+                            <option value="O">Otro</option>
+                        </select>
+                    </div>
+                </div>
             </div>
-        </div>
-        <div class="flex gap-3 mt-6">
-            <button onclick="closeModal('employeeModal')" class="flex-1 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">Cancelar</button>
-            <button onclick="saveEmployee()" class="flex-1 py-2 bg-brand-600 text-white rounded-lg hover:bg-brand-700 transition-colors">Guardar</button>
+    
+            <!-- TAB: DATOS LABORALES -->
+            <div id="empFormLaboral" class="employee-form-tab hidden">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Área *</label>
+                        <select id="empArea" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-brand-500 outline-none">
+                            <option value="produccion">Producción</option>
+                            <option value="atencion">Atención a Clientes</option>
+                            <option value="administrativo">Administrativo</option>
+                            <option value="logistica">Logística/Almacén</option>
+                        </select>
+                    </div>
+    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Puesto/Rol *</label>
+                        <input type="text" id="empRole" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-brand-500 outline-none" placeholder="Ej: Pastelero Principal, Cajero, etc.">
+                    </div>
+    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Tipo de Contrato *</label>
+                        <select id="empContractType" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-brand-500 outline-none">
+                            <option value="indefinido">Indefinido</option>
+                            <option value="temporal">Temporal/Eventual</option>
+                            <option value="prueba">Período de Prueba</option>
+                            <option value="honorarios">Honorarios (no relación laboral)</option>
+                        </select>
+                    </div>
+    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Fecha de Ingreso *</label>
+                        <input type="date" id="empHireDate" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-brand-500 outline-none" onchange="calculateSeniority()">
+                    </div>
+    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Sueldo Base Diario (para cálculos)</label>
+                        <div class="relative">
+                            <span class="absolute left-3 top-2 text-gray-500">$</span>
+                            <input type="number" id="empDailySalary" class="w-full border border-gray-300 rounded-lg pl-8 pr-3 py-2 focus:ring-2 focus:ring-brand-500 outline-none" placeholder="0.00" step="0.01" oninput="calculateMonthlySalary()">
+                        </div>
+                        <p class="text-xs text-gray-500 mt-1">Usado para cálculo de vacaciones e IMSS simulado</p>
+                    </div>
+    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Sueldo Mensual Aproximado</label>
+                        <div class="relative">
+                            <span class="absolute left-3 top-2 text-gray-500">$</span>
+                            <input type="number" id="empMonthlySalary" class="w-full border border-gray-300 rounded-lg pl-8 pr-3 py-2 focus:ring-2 focus:ring-brand-500 outline-none bg-gray-50" placeholder="0.00" readonly>
+                        </div>
+                        <p class="text-xs text-gray-500 mt-1">Calculado automáticamente (30.4 días)</p>
+                    </div>
+    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Estado Laboral Actual</label>
+                        <select id="empStatus" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-brand-500 outline-none">
+                            <option value="active">Activo</option>
+                            <option value="vacation">De Vacaciones</option>
+                            <option value="sick">Incapacitado</option>
+                            <option value="suspended">Suspendido</option>
+                        </select>
+                    </div>
+    
+                    <div id="empSeniorityDisplay" class="p-3 bg-blue-50 rounded-lg">
+                        <p class="text-sm text-blue-800">Antigüedad calculada: <span id="empSeniorityText" class="font-bold">0 años, 0 meses</span></p>
+                        <p class="text-xs text-blue-600 mt-1">Días de vacaciones correspondientes: <span id="empVacationDays" class="font-bold">0 días</span></p>
+                    </div>
+                </div>
+            </div>
+    
+            <!-- TAB: DOCUMENTOS -->
+            <div id="empFormDocumentos" class="employee-form-tab hidden">
+                <div class="space-y-4">
+                    <p class="text-sm text-gray-600 mb-4">Suba fotos o PDFs de los documentos del empleado. Tamaño máximo 5MB por archivo.</p>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div class="border-2 border-dashed border-gray-300 rounded-lg p-4 hover:border-brand-400 transition-colors">
+                            <label class="block text-sm font-medium text-gray-700 mb-2">INE (Frente)</label>
+                            <div class="flex items-center gap-3">
+                                <div id="docINEPreview" class="w-16 h-16 bg-gray-100 rounded flex items-center justify-center text-2xl">📄</div>
+                                <div class="flex-1">
+                                    <input type="file" id="docINE" accept="image/*,.pdf" class="hidden" onchange="previewDocument(this, 'docINEPreview')">
+                                    <button onclick="document.getElementById('docINE').click()" class="text-sm bg-gray-100 hover:bg-gray-200 px-3 py-1 rounded transition-colors">
+                                        <i class="fas fa-upload mr-1"></i>Seleccionar
+                                    </button>
+                                    <p class="text-xs text-gray-500 mt-1" id="docINEName">Sin archivo</p>
+                                </div>
+                            </div>
+                        </div>
+    
+                        <div class="border-2 border-dashed border-gray-300 rounded-lg p-4 hover:border-brand-400 transition-colors">
+                            <label class="block text-sm font-medium text-gray-700 mb-2">INE (Reverso)</label>
+                            <div class="flex items-center gap-3">
+                                <div id="docINEBackPreview" class="w-16 h-16 bg-gray-100 rounded flex items-center justify-center text-2xl">📄</div>
+                                <div class="flex-1">
+                                    <input type="file" id="docINEBack" accept="image/*,.pdf" class="hidden" onchange="previewDocument(this, 'docINEBackPreview')">
+                                    <button onclick="document.getElementById('docINEBack').click()" class="text-sm bg-gray-100 hover:bg-gray-200 px-3 py-1 rounded transition-colors">
+                                        <i class="fas fa-upload mr-1"></i>Seleccionar
+                                    </button>
+                                    <p class="text-xs text-gray-500 mt-1" id="docINEBackName">Sin archivo</p>
+                                </div>
+                            </div>
+                        </div>
+    
+                        <div class="border-2 border-dashed border-gray-300 rounded-lg p-4 hover:border-brand-400 transition-colors">
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Comprobante de Domicilio</label>
+                            <div class="flex items-center gap-3">
+                                <div id="docAddressPreview" class="w-16 h-16 bg-gray-100 rounded flex items-center justify-center text-2xl">📄</div>
+                                <div class="flex-1">
+                                    <input type="file" id="docAddress" accept="image/*,.pdf" class="hidden" onchange="previewDocument(this, 'docAddressPreview')">
+                                    <button onclick="document.getElementById('docAddress').click()" class="text-sm bg-gray-100 hover:bg-gray-200 px-3 py-1 rounded transition-colors">
+                                        <i class="fas fa-upload mr-1"></i>Seleccionar
+                                    </button>
+                                    <p class="text-xs text-gray-500 mt-1" id="docAddressName">Sin archivo</p>
+                                </div>
+                            </div>
+                        </div>
+    
+                        <div class="border-2 border-dashed border-gray-300 rounded-lg p-4 hover:border-brand-400 transition-colors">
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Acta de Nacimiento</label>
+                            <div class="flex items-center gap-3">
+                                <div id="docBirthPreview" class="w-16 h-16 bg-gray-100 rounded flex items-center justify-center text-2xl">📄</div>
+                                <div class="flex-1">
+                                    <input type="file" id="docBirth" accept="image/*,.pdf" class="hidden" onchange="previewDocument(this, 'docBirthPreview')">
+                                    <button onclick="document.getElementById('docBirth').click()" class="text-sm bg-gray-100 hover:bg-gray-200 px-3 py-1 rounded transition-colors">
+                                        <i class="fas fa-upload mr-1"></i>Seleccionar
+                                    </button>
+                                    <p class="text-xs text-gray-500 mt-1" id="docBirthName">Sin archivo</p>
+                                </div>
+                            </div>
+                        </div>
+    
+                        <div class="border-2 border-dashed border-gray-300 rounded-lg p-4 hover:border-brand-400 transition-colors">
+                            <label class="block text-sm font-medium text-gray-700 mb-2">CURP (Formato oficial)</label>
+                            <div class="flex items-center gap-3">
+                                <div id="docCURPPreview" class="w-16 h-16 bg-gray-100 rounded flex items-center justify-center text-2xl">📄</div>
+                                <div class="flex-1">
+                                    <input type="file" id="docCURP" accept="image/*,.pdf" class="hidden" onchange="previewDocument(this, 'docCURPPreview')">
+                                    <button onclick="document.getElementById('docCURP').click()" class="text-sm bg-gray-100 hover:bg-gray-200 px-3 py-1 rounded transition-colors">
+                                        <i class="fas fa-upload mr-1"></i>Seleccionar
+                                    </button>
+                                    <p class="text-xs text-gray-500 mt-1" id="docCURPName">Sin archivo</p>
+                                </div>
+                            </div>
+                        </div>
+    
+                        <div class="border-2 border-dashed border-gray-300 rounded-lg p-4 hover:border-brand-400 transition-colors">
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Contrato de Trabajo</label>
+                            <div class="flex items-center gap-3">
+                                <div id="docContractPreview" class="w-16 h-16 bg-gray-100 rounded flex items-center justify-center text-2xl">📄</div>
+                                <div class="flex-1">
+                                    <input type="file" id="docContract" accept="image/*,.pdf" class="hidden" onchange="previewDocument(this, 'docContractPreview')">
+                                    <button onclick="document.getElementById('docContract').click()" class="text-sm bg-gray-100 hover:bg-gray-200 px-3 py-1 rounded transition-colors">
+                                        <i class="fas fa-upload mr-1"></i>Seleccionar
+                                    </button>
+                                    <p class="text-xs text-gray-500 mt-1" id="docContractName">Sin archivo</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+    
+            <!-- TAB: CONTACTO -->
+            <div id="empFormContacto" class="employee-form-tab hidden">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Teléfono Personal *</label>
+                        <input type="tel" id="empPhone" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-brand-500 outline-none" placeholder="Ej: 9221234567" maxlength="10">
+                    </div>
+    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Correo Electrónico</label>
+                        <input type="email" id="empEmail" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-brand-500 outline-none" placeholder="ejemplo@correo.com">
+                    </div>
+    
+                    <div class="md:col-span-2">
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Dirección Completa</label>
+                        <textarea id="empAddress" rows="2" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-brand-500 outline-none" placeholder="Calle, número, colonia, ciudad, CP"></textarea>
+                    </div>
+    
+                    <div class="md:col-span-2 border-t pt-4 mt-2">
+                        <h4 class="font-bold text-gray-800 mb-3">Contacto de Emergencia</h4>
+                    </div>
+    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Nombre del Contacto</label>
+                        <input type="text" id="empEmergencyName" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-brand-500 outline-none" placeholder="Nombre completo">
+                    </div>
+    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Parentesco</label>
+                        <input type="text" id="empEmergencyRelation" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-brand-500 outline-none" placeholder="Ej: Esposo/a, Padre, Hermano/a">
+                    </div>
+    
+                    <div class="md:col-span-2">
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Teléfono de Emergencia *</label>
+                        <input type="tel" id="empEmergencyPhone" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-brand-500 outline-none" placeholder="Ej: 9227654321" maxlength="10">
+                    </div>
+                </div>
+            </div>
+    
+            <!-- BOTONES -->
+            <div class="flex gap-3 mt-8 pt-4 border-t">
+                <button onclick="closeModal('employeeModal')" class="flex-1 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">Cancelar</button>
+                <button onclick="saveEmployee()" class="flex-1 py-2 bg-brand-600 text-white rounded-lg hover:bg-brand-700 transition-colors font-medium">
+                    <i class="fas fa-save mr-2"></i>Guardar Empleado
+                </button>
+            </div>
         </div>
     </div>
-</div>
-
+    
+    <!-- Modal Detalle de Empleado -->
+    <div id="employeeDetailModal" class="modal">
+        <div class="bg-white rounded-2xl p-6 w-full max-w-4xl mx-4 shadow-2xl max-h-[90vh] overflow-y-auto">
+            <div class="flex justify-between items-start mb-6">
+                <div class="flex items-center gap-4">
+                    <div id="detailEmpPhoto" class="w-20 h-20 rounded-full bg-gray-200 flex items-center justify-center text-3xl overflow-hidden">
+                        👤
+                    </div>
+                    <div>
+                        <h3 class="text-2xl font-bold text-brand-800" id="detailEmpName">Empleado</h3>
+                        <p class="text-sm text-gray-500" id="detailEmpRole">Puesto</p>
+                        <span id="detailEmpStatus" class="inline-block mt-1 px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-700">Activo</span>
+                    </div>
+                </div>
+                <div class="flex gap-2">
+                    <button onclick="editEmployeeFromDetail()" class="w-10 h-10 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center hover:bg-blue-200 transition-colors" title="Editar">
+                        <i class="fas fa-edit"></i>
+                    </button>
+                    <button onclick="closeModal('employeeDetailModal')" class="w-10 h-10 rounded-full bg-gray-100 text-gray-600 flex items-center justify-center hover:bg-gray-200 transition-colors">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+            </div>
+    
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <!-- Columna 1: Info Personal -->
+                <div class="space-y-4">
+                    <h4 class="font-bold text-gray-800 border-b pb-2">Información Personal</h4>
+                    
+                    <div>
+                        <p class="text-xs text-gray-500 uppercase">RFC</p>
+                        <p class="font-medium text-gray-800 font-mono" id="detailEmpRFC">-</p>
+                    </div>
+                    <div>
+                        <p class="text-xs text-gray-500 uppercase">CURP</p>
+                        <p class="font-medium text-gray-800 font-mono" id="detailEmpCURP">-</p>
+                    </div>
+                    <div>
+                        <p class="text-xs text-gray-500 uppercase">NSS</p>
+                        <p class="font-medium text-gray-800" id="detailEmpNSS">-</p>
+                    </div>
+                    <div>
+                        <p class="text-xs text-gray-500 uppercase">Fecha de Nacimiento</p>
+                        <p class="font-medium text-gray-800" id="detailEmpBirthDate">-</p>
+                    </div>
+                    <div>
+                        <p class="text-xs text-gray-500 uppercase">Edad</p>
+                        <p class="font-medium text-gray-800" id="detailEmpAge">-</p>
+                    </div>
+                </div>
+    
+                <!-- Columna 2: Info Laboral -->
+                <div class="space-y-4">
+                    <h4 class="font-bold text-gray-800 border-b pb-2">Información Laboral</h4>
+                    
+                    <div>
+                        <p class="text-xs text-gray-500 uppercase">Área</p>
+                        <p class="font-medium text-gray-800 capitalize" id="detailEmpArea">-</p>
+                    </div>
+                    <div>
+                        <p class="text-xs text-gray-500 uppercase">Tipo de Contrato</p>
+                        <p class="font-medium text-gray-800" id="detailEmpContract">-</p>
+                    </div>
+                    <div>
+                        <p class="text-xs text-gray-500 uppercase">Fecha de Ingreso</p>
+                        <p class="font-medium text-gray-800" id="detailEmpHireDate">-</p>
+                    </div>
+                    <div>
+                        <p class="text-xs text-gray-500 uppercase">Antigüedad</p>
+                        <p class="font-medium text-brand-700" id="detailEmpSeniority">-</p>
+                    </div>
+                    <div>
+                        <p class="text-xs text-gray-500 uppercase">Días de Vacaciones</p>
+                        <p class="font-medium text-blue-700" id="detailEmpVacationDays">-</p>
+                    </div>
+                    <div>
+                        <p class="text-xs text-gray-500 uppercase">Sueldo Mensual</p>
+                        <p class="font-medium text-green-700" id="detailEmpSalary">-</p>
+                    </div>
+                </div>
+    
+                <!-- Columna 3: Contacto y Documentos -->
+                <div class="space-y-4">
+                    <h4 class="font-bold text-gray-800 border-b pb-2">Contacto</h4>
+                    
+                    <div>
+                        <p class="text-xs text-gray-500 uppercase">Teléfono</p>
+                        <p class="font-medium text-gray-800" id="detailEmpPhone">-</p>
+                    </div>
+                    <div>
+                        <p class="text-xs text-gray-500 uppercase">Correo</p>
+                        <p class="font-medium text-gray-800" id="detailEmpEmail">-</p>
+                    </div>
+                    <div>
+                        <p class="text-xs text-gray-500 uppercase">Dirección</p>
+                        <p class="font-medium text-gray-800 text-sm" id="detailEmpAddress">-</p>
+                    </div>
+                    <div>
+                        <p class="text-xs text-gray-500 uppercase">Contacto de Emergencia</p>
+                        <p class="font-medium text-gray-800 text-sm" id="detailEmpEmergency">-</p>
+                    </div>
+    
+                    <h4 class="font-bold text-gray-800 border-b pb-2 mt-6">Documentos</h4>
+                    <div id="detailEmpDocuments" class="flex flex-wrap gap-2">
+                        <!-- Se llenan dinámicamente -->
+                    </div>
+                </div>
+            </div>
+    
+            <!-- Historial de cambios -->
+            <div class="mt-8 border-t pt-6">
+                <h4 class="font-bold text-gray-800 mb-4">Historial de Cambios de Puesto</h4>
+                <div id="detailEmpHistory" class="space-y-2">
+                    <!-- Se llena dinámicamente -->
+                </div>
+            </div>
+    
+            <!-- Acciones -->
+            <div class="mt-8 flex gap-3">
+                <button onclick="initiateEmployeeLoanFromDetail()" class="flex-1 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition-colors">
+                    <i class="fas fa-hand-holding-usd mr-2"></i>Registrar Préstamo
+                </button>
+                <button onclick="initiateVacationFromDetail()" class="flex-1 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors">
+                    <i class="fas fa-umbrella-beach mr-2"></i>Solicitar Vacaciones
+                </button>
+                <button onclick="deactivateEmployee()" id="btnDeactivateEmp" class="flex-1 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors">
+                    <i class="fas fa-user-times mr-2"></i>Dar de Baja
+                </button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Modal de Baja de Empleado -->
+    <div id="employeeTerminationModal" class="modal">
+        <div class="bg-white rounded-2xl p-6 w-full max-w-lg mx-4 shadow-2xl">
+            <h3 class="text-xl font-bold text-red-800 mb-4">
+                <i class="fas fa-user-times mr-2"></i>Dar de Baja a Empleado
+            </h3>
+            
+            <input type="hidden" id="terminationEmpId">
+            
+            <div class="space-y-4">
+                <div class="p-4 bg-red-50 rounded-lg">
+                    <p class="text-sm text-red-800 font-medium mb-1">Empleado:</p>
+                    <p class="text-lg font-bold text-red-900" id="terminationEmpName">Nombre</p>
+                </div>
+    
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Fecha de Baja *</label>
+                    <input type="date" id="terminationDate" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-red-500 outline-none">
+                </div>
+    
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Motivo de la Baja *</label>
+                    <select id="terminationReason" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-red-500 outline-none">
+                        <option value="">Seleccionar motivo...</option>
+                        <option value="renuncia">Renuncia voluntaria</option>
+                        <option value="termino_contrato">Término de contrato</option>
+                        <option value="despido_justificado">Despido justificado</option>
+                        <option value="despido_injustificado">Despido injustificado</option>
+                        <option value="faltas">Acumulación de faltas</option>
+                        <option value="otro">Otro</option>
+                    </select>
+                </div>
+    
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Observaciones</label>
+                    <textarea id="terminationNotes" rows="3" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-red-500 outline-none" placeholder="Detalles adicionales..."></textarea>
+                </div>
+    
+                <div class="p-4 bg-yellow-50 rounded-lg border border-yellow-200">
+                    <p class="text-sm text-yellow-800">
+                        <i class="fas fa-exclamation-triangle mr-1"></i>
+                        <strong>Advertencia:</strong> Esta acción dará de baja al empleado. Se calculará finiquito si aplica.
+                    </p>
+                </div>
+    
+                <!-- Resumen de finiquito (se calcula dinámicamente) -->
+                <div id="terminationSettlement" class="hidden p-4 bg-gray-50 rounded-lg">
+                    <h4 class="font-bold text-gray-800 mb-2">Estimación de Finiquito:</h4>
+                    <div class="space-y-1 text-sm">
+                        <div class="flex justify-between">
+                            <span>Salarios pendientes:</span>
+                            <span id="settlementSalary" class="font-medium">$0.00</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span>Prima vacacional proporcional:</span>
+                            <span id="settlementVacation" class="font-medium">$0.00</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span>Aguinaldo proporcional:</span>
+                            <span id="settlementBonus" class="font-medium">$0.00</span>
+                        </div>
+                        <div class="flex justify-between text-red-600">
+                            <span>Descuentos pendientes:</span>
+                            <span id="settlementDeductions" class="font-medium">-$0.00</span>
+                        </div>
+                        <div class="border-t pt-2 flex justify-between font-bold text-lg">
+                            <span>Total a pagar:</span>
+                            <span id="settlementTotal" class="text-green-700">$0.00</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+    
+            <div class="flex gap-3 mt-6">
+                <button onclick="closeModal('employeeTerminationModal')" class="flex-1 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">Cancelar</button>
+                <button onclick="confirmEmployeeTermination()" class="flex-1 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors font-medium">
+                    <i class="fas fa-check mr-2"></i>Confirmar Baja
+                </button>
+            </div>
+        </div>
+    </div>
 <!-- Modal Nómina - AHORA CON MÉTODO DE PAGO -->
 <div id="nominaModal" class="modal">
     <div class="bg-white rounded-2xl p-6 w-full max-w-lg mx-4 shadow-2xl max-h-[90vh] overflow-y-auto">
@@ -6686,107 +7574,1135 @@ function confirmMixedPayment() {
     }
 
     // ============================================
-    // EMPLEADOS
+    // EMPLEADOS - VERSIÓN PROFESIONAL COMPLETA
     // ============================================
-
+    
+    let currentEmployeeFilter = { area: 'all', status: 'all', search: '' };
+    let currentEmployeeTab = 'list';
+    let employeeLoans = [];
+    let employeeVacations = [];
+    let selectedEmployeeForDetail = null;
+    
+    // ========== INICIALIZACIÓN ==========
+    
     async function loadEmployees() {
         try {
-            const { data, error } = await supabaseClient
+            // Cargar empleados activos
+            const { data: employeesData, error: empError } = await supabaseClient
                 .from('employees')
                 .select('*')
-                .eq('is_active', true)
-                .order('name');
+                .order('hire_date', { ascending: false });
             
-            if (error) throw error;
-            employees = data || [];
+            if (empError) throw empError;
+            employees = employeesData || [];
             
-            const prodCount = employees.filter(e => e.area === 'produccion').length;
-            const servCount = employees.filter(e => e.area === 'atencion').length;
+            // Cargar préstamos activos
+            const { data: loansData, error: loanError } = await supabaseClient
+                .from('employee_loans')
+                .select('*, employees(name)')
+                .eq('status', 'active')
+                .order('created_at', { ascending: false });
             
-            document.getElementById('countProduction').textContent = prodCount + ' empleados';
-            document.getElementById('countService').textContent = servCount + ' empleados';
+            if (loanError) throw loanError;
+            employeeLoans = loansData || [];
             
-            document.getElementById('productionEmployees').innerHTML = employees
-                .filter(e => e.area === 'produccion')
-                .map(e => `
-                    <div class="flex items-center justify-between p-3 bg-orange-50 rounded-lg group">
-                        <div>
-                            <p class="font-medium text-gray-800">${e.name}</p>
-                            <p class="text-xs text-gray-500">${e.role}</p>
-                        </div>
-                        <button onclick="deleteEmployee('${e.id}')" class="text-red-400 hover:text-red-600 opacity-0 group-hover:opacity-100 transition-all btn-action">
-                            <i class="fas fa-trash-alt"></i>
-                        </button>
-                    </div>
-                `).join('');
-                
-            document.getElementById('serviceEmployees').innerHTML = employees
-                .filter(e => e.area === 'atencion')
-                .map(e => `
-                    <div class="flex items-center justify-between p-3 bg-pink-50 rounded-lg group">
-                        <div>
-                            <p class="font-medium text-gray-800">${e.name}</p>
-                            <p class="text-xs text-gray-500">${e.role}</p>
-                        </div>
-                        <button onclick="deleteEmployee('${e.id}')" class="text-red-400 hover:text-red-600 opacity-0 group-hover:opacity-100 transition-all btn-action">
-                            <i class="fas fa-trash-alt"></i>
-                        </button>
-                    </div>
-                `).join('');
-
-            const nominaSelect = document.getElementById('nominaEmployee');
-            const filterSelect = document.getElementById('nominaFilterEmployee');
+            // Cargar solicitudes de vacaciones pendientes
+            const { data: vacationsData, error: vacError } = await supabaseClient
+                .from('vacation_requests')
+                .select('*, employees(name)')
+                .in('status', ['pending', 'approved'])
+                .order('created_at', { ascending: false });
             
-            if (nominaSelect) {
-                nominaSelect.innerHTML = '<option value="">Seleccionar empleado...</option>' +
-                    employees.map(e => `<option value="${e.id}">${e.name} - ${e.role}</option>`).join('');
-            }
-            if (filterSelect) {
-                filterSelect.innerHTML = '<option value="all">Todos los empleados</option>' +
-                    employees.map(e => `<option value="${e.id}">${e.name}</option>`).join('');
-            }
+            if (vacError) throw vacError;
+            employeeVacations = vacationsData || [];
+            
+            updateEmployeeDashboard();
+            renderEmployeesGrid();
+            updateEmployeeSelects();
+            renderLoansTable();
+            renderVacationRequests();
+            renderIMSSSimulation();
             
         } catch (error) {
             console.error('Error loading employees:', error);
+            showNotification('Error al cargar personal: ' + error.message, 'error');
         }
     }
-
-    async function saveEmployee() {
-        const name = document.getElementById('empName').value;
-        const area = document.getElementById('empArea').value;
-        const role = document.getElementById('empRole').value;
+    
+    function updateEmployeeDashboard() {
+        const activeEmps = employees.filter(e => e.status === 'active');
+        const onVacation = employees.filter(e => e.status === 'vacation');
+        const withLoans = [...new Set(employeeLoans.map(l => l.employee_id))].length;
         
-        if (!name || !role) {
-            alert('Complete todos los campos');
+        // Calcular antigüedad promedio
+        const totalYears = employees.reduce((sum, e) => {
+            if (!e.hire_date) return sum;
+            const years = (new Date() - new Date(e.hire_date)) / (1000 * 60 * 60 * 24 * 365);
+            return sum + years;
+        }, 0);
+        const avgYears = employees.length > 0 ? (totalYears / employees.length).toFixed(1) : 0;
+        
+        animateValue('totalActiveEmployees', 0, activeEmps.length, 500);
+        animateValue('totalOnVacation', 0, onVacation.length, 500);
+        animateValue('totalWithLoans', 0, withLoans, 500);
+        document.getElementById('avgSeniority').textContent = avgYears + ' años';
+        
+        // Badges
+        const loanBadge = document.getElementById('loanBadge');
+        if (employeeLoans.length > 0) {
+            loanBadge.textContent = employeeLoans.length;
+            loanBadge.classList.remove('hidden');
+        } else {
+            loanBadge.classList.add('hidden');
+        }
+        
+        const pendingVacations = employeeVacations.filter(v => v.status === 'pending').length;
+        const vacBadge = document.getElementById('vacationBadge');
+        if (pendingVacations > 0) {
+            vacBadge.textContent = pendingVacations;
+            vacBadge.classList.remove('hidden');
+        } else {
+            vacBadge.classList.add('hidden');
+        }
+    }
+    
+    // ========== TABS ==========
+    
+    function showEmployeeTab(tab) {
+        currentEmployeeTab = tab;
+        
+        // Actualizar botones
+        document.querySelectorAll('[id^="tab"]').forEach(btn => {
+            btn.classList.remove('text-brand-600', 'border-brand-600', 'bg-brand-50');
+            btn.classList.add('text-gray-500', 'border-transparent');
+        });
+        
+        document.getElementById('tab' + tab.charAt(0).toUpperCase() + tab.slice(1)).classList.add('text-brand-600', 'border-brand-600', 'bg-brand-50');
+        document.getElementById('tab' + tab.charAt(0).toUpperCase() + tab.slice(1)).classList.remove('text-gray-500', 'border-transparent');
+        
+        // Mostrar contenido
+        document.querySelectorAll('.employee-tab-content').forEach(content => content.classList.add('hidden'));
+        document.getElementById('employeeTab' + tab.charAt(0).toUpperCase() + tab.slice(1)).classList.remove('hidden');
+        
+        // Acciones específicas por tab
+        if (tab === 'imss') {
+            renderIMSSSimulation();
+        }
+    }
+    
+    function showEmployeeFormTab(tab) {
+        document.querySelectorAll('.employee-form-tab').forEach(t => t.classList.add('hidden'));
+        document.getElementById('empForm' + tab.charAt(0).toUpperCase() + tab.slice(1)).classList.remove('hidden');
+        
+        document.querySelectorAll('[id^="empTab"]').forEach(btn => {
+            btn.classList.remove('text-brand-600', 'border-brand-600');
+            btn.classList.add('text-gray-500', 'border-transparent');
+        });
+        document.getElementById('empTab' + tab.charAt(0).toUpperCase() + tab.slice(1)).classList.add('text-brand-600', 'border-brand-600');
+        document.getElementById('empTab' + tab.charAt(0).toUpperCase() + tab.slice(1)).classList.remove('text-gray-500', 'border-transparent');
+    }
+    
+    // ========== RENDERIZADO DE EMPLEADOS ==========
+    
+    function renderEmployeesGrid() {
+        const grid = document.getElementById('employeesGrid');
+        const emptyState = document.getElementById('employeesEmptyState');
+        
+        let filtered = employees.filter(e => {
+            if (currentEmployeeFilter.area !== 'all' && e.area !== currentEmployeeFilter.area) return false;
+            if (currentEmployeeFilter.status !== 'all' && e.status !== currentEmployeeFilter.status) return false;
+            if (currentEmployeeFilter.search) {
+                const search = currentEmployeeFilter.search.toLowerCase();
+                return (e.name?.toLowerCase().includes(search) ||
+                        e.rfc?.toLowerCase().includes(search) ||
+                        e.curp?.toLowerCase().includes(search) ||
+                        e.role?.toLowerCase().includes(search));
+            }
+            return true;
+        });
+        
+        if (filtered.length === 0) {
+            grid.innerHTML = '';
+            emptyState.classList.remove('hidden');
             return;
         }
         
+        emptyState.classList.add('hidden');
+        
+        grid.innerHTML = filtered.map(emp => {
+            const statusColors = {
+                'active': 'bg-green-100 text-green-700',
+                'vacation': 'bg-blue-100 text-blue-700',
+                'sick': 'bg-orange-100 text-orange-700',
+                'suspended': 'bg-yellow-100 text-yellow-700',
+                'inactive': 'bg-gray-100 text-gray-500'
+            };
+            
+            const statusLabels = {
+                'active': 'Activo',
+                'vacation': 'Vacaciones',
+                'sick': 'Incapacitado',
+                'suspended': 'Suspendido',
+                'inactive': 'Baja'
+            };
+            
+            const hasLoan = employeeLoans.some(l => l.employee_id === emp.id);
+            const seniority = calculateEmployeeSeniority(emp.hire_date);
+            const vacationDays = calculateVacationDays(emp.hire_date);
+            
+            return `
+            <div class="glass-panel rounded-2xl p-5 hover:shadow-lg transition-all cursor-pointer border-2 border-transparent hover:border-brand-300 relative group" onclick="showEmployeeDetail('${emp.id}')">
+                <div class="absolute top-3 right-3">
+                    <span class="px-2 py-1 rounded-full text-xs font-medium ${statusColors[emp.status] || 'bg-gray-100 text-gray-500'}">
+                        ${statusLabels[emp.status] || emp.status}
+                    </span>
+                </div>
+                
+                <div class="flex items-center gap-4 mb-4">
+                    <div class="w-16 h-16 rounded-full bg-gradient-to-br from-brand-100 to-brand-200 flex items-center justify-center text-2xl overflow-hidden">
+                        ${emp.photo_url ? `<img src="${emp.photo_url}" class="w-full h-full object-cover">` : '👤'}
+                    </div>
+                    <div class="flex-1 min-w-0">
+                        <h4 class="font-bold text-gray-800 truncate">${emp.name}</h4>
+                        <p class="text-sm text-gray-500 capitalize">${emp.area} • ${emp.role}</p>
+                    </div>
+                </div>
+                
+                <div class="space-y-2 text-sm">
+                    <div class="flex justify-between">
+                        <span class="text-gray-500">RFC:</span>
+                        <span class="font-mono text-gray-700">${emp.rfc || '-'}</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-gray-500">Ingreso:</span>
+                        <span class="text-gray-700">${emp.hire_date ? new Date(emp.hire_date).toLocaleDateString('es-MX') : '-'}</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-gray-500">Antigüedad:</span>
+                        <span class="text-brand-700 font-medium">${seniority}</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-gray-500">Vacaciones:</span>
+                        <span class="text-blue-700 font-medium">${vacationDays} días</span>
+                    </div>
+                </div>
+                
+                ${hasLoan ? `
+                <div class="mt-3 pt-3 border-t flex items-center gap-2 text-orange-600 text-xs">
+                    <i class="fas fa-hand-holding-usd"></i>
+                    <span>Con préstamo activo</span>
+                </div>
+                ` : ''}
+                
+                <div class="absolute bottom-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <button class="w-8 h-8 rounded-full bg-brand-500 text-white flex items-center justify-center hover:bg-brand-600" title="Ver detalle">
+                        <i class="fas fa-eye text-xs"></i>
+                    </button>
+                </div>
+            </div>
+            `;
+        }).join('');
+    }
+    
+    function filterEmployees(searchTerm) {
+        currentEmployeeFilter.search = searchTerm;
+        renderEmployeesGrid();
+    }
+    
+    function filterEmployeesByArea() {
+        currentEmployeeFilter.area = document.getElementById('employeeFilterArea').value;
+        renderEmployeesGrid();
+    }
+    
+    function filterEmployeesByStatus() {
+        currentEmployeeFilter.status = document.getElementById('employeeFilterStatus').value;
+        renderEmployeesGrid();
+    }
+    
+    function clearEmployeeFilters() {
+        document.getElementById('employeeSearch').value = '';
+        document.getElementById('employeeFilterArea').value = 'all';
+        document.getElementById('employeeFilterStatus').value = 'all';
+        currentEmployeeFilter = { area: 'all', status: 'all', search: '' };
+        renderEmployeesGrid();
+    }
+    
+    // ========== CÁLCULOS ==========
+    
+    function calculateEmployeeSeniority(hireDate) {
+        if (!hireDate) return '0 años';
+        const start = new Date(hireDate);
+        const now = new Date();
+        const years = now.getFullYear() - start.getFullYear();
+        const months = now.getMonth() - start.getMonth();
+        
+        if (years === 0 && months === 0) return '< 1 mes';
+        if (years === 0) return `${months} mes${months !== 1 ? 'es' : ''}`;
+        if (months === 0) return `${years} año${years !== 1 ? 's' : ''}`;
+        return `${years} año${years !== 1 ? 's' : ''}, ${Math.abs(months)} mes${Math.abs(months) !== 1 ? 'es' : ''}`;
+    }
+    
+    function calculateVacationDays(hireDate) {
+        if (!hireDate) return 0;
+        const years = (new Date() - new Date(hireDate)) / (1000 * 60 * 60 * 24 * 365);
+        
+        // Ley Federal del Trabajo México
+        if (years < 1) return 0;
+        if (years < 2) return 12;
+        if (years < 3) return 14;
+        if (years < 4) return 16;
+        if (years < 5) return 18;
+        if (years < 6) return 20;
+        if (years < 11) return 22;
+        if (years < 16) return 24;
+        if (years < 21) return 26;
+        if (years < 26) return 28;
+        return 30;
+    }
+    
+    function calculateSeniority() {
+        const hireDate = document.getElementById('empHireDate').value;
+        if (!hireDate) return;
+        
+        const seniorityText = calculateEmployeeSeniority(hireDate);
+        const vacationDays = calculateVacationDays(hireDate);
+        
+        document.getElementById('empSeniorityText').textContent = seniorityText;
+        document.getElementById('empVacationDays').textContent = vacationDays + ' días';
+    }
+    
+    function calculateMonthlySalary() {
+        const daily = parseFloat(document.getElementById('empDailySalary').value) || 0;
+        const monthly = daily * 30.4; // Mes promedio
+        document.getElementById('empMonthlySalary').value = monthly.toFixed(2);
+    }
+    
+    // ========== MODALES Y FORMULARIOS ==========
+    
+    function openEmployeeModal() {
+        // Resetear formulario
+        document.getElementById('employeeModalTitle').textContent = 'Nuevo Empleado';
+        document.getElementById('empId').value = '';
+        document.getElementById('empName').value = '';
+        document.getElementById('empRFC').value = '';
+        document.getElementById('empCURP').value = '';
+        document.getElementById('empNSS').value = '';
+        document.getElementById('empBirthDate').value = '';
+        document.getElementById('empGender').value = '';
+        document.getElementById('empArea').value = 'produccion';
+        document.getElementById('empRole').value = '';
+        document.getElementById('empContractType').value = 'indefinido';
+        document.getElementById('empHireDate').value = new Date().toISOString().split('T')[0];
+        document.getElementById('empDailySalary').value = '';
+        document.getElementById('empMonthlySalary').value = '';
+        document.getElementById('empStatus').value = 'active';
+        document.getElementById('empPhone').value = '';
+        document.getElementById('empEmail').value = '';
+        document.getElementById('empAddress').value = '';
+        document.getElementById('empEmergencyName').value = '';
+        document.getElementById('empEmergencyRelation').value = '';
+        document.getElementById('empEmergencyPhone').value = '';
+        
+        // Resetear foto
+        document.getElementById('empPhotoImg').classList.add('hidden');
+        document.getElementById('empPhotoPlaceholder').classList.remove('hidden');
+        
+        // Resetear documentos
+        ['INE', 'INEBack', 'Address', 'Birth', 'CURP', 'Contract'].forEach(doc => {
+            document.getElementById('doc' + doc + 'Preview').innerHTML = '📄';
+            document.getElementById('doc' + doc + 'Name').textContent = 'Sin archivo';
+        });
+        
+        calculateSeniority();
+        showEmployeeFormTab('general');
+        openModal('employeeModal');
+    }
+    
+    async function saveEmployee() {
+        // Validaciones básicas
+        const name = document.getElementById('empName').value.trim();
+        const rfc = document.getElementById('empRFC').value.trim().toUpperCase();
+        const curp = document.getElementById('empCURP').value.trim().toUpperCase();
+        const hireDate = document.getElementById('empHireDate').value;
+        const phone = document.getElementById('empPhone').value.trim();
+        const emergencyPhone = document.getElementById('empEmergencyPhone').value.trim();
+        
+        if (!name || !rfc || !curp || !hireDate) {
+            showNotification('Complete los campos obligatorios (Nombre, RFC, CURP, Fecha de ingreso)', 'error');
+            return;
+        }
+        
+        if (!validateRFCFormat(rfc)) {
+            showNotification('RFC inválido', 'error');
+            return;
+        }
+        
+        if (!validateCURPFormat(curp)) {
+            showNotification('CURP inválida', 'error');
+            return;
+        }
+        
+        // Preparar datos
+        const employeeData = {
+            name,
+            rfc,
+            curp,
+            nss: document.getElementById('empNSS').value.trim() || null,
+            birth_date: document.getElementById('empBirthDate').value || null,
+            gender: document.getElementById('empGender').value || null,
+            area: document.getElementById('empArea').value,
+            role: document.getElementById('empRole').value.trim(),
+            contract_type: document.getElementById('empContractType').value,
+            hire_date: hireDate,
+            daily_salary: parseFloat(document.getElementById('empDailySalary').value) || 0,
+            monthly_salary: parseFloat(document.getElementById('empMonthlySalary').value) || 0,
+            status: document.getElementById('empStatus').value,
+            phone,
+            email: document.getElementById('empEmail').value.trim() || null,
+            address: document.getElementById('empAddress').value.trim() || null,
+            emergency_name: document.getElementById('empEmergencyName').value.trim() || null,
+            emergency_relation: document.getElementById('empEmergencyRelation').value.trim() || null,
+            emergency_phone: emergencyPhone || null,
+            updated_at: new Date().toISOString()
+        };
+        
         try {
-            const { error } = await supabaseClient.from('employees').insert([{ name, area, role }]);
-            if (error) throw error;
+            const empId = document.getElementById('empId').value;
+            
+            if (empId) {
+                // Actualizar
+                const { error } = await supabaseClient
+                    .from('employees')
+                    .update(employeeData)
+                    .eq('id', empId);
+                
+                if (error) throw error;
+                showNotification('Empleado actualizado correctamente', 'success');
+            } else {
+                // Crear nuevo
+                employeeData.created_at = new Date().toISOString();
+                employeeData.is_active = true;
+                
+                const { error } = await supabaseClient
+                    .from('employees')
+                    .insert([employeeData]);
+                
+                if (error) throw error;
+                showNotification('Empleado registrado correctamente', 'success');
+            }
+            
+            // Subir documentos si hay
+            await uploadEmployeeDocuments(empId || null);
             
             closeModal('employeeModal');
             await loadEmployees();
             
-            document.getElementById('empName').value = '';
-            document.getElementById('empRole').value = '';
-            
         } catch (error) {
-            alert('Error al guardar empleado: ' + error.message);
+            console.error('Error saving employee:', error);
+            showNotification('Error al guardar: ' + error.message, 'error');
         }
     }
-
-    async function deleteEmployee(id) {
-        if (!confirm('¿Eliminar este empleado?')) return;
+    
+    // ========== DETALLE DE EMPLEADO ==========
+    
+    function showEmployeeDetail(empId) {
+        const emp = employees.find(e => e.id === empId);
+        if (!emp) return;
+        
+        selectedEmployeeForDetail = emp;
+        
+        // Llenar datos
+        document.getElementById('detailEmpName').textContent = emp.name;
+        document.getElementById('detailEmpRole').textContent = emp.role;
+        document.getElementById('detailEmpStatus').textContent = emp.status === 'active' ? 'Activo' : 
+                                                                 emp.status === 'vacation' ? 'De Vacaciones' :
+                                                                 emp.status === 'sick' ? 'Incapacitado' :
+                                                                 emp.status === 'suspended' ? 'Suspendido' : 'Baja';
+        document.getElementById('detailEmpStatus').className = `inline-block mt-1 px-2 py-0.5 rounded-full text-xs font-medium ${
+            emp.status === 'active' ? 'bg-green-100 text-green-700' :
+            emp.status === 'vacation' ? 'bg-blue-100 text-blue-700' :
+            emp.status === 'sick' ? 'bg-orange-100 text-orange-700' :
+            emp.status === 'suspended' ? 'bg-yellow-100 text-yellow-700' : 'bg-gray-100 text-gray-500'
+        }`;
+        
+        document.getElementById('detailEmpPhoto').innerHTML = emp.photo_url ? 
+            `<img src="${emp.photo_url}" class="w-full h-full object-cover">` : '👤';
+        
+        document.getElementById('detailEmpRFC').textContent = emp.rfc || '-';
+        document.getElementById('detailEmpCURP').textContent = emp.curp || '-';
+        document.getElementById('detailEmpNSS').textContent = emp.nss || 'No registrado';
+        document.getElementById('detailEmpBirthDate').textContent = emp.birth_date ? 
+            new Date(emp.birth_date).toLocaleDateString('es-MX') : '-';
+        document.getElementById('detailEmpAge').textContent = emp.birth_date ? 
+            Math.floor((new Date() - new Date(emp.birth_date)) / (1000 * 60 * 60 * 24 * 365)) + ' años' : '-';
+        
+        document.getElementById('detailEmpArea').textContent = emp.area || '-';
+        document.getElementById('detailEmpContract').textContent = {
+            'indefinido': 'Indefinido',
+            'temporal': 'Temporal/Eventual',
+            'prueba': 'Período de Prueba',
+            'honorarios': 'Honorarios'
+        }[emp.contract_type] || emp.contract_type;
+        
+        document.getElementById('detailEmpHireDate').textContent = emp.hire_date ? 
+            new Date(emp.hire_date).toLocaleDateString('es-MX') : '-';
+        document.getElementById('detailEmpSeniority').textContent = calculateEmployeeSeniority(emp.hire_date);
+        document.getElementById('detailEmpVacationDays').textContent = calculateVacationDays(emp.hire_date) + ' días';
+        document.getElementById('detailEmpSalary').textContent = formatMoney(emp.monthly_salary || 0);
+        
+        document.getElementById('detailEmpPhone').textContent = emp.phone || '-';
+        document.getElementById('detailEmpEmail').textContent = emp.email || '-';
+        document.getElementById('detailEmpAddress').textContent = emp.address || '-';
+        document.getElementById('detailEmpEmergency').innerHTML = emp.emergency_name ? 
+            `${emp.emergency_name} (${emp.emergency_relation})<br><span class="text-brand-600">${emp.emergency_phone}</span>` : '-';
+        
+        // Documentos (placeholder - se implementaría con storage)
+        document.getElementById('detailEmpDocuments').innerHTML = `
+            <span class="px-2 py-1 bg-gray-100 rounded text-xs text-gray-500">Documentos en desarrollo</span>
+        `;
+        
+        // Historial (placeholder)
+        document.getElementById('detailEmpHistory').innerHTML = `
+            <p class="text-sm text-gray-500 italic">Sin cambios de puesto registrados</p>
+        `;
+        
+        // Actualizar botón de baja
+        const btnDeactivate = document.getElementById('btnDeactivateEmp');
+        if (emp.status === 'inactive') {
+            btnDeactivate.innerHTML = '<i class="fas fa-user-check mr-2"></i>Reactivar';
+            btnDeactivate.classList.remove('bg-red-500', 'hover:bg-red-600');
+            btnDeactivate.classList.add('bg-green-500', 'hover:bg-green-600');
+        } else {
+            btnDeactivate.innerHTML = '<i class="fas fa-user-times mr-2"></i>Dar de Baja';
+            btnDeactivate.classList.remove('bg-green-500', 'hover:bg-green-600');
+            btnDeactivate.classList.add('bg-red-500', 'hover:bg-red-600');
+        }
+        
+        openModal('employeeDetailModal');
+    }
+    
+    function editEmployeeFromDetail() {
+        if (!selectedEmployeeForDetail) return;
+        
+        const emp = selectedEmployeeForDetail;
+        document.getElementById('employeeModalTitle').textContent = 'Editar Empleado';
+        document.getElementById('empId').value = emp.id;
+        document.getElementById('empName').value = emp.name;
+        document.getElementById('empRFC').value = emp.rfc;
+        document.getElementById('empCURP').value = emp.curp;
+        document.getElementById('empNSS').value = emp.nss || '';
+        document.getElementById('empBirthDate').value = emp.birth_date || '';
+        document.getElementById('empGender').value = emp.gender || '';
+        document.getElementById('empArea').value = emp.area;
+        document.getElementById('empRole').value = emp.role;
+        document.getElementById('empContractType').value = emp.contract_type || 'indefinido';
+        document.getElementById('empHireDate').value = emp.hire_date;
+        document.getElementById('empDailySalary').value = emp.daily_salary || '';
+        document.getElementById('empMonthlySalary').value = emp.monthly_salary || '';
+        document.getElementById('empStatus').value = emp.status;
+        document.getElementById('empPhone').value = emp.phone || '';
+        document.getElementById('empEmail').value = emp.email || '';
+        document.getElementById('empAddress').value = emp.address || '';
+        document.getElementById('empEmergencyName').value = emp.emergency_name || '';
+        document.getElementById('empEmergencyRelation').value = emp.emergency_relation || '';
+        document.getElementById('empEmergencyPhone').value = emp.emergency_phone || '';
+        
+        calculateSeniority();
+        closeModal('employeeDetailModal');
+        showEmployeeFormTab('general');
+        openModal('employeeModal');
+    }
+    
+    // ========== PRÉSTAMOS/ADELANTOS ==========
+    
+    function updateEmployeeSelects() {
+        const options = employees.filter(e => e.status === 'active').map(e => 
+            `<option value="${e.id}">${e.name} - ${e.role}</option>`
+        ).join('');
+        
+        const loanSelect = document.getElementById('loanEmployee');
+        const vacSelect = document.getElementById('vacationEmployee');
+        
+        if (loanSelect) {
+            loanSelect.innerHTML = '<option value="">Seleccionar empleado...</option>' + options;
+        }
+        if (vacSelect) {
+            vacSelect.innerHTML = '<option value="">Seleccionar empleado...</option>' + options;
+            vacSelect.onchange = updateVacationInfo;
+        }
+    }
+    
+    async function saveEmployeeLoan() {
+        const employeeId = document.getElementById('loanEmployee').value;
+        const amount = parseFloat(document.getElementById('loanAmount').value);
+        const type = document.getElementById('loanType').value;
+        const weeks = parseInt(document.getElementById('loanWeeklyDiscount').value) || 1;
+        const reason = document.getElementById('loanReason').value.trim();
+        
+        if (!employeeId || !amount || amount <= 0) {
+            showNotification('Seleccione empleado y monto válido', 'error');
+            return;
+        }
+        
+        const emp = employees.find(e => e.id === employeeId);
         
         try {
-            await supabaseClient.from('employees').update({ is_active: false }).eq('id', id);
+            const { error } = await supabaseClient.from('employee_loans').insert([{
+                employee_id: employeeId,
+                employee_name: emp.name,
+                amount,
+                remaining_amount: amount,
+                type,
+                weekly_discount: amount / weeks,
+                total_weeks: weeks,
+                remaining_weeks: weeks,
+                reason,
+                status: 'active',
+                created_by: currentProfile.full_name,
+                created_at: new Date().toISOString()
+            }]);
+            
+            if (error) throw error;
+            
+            showNotification('Préstamo registrado correctamente', 'success');
+            
+            // Limpiar formulario
+            document.getElementById('loanEmployee').value = '';
+            document.getElementById('loanAmount').value = '';
+            document.getElementById('loanType').value = 'advance';
+            document.getElementById('loanWeeklyDiscount').value = '';
+            document.getElementById('loanReason').value = '';
+            
             await loadEmployees();
+            
         } catch (error) {
-            alert('Error al eliminar: ' + error.message);
+            console.error('Error saving loan:', error);
+            showNotification('Error al registrar préstamo: ' + error.message, 'error');
         }
     }
-
+    
+    function renderLoansTable() {
+        const tbody = document.getElementById('loansTableBody');
+        const emptyState = document.getElementById('loansEmptyState');
+        
+        if (employeeLoans.length === 0) {
+            tbody.innerHTML = '';
+            emptyState.classList.remove('hidden');
+            return;
+        }
+        
+        emptyState.classList.add('hidden');
+        
+        tbody.innerHTML = employeeLoans.map(loan => {
+            const progress = ((loan.total_weeks - loan.remaining_weeks) / loan.total_weeks) * 100;
+            
+            return `
+            <tr class="hover:bg-orange-50 transition-colors">
+                <td class="px-4 py-3 font-medium">${loan.employee_name}</td>
+                <td class="px-4 py-3">
+                    <span class="px-2 py-1 rounded-full text-xs ${
+                        loan.type === 'advance' ? 'bg-blue-100 text-blue-700' :
+                        loan.type === 'loan' ? 'bg-orange-100 text-orange-700' :
+                        loan.type === 'uniform' ? 'bg-purple-100 text-purple-700' : 'bg-gray-100 text-gray-700'
+                    }">
+                        ${loan.type === 'advance' ? 'Adelanto' : 
+                          loan.type === 'loan' ? 'Préstamo' : 
+                          loan.type === 'uniform' ? 'Uniforme' : 'Otro'}
+                    </span>
+                </td>
+                <td class="px-4 py-3 text-right font-medium">${formatMoney(loan.amount)}</td>
+                <td class="px-4 py-3 text-right text-orange-600 font-bold">${formatMoney(loan.remaining_amount)}</td>
+                <td class="px-4 py-3 text-center">
+                    <div class="flex items-center gap-2">
+                        <div class="flex-1 h-2 bg-gray-200 rounded-full overflow-hidden">
+                            <div class="h-full bg-green-500" style="width: ${progress}%"></div>
+                        </div>
+                        <span class="text-xs">${loan.remaining_weeks}/${loan.total_weeks}</span>
+                    </div>
+                </td>
+                <td class="px-4 py-3 text-center">
+                    <span class="px-2 py-1 rounded-full text-xs bg-green-100 text-green-700">Activo</span>
+                </td>
+                <td class="px-4 py-3 text-center">
+                    <button onclick="makeLoanPayment('${loan.id}')" class="text-green-500 hover:text-green-700 mr-2" title="Registrar pago">
+                        <i class="fas fa-dollar-sign"></i>
+                    </button>
+                    <button onclick="deleteLoan('${loan.id}')" class="text-red-500 hover:text-red-700" title="Cancelar préstamo">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </td>
+            </tr>
+            `;
+        }).join('');
+    }
+    
+    async function makeLoanPayment(loanId) {
+        if (!confirm('¿Confirmar pago semanal de este préstamo?')) return;
+        
+        try {
+            const loan = employeeLoans.find(l => l.id === loanId);
+            if (!loan) return;
+            
+            const newRemaining = Math.max(0, loan.remaining_amount - loan.weekly_discount);
+            const newWeeks = Math.max(0, loan.remaining_weeks - 1);
+            const newStatus = newRemaining <= 0 ? 'paid' : 'active';
+            
+            const { error } = await supabaseClient
+                .from('employee_loans')
+                .update({
+                    remaining_amount: newRemaining,
+                    remaining_weeks: newWeeks,
+                    status: newStatus,
+                    last_payment_date: new Date().toISOString()
+                })
+                .eq('id', loanId);
+            
+            if (error) throw error;
+            
+            showNotification('Pago registrado correctamente', 'success');
+            await loadEmployees();
+            
+        } catch (error) {
+            showNotification('Error al registrar pago: ' + error.message, 'error');
+        }
+    }
+    
+    // ========== VACACIONES ==========
+    
+    function updateVacationInfo() {
+        const empId = document.getElementById('vacationEmployee').value;
+        const infoDiv = document.getElementById('vacationInfo');
+        
+        if (!empId) {
+            infoDiv.classList.add('hidden');
+            return;
+        }
+        
+        const emp = employees.find(e => e.id === empId);
+        if (!emp) return;
+        
+        const availableDays = calculateVacationDays(emp.hire_date);
+        const seniority = calculateEmployeeSeniority(emp.hire_date);
+        
+        // Verificar vacaciones ya tomadas este año
+        const takenThisYear = employeeVacations
+            .filter(v => v.employee_id === empId && v.status === 'approved' && new Date(v.start_date).getFullYear() === new Date().getFullYear())
+            .reduce((sum, v) => sum + v.days_requested, 0);
+        
+        const remainingDays = Math.max(0, availableDays - takenThisYear);
+        
+        document.getElementById('vacationAvailableDays').textContent = remainingDays;
+        document.getElementById('vacationSeniority').textContent = seniority;
+        infoDiv.classList.remove('hidden');
+    }
+    
+    function renderVacationRequests() {
+        const tbody = document.getElementById('vacationRequestsTableBody');
+        const currentList = document.getElementById('currentVacationsList');
+        
+        // Solicitudes pendientes
+        const pending = employeeVacations.filter(v => v.status === 'pending');
+        
+        if (tbody) {
+            tbody.innerHTML = pending.length === 0 ? 
+                '<tr><td colspan="5" class="px-4 py-4 text-center text-gray-400">No hay solicitudes pendientes</td></tr>' :
+                pending.map(v => `
+                    <tr class="hover:bg-blue-50 transition-colors">
+                        <td class="px-4 py-3 font-medium">${v.employee_name}</td>
+                        <td class="px-4 py-3 text-center text-sm">
+                            ${new Date(v.start_date).toLocaleDateString('es-MX')} - 
+                            ${new Date(v.end_date).toLocaleDateString('es-MX')}
+                        </td>
+                        <td class="px-4 py-3 text-center font-bold">${v.days_requested} días</td>
+                        <td class="px-4 py-3 text-center">
+                            <span class="px-2 py-1 rounded-full text-xs bg-yellow-100 text-yellow-700">Pendiente</span>
+                        </td>
+                        <td class="px-4 py-3 text-center">
+                            <button onclick="approveVacation('${v.id}')" class="text-green-500 hover:text-green-700 mr-2" title="Aprobar">
+                                <i class="fas fa-check"></i>
+                            </button>
+                            <button onclick="rejectVacation('${v.id}')" class="text-red-500 hover:text-red-700" title="Rechazar">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </td>
+                    </tr>
+                `).join('');
+        }
+        
+        // Vacaciones actuales
+        const today = new Date();
+        const current = employeeVacations.filter(v => {
+            if (v.status !== 'approved') return false;
+            const start = new Date(v.start_date);
+            const end = new Date(v.end_date);
+            return today >= start && today <= end;
+        });
+        
+        if (currentList) {
+            currentList.innerHTML = current.length === 0 ?
+                '<p class="text-gray-400 text-sm col-span-2">Nadie está de vacaciones actualmente</p>' :
+                current.map(v => `
+                    <div class="p-3 bg-blue-50 rounded-lg border border-blue-200">
+                        <div class="flex items-center gap-2 mb-1">
+                            <i class="fas fa-umbrella-beach text-blue-500"></i>
+                            <span class="font-bold text-gray-800">${v.employee_name}</span>
+                        </div>
+                        <p class="text-xs text-gray-600">
+                            Hasta ${new Date(v.end_date).toLocaleDateString('es-MX')}
+                            (${Math.ceil((new Date(v.end_date) - today) / (1000 * 60 * 60 * 24))} días restantes)
+                        </p>
+                    </div>
+                `).join('');
+        }
+    }
+    
+    async function requestVacation() {
+        const empId = document.getElementById('vacationEmployee').value;
+        const startDate = document.getElementById('vacationStartDate').value;
+        const endDate = document.getElementById('vacationEndDate').value;
+        const notes = document.getElementById('vacationNotes').value.trim();
+        
+        if (!empId || !startDate || !endDate) {
+            showNotification('Complete todos los campos obligatorios', 'error');
+            return;
+        }
+        
+        const start = new Date(startDate);
+        const end = new Date(endDate);
+        const days = Math.ceil((end - start) / (1000 * 60 * 60 * 24)) + 1;
+        
+        if (days <= 0) {
+            showNotification('La fecha de fin debe ser posterior a la de inicio', 'error');
+            return;
+        }
+        
+        const emp = employees.find(e => e.id === empId);
+        
+        try {
+            const { error } = await supabaseClient.from('vacation_requests').insert([{
+                employee_id: empId,
+                employee_name: emp.name,
+                start_date: startDate,
+                end_date: endDate,
+                days_requested: days,
+                notes,
+                status: 'pending',
+                requested_by: currentProfile.full_name,
+                created_at: new Date().toISOString()
+            }]);
+            
+            if (error) throw error;
+            
+            showNotification('Solicitud de vacaciones enviada', 'success');
+            
+            // Limpiar
+            document.getElementById('vacationEmployee').value = '';
+            document.getElementById('vacationStartDate').value = '';
+            document.getElementById('vacationEndDate').value = '';
+            document.getElementById('vacationDays').value = '';
+            document.getElementById('vacationNotes').value = '';
+            document.getElementById('vacationInfo').classList.add('hidden');
+            
+            await loadEmployees();
+            
+        } catch (error) {
+            showNotification('Error al solicitar vacaciones: ' + error.message, 'error');
+        }
+    }
+    
+    async function approveVacation(vacationId) {
+        try {
+            const { error } = await supabaseClient
+                .from('vacation_requests')
+                .update({ status: 'approved', approved_by: currentProfile.full_name, approved_at: new Date().toISOString() })
+                .eq('id', vacationId);
+            
+            if (error) throw error;
+            
+            // Actualizar estado del empleado
+            const vacation = employeeVacations.find(v => v.id === vacationId);
+            if (vacation) {
+                await supabaseClient
+                    .from('employees')
+                    .update({ status: 'vacation' })
+                    .eq('id', vacation.employee_id);
+            }
+            
+            showNotification('Vacaciones aprobadas', 'success');
+            await loadEmployees();
+            
+        } catch (error) {
+            showNotification('Error: ' + error.message, 'error');
+        }
+    }
+    
+    // ========== SIMULACIÓN IMSS ==========
+    
+    function renderIMSSSimulation() {
+        const tbody = document.getElementById('imssTableBody');
+        if (!tbody) return;
+        
+        const activeEmployees = employees.filter(e => e.status === 'active' && e.daily_salary > 0);
+        
+        if (activeEmployees.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="5" class="px-4 py-4 text-center text-gray-400">No hay empleados con salario registrado</td></tr>';
+            return;
+        }
+        
+        tbody.innerHTML = activeEmployees.map(emp => {
+            const sbc = emp.daily_salary; // Salario Base de Cotización
+            const monthlySBC = sbc * 30.4;
+            
+            // Cuotas patronales (aproximadas)
+            const cuotaFija = sbc * 0.2040 * 30;
+            const excedente = Math.max(0, sbc - 311.74) * 0.0110 * 30; // 3 SMG diarios aprox
+            const prestaciones = sbc * 0.0070 * 30;
+            const gastosMedicos = sbc * 0.0105 * 30;
+            const riesgo = sbc * 0.0050 * 30; // Clase II baja
+            const invalidez = sbc * 0.0175 * 30;
+            const guarderia = sbc * 0.0100 * 30;
+            const retiro = sbc * 0.0200 * 30;
+            const cesantia = sbc * 0.0315 * 30;
+            const infonavit = sbc * 0.0500 * 30;
+            
+            const totalPatron = cuotaFija + excedente + prestaciones + gastosMedicos + riesgo + invalidez + guarderia + retiro + cesantia + infonavit;
+            
+            // Cuotas obreras
+            const cuotaObrera = sbc * 0.00625 * 30;
+            const excedenteObrera = Math.max(0, sbc - 311.74) * 0.0040 * 30;
+            const prestacionesObrera = sbc * 0.0025 * 30;
+            const invalidezObrera = sbc * 0.00625 * 30;
+            const cesantiaObrera = sbc * 0.01125 * 30;
+            const totalObrero = cuotaObrera + excedenteObrera + prestacionesObrera + invalidezObrera + cesantiaObrera;
+            
+            return `
+            <tr class="hover:bg-green-50 transition-colors">
+                <td class="px-4 py-3 font-medium">${emp.name}</td>
+                <td class="px-4 py-3 text-right font-mono">${formatMoney(sbc)}</td>
+                <td class="px-4 py-3 text-right text-red-600 font-mono">${formatMoney(totalPatron)}</td>
+                <td class="px-4 py-3 text-right text-blue-600 font-mono">${formatMoney(totalObrero)}</td>
+                <td class="px-4 py-3 text-right font-bold font-mono">${formatMoney(totalPatron + totalObrero)}</td>
+            </tr>
+            `;
+        }).join('');
+    }
+    
+    function calculateIMSS() {
+        const sbc = parseFloat(document.getElementById('imssSBC').value) || 0;
+        if (sbc <= 0) return;
+        
+        const monthlySBC = sbc * 30.4;
+        
+        // Cuotas patronales
+        const cuotaFija = sbc * 0.2040 * 30;
+        const excedente = Math.max(0, sbc - 311.74) * 0.0110 * 30;
+        const prestaciones = sbc * 0.0070 * 30;
+        const gastosMedicos = sbc * 0.0105 * 30;
+        const riesgo = sbc * 0.0050 * 30;
+        const invalidez = sbc * 0.0175 * 30;
+        const guarderia = sbc * 0.0100 * 30;
+        const retiro = sbc * 0.0200 * 30;
+        const cesantia = sbc * 0.0315 * 30;
+        const infonavit = sbc * 0.0500 * 30;
+        
+        const totalPatron = cuotaFija + excedente + prestaciones + gastosMedicos + riesgo + invalidez + guarderia + retiro + cesantia + infonavit;
+        
+        // Cuotas obreras
+        const cuotaObrera = sbc * 0.00625 * 30;
+        const excedenteObrera = Math.max(0, sbc - 311.74) * 0.0040 * 30;
+        const prestacionesObrera = sbc * 0.0025 * 30;
+        const invalidezObrera = sbc * 0.00625 * 30;
+        const cesantiaObrera = sbc * 0.01125 * 30;
+        const totalObrero = cuotaObrera + excedenteObrera + prestacionesObrera + invalidezObrera + cesantiaObrera;
+        
+        // Actualizar UI
+        document.getElementById('imssCuotaFija').textContent = formatMoney(cuotaFija);
+        document.getElementById('imssExcedente').textContent = formatMoney(excedente);
+        document.getElementById('imssPrestaciones').textContent = formatMoney(prestaciones);
+        document.getElementById('imssGastosMedicos').textContent = formatMoney(gastosMedicos);
+        document.getElementById('imssRiesgo').textContent = formatMoney(riesgo);
+        document.getElementById('imssInvalidez').textContent = formatMoney(invalidez);
+        document.getElementById('imssGuarderia').textContent = formatMoney(guarderia);
+        document.getElementById('imssRetiro').textContent = formatMoney(retiro);
+        document.getElementById('imssCesantia').textContent = formatMoney(cesantia);
+        document.getElementById('imssInfonavit').textContent = formatMoney(infonavit);
+        document.getElementById('imssTotalPatron').textContent = formatMoney(totalPatron);
+        document.getElementById('imssPorcentajeTotal').textContent = ((totalPatron / monthlySBC) * 100).toFixed(1) + '%';
+        
+        document.getElementById('imssCuotaObrera').textContent = formatMoney(cuotaObrera);
+        document.getElementById('imssExcedenteObrera').textContent = formatMoney(excedenteObrera);
+        document.getElementById('imssPrestacionesObrera').textContent = formatMoney(prestacionesObrera);
+        document.getElementById('imssInvalidezObrera').textContent = formatMoney(invalidezObrera);
+        document.getElementById('imssCesantiaObrera').textContent = formatMoney(cesantiaObrera);
+        document.getElementById('imssTotalObrero').textContent = formatMoney(totalObrero);
+    }
+    
+    // ========== VALIDACIONES ==========
+    
+    function validateRFC(input) {
+        const rfc = input.value.toUpperCase();
+        const isValid = validateRFCFormat(rfc);
+        const errorEl = document.getElementById('empRFCError');
+        
+        if (rfc.length === 13 && !isValid) {
+            errorEl.classList.remove('hidden');
+            input.classList.add('border-red-500');
+        } else {
+            errorEl.classList.add('hidden');
+            input.classList.remove('border-red-500');
+        }
+    }
+    
+    function validateRFCFormat(rfc) {
+        // Validación básica de formato RFC (simplificada)
+        const regex = /^[A-Z]{4}[0-9]{6}[A-Z0-9]{3}$/;
+        return regex.test(rfc);
+    }
+    
+    function validateCURP(input) {
+        const curp = input.value.toUpperCase();
+        const isValid = validateCURPFormat(curp);
+        const errorEl = document.getElementById('empCURPError');
+        
+        if (curp.length === 18 && !isValid) {
+            errorEl.classList.remove('hidden');
+            input.classList.add('border-red-500');
+        } else {
+            errorEl.classList.add('hidden');
+            input.classList.remove('border-red-500');
+        }
+    }
+    
+    function validateCURPFormat(curp) {
+        // Validación básica de formato CURP
+        const regex = /^[A-Z]{4}[0-9]{6}[HM][A-Z]{5}[0-9A-Z]{2}$/;
+        return regex.test(curp);
+    }
+    
+    // ========== UTILIDADES ==========
+    
+    function previewEmployeePhoto(input) {
+        if (input.files && input.files[0]) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                document.getElementById('empPhotoImg').src = e.target.result;
+                document.getElementById('empPhotoImg').classList.remove('hidden');
+                document.getElementById('empPhotoPlaceholder').classList.add('hidden');
+            };
+            reader.readAsDataURL(input.files[0]);
+        }
+    }
+    
+    function previewDocument(input, previewId) {
+        if (input.files && input.files[0]) {
+            const file = input.files[0];
+            const nameEl = document.getElementById(previewId.replace('Preview', 'Name'));
+            
+            nameEl.textContent = file.name.length > 20 ? file.name.substring(0, 20) + '...' : file.name;
+            
+            if (file.type.startsWith('image/')) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    document.getElementById(previewId).innerHTML = `<img src="${e.target.result}" class="w-full h-full object-cover">`;
+                };
+                reader.readAsDataURL(file);
+            } else {
+                document.getElementById(previewId).innerHTML = '<i class="fas fa-file-pdf text-red-500 text-2xl"></i>';
+            }
+        }
+    }
+    
+    async function uploadEmployeeDocuments(empId) {
+        // Placeholder - implementar con Supabase Storage cuando se configure
+        // Por ahora solo simulamos éxito
+        return true;
+    }
+    
+    function initiateEmployeeLoanFromDetail() {
+        if (!selectedEmployeeForDetail) return;
+        closeModal('employeeDetailModal');
+        showEmployeeTab('loans');
+        document.getElementById('loanEmployee').value = selectedEmployeeForDetail.id;
+    }
+    
+    function initiateVacationFromDetail() {
+        if (!selectedEmployeeForDetail) return;
+        closeModal('employeeDetailModal');
+        showEmployeeTab('vacations');
+        document.getElementById('vacationEmployee').value = selectedEmployeeForDetail.id;
+        updateVacationInfo();
+    }
+    
+    function deactivateEmployee() {
+        if (!selectedEmployeeForDetail) return;
+        
+        if (selectedEmployeeForDetail.status === 'inactive') {
+            // Reactivar
+            reactivateEmployee(selectedEmployeeForDetail.id);
+        } else {
+            // Dar de baja
+            document.getElementById('terminationEmpId').value = selectedEmployeeForDetail.id;
+            document.getElementById('terminationEmpName').textContent = selectedEmployeeForDetail.name;
+            document.getElementById('terminationDate').value = new Date().toISOString().split('T')[0];
+            closeModal('employeeDetailModal');
+            openModal('employeeTerminationModal');
+        }
+    }
+    
+    async function reactivateEmployee(empId) {
+        try {
+            await supabaseClient.from('employees').update({ status: 'active' }).eq('id', empId);
+            showNotification('Empleado reactivado', 'success');
+            await loadEmployees();
+        } catch (error) {
+            showNotification('Error: ' + error.message, 'error');
+        }
+    }
+    
+    async function confirmEmployeeTermination() {
+        const empId = document.getElementById('terminationEmpId').value;
+        const date = document.getElementById('terminationDate').value;
+        const reason = document.getElementById('terminationReason').value;
+        const notes = document.getElementById('terminationNotes').value;
+        
+        if (!date || !reason) {
+            showNotification('Complete fecha y motivo de la baja', 'error');
+            return;
+        }
+        
+        try {
+            // Crear registro de baja
+            await supabaseClient.from('employee_terminations').insert([{
+                employee_id: empId,
+                termination_date: date,
+                reason,
+                notes,
+                registered_by: currentProfile.full_name,
+                created_at: new Date().toISOString()
+            }]);
+            
+            // Actualizar empleado
+            await supabaseClient
+                .from('employees')
+                .update({ 
+                    status: 'inactive',
+                    termination_date: date,
+                    termination_reason: reason
+                })
+                .eq('id', empId);
+            
+            showNotification('Baja de empleado registrada correctamente', 'success');
+            closeModal('employeeTerminationModal');
+            await loadEmployees();
+            
+        } catch (error) {
+            showNotification('Error al dar de baja: ' + error.message, 'error');
+        }
+    }
+    
+    function openEmployeeReport() {
+        alert('Función de reporte en desarrollo. Se generará PDF con información del personal.');
+    }
     // ============================================
     // NÓMINA - AHORA CON GASTO AUTOMÁTICO
     // ============================================
